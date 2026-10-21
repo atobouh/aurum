@@ -6,6 +6,7 @@
 #import <sodium:include/fog.glsl>
 #import <aurum:include/terrain_uniforms.glsl>
 #import <aurum:include/tonemap.glsl>
+#import <aurum:include/shadow.glsl>
 #import <aurum:include/lighting.glsl>
 
 in vec4 v_Color;
@@ -36,6 +37,12 @@ void main() {
         discard;
     }
 #endif
+
+    if (u_AurumMode == 2) {
+        // Shadow pass: depth only.
+        fragColor = vec4(0.0);
+        return;
+    }
 
     if (u_AurumMode == 0) {
         diffuseColor.rgb *= v_Color.rgb * v_VanillaLight.rgb;

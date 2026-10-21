@@ -10,6 +10,7 @@
 #import <sodium:include/chunk_material.glsl>
 #import <aurum:include/terrain_uniforms.glsl>
 #import <aurum:include/wind.glsl>
+#import <aurum:include/shadow.glsl>
 
 out vec4 v_Color;
 out vec2 v_TexCoord;
@@ -54,10 +55,15 @@ void main() {
 
 #ifdef USE_FRAGMENT_DISCARD
     // Plants and leaves live in the cutout pass; solid terrain never pays for the material lookup.
-    if (u_AurumMode == 1) {
+    if (u_AurumMode >= 1) {
         int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5);
         v_Material = id;
-        if (id != 0 && u_WindParams.z > 0.0) {
+        if (u_AurumMode == 2 && id != 0 && id != MAT_LEAVES && id != MAT_VINE) {
+            // Shadow pass: grass, flowers and crops never cast shadows (cheap and they would only add noise).
+            gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+            return;
+        }
+        if (u_AurumMode == 1 && id != 0 && u_WindParams.z > 0.0) {
             float dist = length(position);
             if (dist < WIND_MAX_DIST) {
                 // A negative V bias means this vertex sits on the top edge of its sprite.
@@ -72,6 +78,10 @@ void main() {
 #endif
 
     gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vec4(position, 1.0);
+    if (u_AurumMode == 2) {
+        // Shadow pass: orthographic light view, distorted toward the centre.
+        gl_Position.xy = aurum_shadowDistort(gl_Position.xy);
+    }
 
     v_Color = _vert_color;
     v_VanillaLight = texture(u_LightTex, _vert_tex_light_coord);

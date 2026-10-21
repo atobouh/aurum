@@ -87,3 +87,18 @@ Facts the replacement shader relies on (all verified in 0.5.13 source):
 - Light coords: `a_LightAndData.xy` = level * 16 + 8 (out of 256) for block and sky light.
 - Positions are camera-relative world space (model-view holds rotation only).
 - Sodium draws SOLID and CUTOUT both inside the `RenderLayer.getSolid()` call.
+
+## Phase 2: shadow pass hooks (as built)
+
+| Hook | Where | Why |
+| --- | --- | --- |
+| `SodiumWorldRendererAccessor` | `renderSectionManager` field | Find the live RenderSectionManager |
+| `RenderSectionManagerAccessor` | `sectionByPosition`, `chunkRenderer` | Look up built sections around the player; draw them with Sodium's renderer |
+| `RenderSectionManagerMixin` | `processChunkBuildResults` HEAD | Mark the shadow cache dirty when a nearby mesh is rebuilt |
+
+- `DefaultChunkRenderer.render(matrices, commandList, ChunkRenderListIterable, pass, CameraTransform)` draws any
+  list we give it; region positions are made relative to the CameraTransform, and block-face culling is computed
+  from it. Region tessellations are created on demand inside `render`.
+- `ChunkRenderList(region)` + `reset(frame)` + `add(section)`: at most 256 sections per region (a region is 8x4x8).
+- `RenderSection.getFlags()` bit `RenderSectionFlags.HAS_BLOCK_GEOMETRY` (0) tells whether a section has meshes.
+- The shadow pass runs inside `RenderDevice.enterManagedCode()` / `exitManagedCode()`, as Sodium's own renderLayer does.

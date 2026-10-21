@@ -37,3 +37,12 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Sky table axes changed to sin(a/2) and sqrt(sin e) | Removes asin/acos per pixel; sky measured 1.35 ms on the UHD 620 vs a 0.3 ms target |
 | 2026-10-21 | Composite does one sky lookup and one tonemap for fog and edge fade | Post measured 2.7 ms vs a 1.5 ms target |
 | 2026-10-21 | Clouds (Phase 4) will be stylized, layered 2D rather than realistic | User preference (Story Mode-like), see docs/research/LOOK.md |
+| 2026-10-21 | Shadow casters are drawn with Sodium's own DefaultChunkRenderer.render, given Aurum's section lists, a virtual camera at the light, and the light's matrices | Reuses Sodium's GPU meshes (no CPU re-meshing; the user is CPU-bound); Sodium's face culling from the light camera keeps only light-facing faces |
+| 2026-10-21 | The replaced terrain shader has a depth-only mode (u_AurumMode = 2) for the shadow pass | One program, one fingerprint check; plants (not leaves) are dropped there so grass never casts shadows |
+| 2026-10-21 | Shadow map is double-buffered; rebuilds are sliced over 3 frames into the back map, then swapped | No frame-time spikes (spec rule 6) while the front map stays valid |
+| 2026-10-21 | Rebuild triggers: light turned 0.23 degrees, player moved 4 blocks, or a chunk mesh within range was rebuilt (rate-limited to every 20 frames) | Lazy updates (spec feature 4) |
+| 2026-10-21 | Shadow direction never drops below ~7 degrees; shadows fade out between ~3 and ~9 degrees of light elevation | An orthographic map cannot hold shadows that stretch to the horizon |
+| 2026-10-21 | Entities get a separate, undistorted 512/1024 map within 16 blocks, redrawn every frame | Vanilla entity shaders cannot apply the terrain map's radial distortion; vanilla blob shadows are skipped only for those entities |
+| 2026-10-21 | Leaves keep 35% of direct light when shadowed | Stand-in for light passing through leaves; fully shadowed crowns looked black at golden hour |
+| 2026-10-21 | Below-horizon sky uses the sky ~2 degrees up (desaturated, darker); fog colour excludes the bright glow around the sun | The horizon row stretched below the horizon made a hard red band; fog toward the sun washed terrain pink-white (user feedback) |
+| 2026-10-21 | Modded leaves detected by name (leaves/leaf/foliage/needles) + full cutout cube, and logged | User's custom-tree mod leaves did not sway |

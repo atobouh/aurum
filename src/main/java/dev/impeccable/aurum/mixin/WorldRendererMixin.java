@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.impeccable.aurum.render.GpuTimers;
 import dev.impeccable.aurum.render.TimerSection;
+import dev.impeccable.aurum.render.shadow.ShadowRenderer;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
@@ -37,6 +38,10 @@ public abstract class WorldRendererMixin {
         // Sodium draws its SOLID and CUTOUT passes both inside the solid call; the cutout calls draw nothing.
         TimerSection section = layer == RenderLayer.getTranslucent() || layer == RenderLayer.getTripwire()
                 ? TimerSection.TERRAIN_TRANSLUCENT : TimerSection.TERRAIN_SOLID;
+        if (layer == RenderLayer.getSolid()) {
+            // The shadow map must be ready before Sodium draws the terrain that samples it.
+            ShadowRenderer.update();
+        }
         int t = GpuTimers.begin(section);
         original.call(self, layer, matrices, x, y, z, projection);
         GpuTimers.end(t);

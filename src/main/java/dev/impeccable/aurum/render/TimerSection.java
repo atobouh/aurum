@@ -8,6 +8,7 @@ public enum TimerSection {
     FRAME("Frame (GPU)", 0),
     WORLD("World", 1),
     SKY("Sky", 2),
+    SHADOW("Shadow map", 2),
     TERRAIN_SOLID("Terrain (solid+cutout)", 2),
     TERRAIN_TRANSLUCENT("Translucent", 2),
     CLOUDS("Clouds", 2),

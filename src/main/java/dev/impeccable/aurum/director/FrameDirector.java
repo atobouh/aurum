@@ -5,6 +5,7 @@ import dev.impeccable.aurum.render.GpuTimers;
 import dev.impeccable.aurum.render.Pipeline;
 import dev.impeccable.aurum.render.PostPass;
 import dev.impeccable.aurum.render.SkyRenderer;
+import dev.impeccable.aurum.render.shadow.ShadowRenderer;
 import dev.impeccable.aurum.render.terrain.TerrainShaders;
 import dev.impeccable.aurum.render.terrain.TerrainUniforms;
 import dev.impeccable.aurum.sky.SkyState;
@@ -58,6 +59,9 @@ public final class FrameDirector {
     /** Called with the exact camera and matrices this frame's world is drawn with. */
     public static void beforeWorld(Camera camera, Matrix4f view, Matrix4f projection) {
         Vec3d p = camera.getPos();
+        ShadowRenderer.cameraX = p.x;
+        ShadowRenderer.cameraY = p.y;
+        ShadowRenderer.cameraZ = p.z;
         TerrainUniforms.cameraMod[0] = (float) Math.floorMod((long) Math.floor(p.x), 256L) + (float) (p.x - Math.floor(p.x));
         TerrainUniforms.cameraMod[1] = (float) Math.floorMod((long) Math.floor(p.y), 256L) + (float) (p.y - Math.floor(p.y));
         TerrainUniforms.cameraMod[2] = (float) Math.floorMod((long) Math.floor(p.z), 256L) + (float) (p.z - Math.floor(p.z));

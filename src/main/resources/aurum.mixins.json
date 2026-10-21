@@ -5,12 +5,16 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "BackgroundRendererMixin",
+    "EntityRenderDispatcherMixin",
     "GameRendererMixin",
     "ShaderProgramAccessor",
     "SpriteAtlasTextureAccessor",
     "WorldRendererMixin",
     "WorldRendererSkyMixin",
     "sodium.ChunkShaderInterfaceMixin",
+    "sodium.RenderSectionManagerAccessor",
+    "sodium.RenderSectionManagerMixin",
+    "sodium.SodiumWorldRendererAccessor",
     "sodium.ShaderLoaderMixin"
   ],
   "injectors": {

@@ -61,7 +61,15 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     }
 
     float skyVis = sky * sky;
+    // Without a shadow map, sky light is the only hint of cover. Inside the shadow range the real shadow takes
+    // over; a weak sky-light gate stays so sealed caves never catch sunlight through thin ceilings.
     float directVis = smoothstep(0.55, 0.95, sky);
+    if (ndl > 0.0) {
+        vec2 sh = aurum_shadow(pos, ng);
+        // Leaves let light through: a shaded leaf still glows a little (cheap subsurface stand-in).
+        float lit = material == 4 ? max(sh.x, 0.35) : sh.x;
+        directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
+    }
     vec3 direct = u_LightColor * (ndl * directVis);
 
     vec3 ambient = mix(u_GroundAmbient, u_SkyAmbient, n.y * 0.5 + 0.5) * skyVis;
