@@ -35,6 +35,12 @@ public final class Compat {
                     + ". Terrain effects stay off on untested Sodium versions.").formatted(Formatting.YELLOW)));
         }
 
+        if (FabricLoader.getInstance().isModLoaded("windblown")) {
+            AurumMod.LOGGER.warn("Windblown is loaded; it edits the same Sodium terrain shader as Aurum");
+            ChatNotices.queue(prefix().append(Text.literal("Windblown edits the same terrain shader as Aurum, so Aurum's"
+                    + " terrain effects stay off. Aurum has its own waving plants: remove Windblown.").formatted(Formatting.YELLOW)));
+        }
+
         for (String id : CONFLICTS) {
             if (FabricLoader.getInstance().isModLoaded(id)) {
                 AurumMod.LOGGER.error("Conflicting rendering mod loaded: {}", id);

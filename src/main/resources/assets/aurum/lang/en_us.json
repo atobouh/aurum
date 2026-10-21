@@ -129,5 +129,12 @@
   "aurum.option.contrast": "Contrast",
   "aurum.option.contrast.tooltip": "Difference between light and dark.\n§7Arrives in Phase 1.",
   "aurum.option.show_overlay": "FPS cost overlay",
-  "aurum.option.show_overlay.tooltip": "Shows the GPU time of each render stage. Costs nothing when off. Key: F8."
+  "aurum.option.show_overlay.tooltip": "Shows the GPU time of each render stage. Costs nothing when off. Key: F8.",
+  "aurum.category.wind": "Plants & wind",
+  "aurum.option.waving_enabled": "Waving plants",
+  "aurum.option.waving_enabled.tooltip": "Grass, flowers, crops, leaves and vines sway in the wind. Gusts roll across the land; rain and thunder make it stronger.",
+  "aurum.option.waving_strength": "Sway amount",
+  "aurum.option.waving_strength.tooltip": "How far plants and leaves move.",
+  "aurum.option.waving_speed": "Wind speed",
+  "aurum.option.waving_speed.tooltip": "How fast plants move and gusts travel."
 }

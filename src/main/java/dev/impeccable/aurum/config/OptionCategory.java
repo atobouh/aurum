@@ -16,7 +16,7 @@ import java.util.function.IntSupplier;
  * preset to CUSTOM.
  */
 public enum OptionCategory {
-    SKY, LIGHTING, GLOW, SHADOWS, FOG, WATER, SKY_EXTRAS, POM, GRADE, DEBUG;
+    SKY, LIGHTING, WIND, GLOW, SHADOWS, FOG, WATER, SKY_EXTRAS, POM, GRADE, DEBUG;
 
     public Text title() {
         return Text.translatable("aurum.category." + name().toLowerCase());
@@ -40,6 +40,11 @@ public enum OptionCategory {
                     bool("normals_enabled", c.normalsEnabled, v -> c.normalsEnabled = v),
                     percent("normal_strength", 0, 200, () -> c.normalStrength, v -> c.normalStrength = v),
                     bool("labpbr", c.labPbr, v -> c.labPbr = v),
+            };
+            case WIND -> new SimpleOption<?>[]{
+                    bool("waving_enabled", c.wavingEnabled, v -> c.wavingEnabled = v),
+                    percent("waving_strength", 0, 200, () -> c.wavingStrength, v -> c.wavingStrength = v),
+                    percent("waving_speed", 25, 200, () -> c.wavingSpeed, v -> c.wavingSpeed = v),
             };
             case GLOW -> new SimpleOption<?>[]{
                     bool("bounce_enabled", c.bounceEnabled, v -> c.bounceEnabled = v),

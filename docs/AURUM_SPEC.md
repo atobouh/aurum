@@ -225,6 +225,13 @@ Each feature lists its technique, the trick that makes it cheap, and what change
 
 - In-game settings screen with Low, Medium and High presets, a toggle and strength slider per effect, shadow size and distance, fog strength, flare strength, bloom strength, saturation and contrast, and a "show FPS cost" debug overlay with per-pass GPU timer queries.
 
+### 12. Waving plants and leaves (P1, added 2026-10-21 at the user's request)
+
+- Grass, flowers, crops, tall plants, leaves, vines and water plants sway with a smooth, premium motion:
+  anchored bases, a main bend plus detail flutter, gusts that roll across the land, stronger in rain and thunder.
+- Built in Phase 1 alongside the terrain shader. Research and design: `docs/research/FOLIAGE.md`.
+- **Tiers:** on for all tiers (it is a few vertex instructions in the cutout pass only); amplitude and speed sliders.
+
 ## Performance budget and rules
 
 The frame budget is **16.6 ms at 60 FPS**, and vanilla Sodium terrain already uses much of it on a UHD 620. Every effect must earn its milliseconds.
@@ -262,8 +269,8 @@ Six phases, each ending in a jar the user tests. A phase starts only after the p
 **Phase 0: Foundation.** Gradle/Loom project, mod entry point, config file + settings screen skeleton, Sodium version check, Iris/Luxium conflict message, shader loader with compile-on-startup and vanilla fallback, GPU timer overlay.
 *Gate:* the game launches with ~200 mods, the settings screen opens, the overlay shows per-pass times, and vanilla visuals are unchanged.
 
-**Phase 1: Golden hour core.** Sky lookup + sky draw, lighting in Sodium terrain shader, baked generated normals, AgX grade, fog director + fog, bounce glow, combined post pass.
-*Gate:* 60+ FPS on Low at render distance 10; sunrise and sunset screenshots approved by the user; no visible pop when fog changes; Badlands show warm bounce.
+**Phase 1: Golden hour core.** Sky lookup + sky draw, lighting in Sodium terrain shader, baked generated normals, AgX grade, fog director + fog, bounce glow, combined post pass, waving plants and leaves.
+*Gate:* 60+ FPS on Low at render distance 10; sunrise and sunset screenshots approved by the user; no visible pop when fog changes; Badlands show warm bounce; plants and leaves sway smoothly with no cracks.
 
 **Phase 2: Shadows.** Shadow map with distortion and bias, soft filtering, cached terrain layer, dynamic layer for nearby entities, blob shadows, time-sliced rebuild.
 *Gate:* no shadow acne or peter-panning in the user's test scenes; FPS on Low within 10% of Phase 1; no frame-time spikes over 33 ms when moving.

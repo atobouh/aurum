@@ -43,6 +43,11 @@ public final class AurumConfig {
     public int normalStrength = 50;
     public boolean labPbr = false;
 
+    // Waving plants
+    public boolean wavingEnabled = true;
+    public int wavingStrength = 100;
+    public int wavingSpeed = 100;
+
     // Glow
     public boolean bounceEnabled = true;
     public int bounceStrength = 100;
