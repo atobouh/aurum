@@ -1,4 +1,18 @@
-# Testing: Phase 4, round two (0.3.1)
+# Testing: Phase 4, round three (0.3.2)
+
+New in 0.3.2 (after your 0.3.1 report):
+
+- **Blocky clouds rebuilt against Nostalgia, side by side:**
+  - crisp Minecraft boxes with soft corners, thicker;
+  - bright side faces, lavender bellies, a lighter top layer;
+  - distant clouds fade into haze, so depth reads through tone;
+  - cloud clusters with clear sky between them.
+- **Height:** clouds sit 24 blocks higher by default (slider 0-160).
+- **Beams through tree gaps and into caves**, viewed from any side, not only when looking into the sun.
+- **Sun rays** show as streaks across trees, terrain and clouds instead of a haze.
+
+## Round two notes (0.3.1)
+
 
 New since 0.3.0:
 

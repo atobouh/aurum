@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 3;
+    public int configVersion = 4;
     public Preset preset = Preset.LOW;
 
     // Sky
@@ -87,7 +87,7 @@ public final class AurumConfig {
     public boolean cloudsEnabled = true;
     public CloudStyle cloudStyle = CloudStyle.BLOCKY;
     public boolean cloudsFullRes = false;
-    public int cloudHeight = 0;
+    public int cloudHeight = 24;
     public int cloudCoverage = 50;
     public int cloudShading = 100;
 
@@ -163,6 +163,12 @@ public final class AurumConfig {
             // 0.3.0: bloom is on for every preset (it was a placeholder before).
             bloomEnabled = true;
             configVersion = 3;
+        }
+        if (configVersion < 4) {
+            // 0.3.2: clouds sit 24 blocks higher by default (user: vanilla's 192 looked too low; much higher made
+            // them small and sparse next to the references).
+            if (cloudHeight == 0) cloudHeight = 24;
+            configVersion = 4;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

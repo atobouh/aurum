@@ -67,3 +67,8 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Cloud height slider (+0 to +160 blocks) | The user's world has high floating islands; vanilla's 192 can sit low there |
 | 2026-10-21 | Volumetric light from the shadow map at 1/4 resolution (12 steps), added over terrain only; dims shadowed haze | User: rays "shy" vs references; the references' beams come from shadowed vs sunlit air, which a screen-space blur cannot make. Over the sky it double-counted the sky's own glow |
 | 2026-10-21 | "Enclosed" factor from sky light at the eye (any height) drives cave/room beam strength | The cave factor only counts below y 70; rooms and overhangs need beams too |
+| 2026-10-21 | Every test render is judged side by side with its matching reference shot | User rule: Aurum must look on par with the references, not like a cheap copy |
+| 2026-10-21 | Blocky clouds: no bake-time rounding (slab rounding only, 2.5 blocks); coverage may only shrink in clear weather; clear patches by whole cells from a baked noise field | Side-by-side with Nostalgia: larger rounding made pills, growth made blobs, per-pixel fields tore edges |
+| 2026-10-21 | Default cloud height +24 blocks (y 216); slider 0-160 | +80 made clouds tiny and sparse vs references; vanilla 192 looked low to the user |
+| 2026-10-21 | Screen-space rays mostly over occluders (trees, terrain, clouds), cubed mask | Over open sky they washed the frame (look lab: darks 11% -> 2%) |
+| 2026-10-21 | Volumetric light: broad phase, 0.16 density, full strength only where lit and shadowed air alternate | User saw no beams through tree gaps or into caves; the forward-only phase vanished from the side |

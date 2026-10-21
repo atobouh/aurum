@@ -27,8 +27,11 @@ public final class CloudBaker {
     private static final int RANGE = 8;
     /** Sub-texels per cloud texel in the baked field. */
     private static final int SUB = 4;
-    /** Corner rounding radius in sub-texels (1.2 sub-texels = 3.6 blocks). */
-    private static final float ROUND = 1.2f;
+    /**
+     * Extra corner rounding at bake time, in sub-texels. Zero: the shader's rounded slab already rounds corners by
+     * 2.5 blocks, and side by side with Nostalgia anything more turned single cells into ovals and pills.
+     */
+    private static final float ROUND = 0.0f;
 
     private static int texture;
     private static int size = 256;
@@ -71,8 +74,14 @@ public final class CloudBaker {
             }
         }
 
+        // Cloud fields: whole cells are cleared where a slow, tiling noise is low, so the sky has clusters and
+        // clear patches instead of an even carpet. Whole cells only, so every edge stays a crisp Minecraft step
+        // (shrinking outlines by a varying amount made them wobble).
+        float[] field = fieldNoise(w, h);
+        for (int i = 0; i < inside.length; i++) if (field[i] > 0.5f) inside[i] = false;
+
         // Bake at 4 sub-texels per cloud texel (3 blocks each) so the block steps survive filtering, then round
-        // the outer corners by a fixed radius: erode, take the exact distance again, and grow back.
+        // the outer corners: erode, take the exact distance again, and grow back (an opening).
         int sw = w * SUB, sh = h * SUB;
         boolean[] fine = new boolean[sw * sh];
         for (int y = 0; y < sh; y++) {
@@ -100,6 +109,34 @@ public final class CloudBaker {
         GlStateManager._bindTexture(0);
         size = w / SUB;
         AurumMod.LOGGER.info("Baked cloud shapes ({}x{}) in {} ms", w, h, (System.nanoTime() - start) / 1_000_000);
+    }
+
+    /** Tiling value noise in [0, 1] with 6 smooth cells across the texture (about 500 blocks each), shaped. */
+    private static float[] fieldNoise(int w, int h) {
+        int cells = 6;
+        java.util.Random r = new java.util.Random(4711);
+        float[] lattice = new float[cells * cells];
+        for (int i = 0; i < lattice.length; i++) lattice[i] = r.nextFloat();
+        float[] out = new float[w * h];
+        for (int y = 0; y < h; y++) {
+            float fy = (float) y / h * cells;
+            int iy = (int) fy;
+            float ty = fy - iy;
+            ty = ty * ty * (3 - 2 * ty);
+            for (int x = 0; x < w; x++) {
+                float fx = (float) x / w * cells;
+                int ix = (int) fx;
+                float tx = fx - ix;
+                tx = tx * tx * (3 - 2 * tx);
+                float a = lattice[(iy % cells) * cells + ix % cells], b = lattice[(iy % cells) * cells + (ix + 1) % cells];
+                float c = lattice[((iy + 1) % cells) * cells + ix % cells], d = lattice[((iy + 1) % cells) * cells + (ix + 1) % cells];
+                float v = (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * ty;
+                // Most of the sky keeps its clouds; roughly the lowest quarter of the field clears out.
+                float t = Math.max(0f, Math.min(1f, (0.45f - v) / 0.2f));
+                out[y * w + x] = t * t * (3 - 2 * t);
+            }
+        }
+        return out;
     }
 
     /** Signed distance in texels between texel centres, negative inside, wrapping at the edges, clamped. */

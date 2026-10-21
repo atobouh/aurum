@@ -188,3 +188,61 @@ streaks near the sun's edges.
 - The screen-space rays are a little stronger, with a longer reach, and still give shafts through cloud gaps.
 
 ![rays](img/rays_0.3.1.jpg)
+
+## Round three (0.3.2): judged side by side with the references
+
+**User feedback on 0.3.1:**
+
+- The blocky clouds were ugly: too heavy, no depth ("depth is often done with different colour shades").
+- Both styles sat at the wrong height, and their distribution was off.
+- There were no rays through tree gaps or into caves, which "every pro shader" has.
+
+**New working rule (user):** every test screenshot is compared side by side with the matching reference shot,
+and must look on par with it, not like a cheap blurry copy. The comparison sheets (our render on the left, the
+reference on the right) are kept with the test renders, not in the repository, because they contain other
+packs' screenshots.
+
+**Blocky vs Nostalgia 0 and 6, iterated with measurements.** Cloud share of the upper frame and cloud
+lightness, median and 90th percentile:
+
+| Build | Cloud % | L p50 / p90 | What we saw side by side |
+| --- | --- | --- | --- |
+| Nostalgia 0 | 29 | 0.65 / 0.76 | Crisp rectangular boxes, small corner radius, near-white, dense, layered |
+| 0.3.1 | 11 | 0.69 / 0.79 | Flat grey carpet |
+| Clouds 80 blocks higher | 1 | 0.58 / 0.67 | Tiny and sparse: wrong direction |
+| Opening radius 7 blocks | — | — | Pills and blobs: thin bars must stay |
+| Coverage growth | — | — | Growing a staircase outline rounds it into blobs: shapes may only shrink |
+| Cloud fields sampled per pixel | 17 | 0.62 / 0.71 | Torn, wobbly edges |
+| **0.3.2** | **22** | **0.62 / 0.70** | Crisp Minecraft boxes, 2.5-block corners, layered, near-white |
+
+What changed in 0.3.2:
+
+- **Shading:** tops, sides and bellies each get their own tone.
+  - The sides are the bright faces, as in Nostalgia.
+  - Bellies are lavender with a slow tonal drift.
+  - The higher layer is lighter and cooler.
+  - Clouds take the sky light's brightness but only part of its blue, so they read white, not blue-grey.
+- **Thickness:** 12-block slabs.
+- **Depth:** aerial haze starts close, so each step back in distance is a step in tone.
+- **Height:** the default is +24 blocks (y 216).
+- **Distribution:** clear patches come from whole cells cleared by a slow, baked noise field, so clusters
+  alternate with open sky and every edge stays a crisp step.
+- **Soft style:** it shares the height and the cloud fields.
+
+**Rays vs Complementary 0, Complementary 8 and Solas 2:**
+
+- **Volumetric light:**
+  - The phase is broad, so a canopy's shafts show when looking across them, not only into the sun.
+  - Density is 0.16 per lit block.
+  - Full strength where lit and shadowed air alternate; open-field glow is cut to 2%.
+  - Enclosed spaces (sky light at the eye, any height) get stronger beams plus some glow scattered around them.
+  - The beam is smoothed with a wider 5-tap filter.
+- **Screen-space rays:** stronger and longer, with the mask cubed so the gaps between shafts stay dark. They
+  are kept weak over open sky, so they show as streaks across trees, terrain and clouds instead of a veil.
+- **Look lab, facing the sun:** a first pass washed the frame (darks 11% to 2%, highlights clipped). After the
+  contrast fix: darks 8%, p95 0.93.
+
+**Gaps that remain against the references** (not sky-extras work):
+
+- Backlit trees stay green instead of going to dark silhouettes (terrain lighting).
+- Water does not reflect the sunset (Phase 3).

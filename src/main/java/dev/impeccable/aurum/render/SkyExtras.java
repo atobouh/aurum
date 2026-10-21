@@ -127,7 +127,7 @@ public final class SkyExtras {
         int t = GpuTimers.begin(TimerSection.AURUM_EFFECTS);
         // 2. God rays: strongest in golden-hour haze, faint at clear noon, none in caves or with the sun away.
         float haze = Math.min(1f, FogDirector.distanceDensity / 0.0015f);
-        rayStrength = c.godRaysEnabled ? c.godRayStrength / 100f * 0.35f * (0.25f + 0.75f * Atmosphere.golden)
+        rayStrength = c.godRaysEnabled ? c.godRayStrength / 100f * 0.8f * (0.2f + 0.8f * Atmosphere.golden)
                 * (0.7f + 0.3f * haze) * sunUp * onScreen * (1f - FogDirector.cave) * (1f - 0.8f * rain) : 0f;
         if (rayStrength > 0.002f) {
             ShaderProgram mask = ShaderManager.get("post/rays_mask");
@@ -156,7 +156,7 @@ public final class SkyExtras {
         // 2b. Volumetric light from the shadow map: beams through trees, past islands and into caves, also with
         // the sun off-screen. Not faded in caves (that is where a beam from an opening looks best).
         volumetricStrength = c.godRaysEnabled && ShadowRenderer.usable()
-                ? c.godRayStrength / 100f * 0.55f * (0.3f + 0.7f * Math.max(Atmosphere.golden, FogDirector.enclosed)) * sunUp * (1f - 0.7f * rain) : 0f;
+                ? c.godRayStrength / 100f * 1.0f * (0.6f + 0.4f * Math.max(Atmosphere.golden, FogDirector.enclosed)) * sunUp * (1f - 0.7f * rain) : 0f;
         ShaderProgram vl = ShaderManager.get("post/volumetric");
         if (volumetricStrength > 0.002f && vl != null) {
             GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, vlFbo);
@@ -233,10 +233,12 @@ public final class SkyExtras {
         float maxDist = 1400f;
         // Vertical extent of everything the style draws, for the composite's "is the cloud in front" test.
         float lo = soft ? base - 2f : base;
-        float hi = soft ? base + 30f : base + 24f;
+        float hi = soft ? base + 30f : base + 31f;
         float plane = soft ? base + 230f : hi;
         float thunder = world.getThunderGradient(tickDelta);
-        float coverage = (c.cloudCoverage - 50) / 50f * 0.8f + 0.6f * rain + 0.3f * thunder;
+        // Measured: Nostalgia's clouds fill ~28% of the upper frame. Slightly fuller shapes than vanilla, broken up
+        // by the shader's large-scale fields (clusters and clear patches); rain fills the sky in.
+        float coverage = (c.cloudCoverage - 50) / 50f * 0.8f + 0.8f * rain + 0.3f * thunder;
 
         GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, cloudFbo);
         GlStateManager._viewport(0, 0, cloudW, cloudH);
@@ -258,7 +260,7 @@ public final class SkyExtras {
         GL20C.glUniform2f(p.uniform("u_NoiseCam"), (float) mod(cam.x + drift, 4096.0), (float) mod(cam.z, 4096.0));
         p.set4f("u_Offset", off1x, off1y, off2x, off2y);
         p.set4f("u_Shape", (float) blocksPerTexel, coverage, rain, 0f);
-        p.set4f("u_Look", Math.min(c.cloudShading / 100f, 1.5f), soft ? 0.85f : 0.85f, 0f, FogDirector.distanceDensity * 0.25f);
+        p.set4f("u_Look", Math.min(c.cloudShading / 100f, 1.5f), soft ? 0.85f : 1.3f, 0f, FogDirector.distanceDensity * 0.25f);
         p.set1f("u_TexSize", size);
         float g = Atmosphere.golden * c.sunsetIntensity / 100f;
         p.set3f("u_Tint", 1f, 1f - 0.16f * g, 1f + 0.30f * g);

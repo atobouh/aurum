@@ -39,9 +39,18 @@ uniform vec3 u_Tint;         // golden-hour push toward peach and mauve (referen
 in vec2 v_Uv;
 out vec4 fragColor;
 
+// Baked tiling noise in world space, moving with the cloud layout. Tile sizes and stretch factors are chosen
+// so 4096 blocks is a whole number of tiles: the CPU-side wrap never shows as a seam.
+float noise(vec2 xz, vec2 stretch, float blocksPerTile, vec2 evolve) {
+    return texture(u_Noise, ((xz + u_NoiseCam) * stretch + evolve) / blocksPerTile).r;
+}
+
 float cloud2d(vec2 xz, vec2 offset, float scale) {
     vec2 uv = (offset + xz / scale) / u_TexSize;
-    return (texture(u_CloudSdf, uv).r - u_Shape.y) * scale;
+    // Shapes may only shrink in clear weather: growing a staircase outline rounds it into blobs (seen side by
+    // side with Nostalgia's crisp boxes). Rain may thicken them.
+    float shrink = max(-u_Shape.y, -0.8 * u_Shape.z);
+    return (texture(u_CloudSdf, uv).r + shrink) * scale;
 }
 
 float lightUp() {
@@ -51,7 +60,8 @@ float lightUp() {
 // Distant clouds sink into the sky colour behind them, like the haze in the references.
 vec3 aerial(vec3 c, vec3 sky, float t) {
     float maxD = u_Layers.y;
-    float f = smoothstep(0.2 * maxD, maxD, t) * 0.85;
+    // Starts close so every step of distance reads as a step back in tone: depth through colour.
+    float f = pow(smoothstep(0.04 * maxD, maxD, t), 0.75) * 0.88;
     f = 1.0 - (1.0 - f) * exp(-t * u_Look.w);
     return mix(c, sky, f);
 }
@@ -63,8 +73,8 @@ const int STEPS = 40;
 
 // Layer 1: the main sheet. Layer 2: larger, sparser boxes 20 blocks higher, rotated so its layout differs; seen
 // through the gaps of layer 1, it gives the sky depth without cluttering it.
-const float L1_CENTRE = 4.0, L1_HALF = 4.0, L1_ROUND = 2.5;
-const float L2_CENTRE = 20.0, L2_HALF = 3.5, L2_ROUND = 2.2, L2_SCALE = 1.15, L2_SHRINK = 0.3;
+const float L1_CENTRE = 6.0, L1_HALF = 6.0, L1_ROUND = 2.5;
+const float L2_CENTRE = 26.0, L2_HALF = 4.5, L2_ROUND = 2.2, L2_SCALE = 1.15, L2_SHRINK = 0.0;
 
 vec2 l2coords(vec2 xz) {
     return vec2(xz.y, -xz.x);
@@ -124,26 +134,37 @@ vec3 normalAt(vec3 p, int layer, float d2) {
     vec2 w = vec2(d2 + r, abs(dy) - (halfT - r));
     vec2 q = max(w, 0.0);
     vec2 gw = length(q) > 1e-5 ? q / length(q) : (w.x > w.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
-    return normalize(vec3(g.x * gw.x, sign(dy) * gw.y, g.y * gw.x));
+    vec3 n = vec3(g.x * gw.x, sign(dy) * gw.y, g.y * gw.x);
+    // Flat spots of the distance field have no horizontal gradient; never normalise a zero vector (NaN = black).
+    return dot(n, n) > 1e-8 ? normalize(n) : vec3(0.0, sign(dy + 1e-4), 0.0);
 }
 
-// Soft, luminous Story Mode shading: tops catch the sun, bottoms stay a light lavender, sides get a gentle
-// vertical gradient, rounded edges blend between them, thin rims glow when backlit.
+// Story Mode shading with depth through tone, matched side by side with Nostalgia 0 and 6: the side faces are
+// the brightest, near-white parts (lit, with a slight lift toward the top), bellies are a softer lavender with a
+// slow tonal drift, tops bright; a warm rim on edges facing the sun; the higher layer slightly lighter and
+// cooler, like it is further away.
 vec3 shade(vec3 p, vec3 n, vec3 dir, int layer) {
     float up = lightUp();
-    float ndl = dot(n, u_LightDir) * 0.5 + 0.5;
-    vec3 sun = u_LightColor * (ndl * ndl) * up;
-    vec3 belly = u_SkyAmbient * vec3(1.0, 0.98, 1.08) + u_LightColor * 0.12 * up;
-    vec3 top = u_SkyAmbient * 1.25 + u_LightColor * 0.05 * up;
-    vec3 amb = mix(belly, top, n.y * 0.5 + 0.5);
+    float ndl = saturate(dot(n, u_LightDir) * 0.6 + 0.4);
     float centre = u_Layers.x + (layer == 0 ? L1_CENTRE : L2_CENTRE);
     float halfT = layer == 0 ? L1_HALF : L2_HALF;
     float h = saturate((p.y - centre) / (2.0 * halfT) + 0.5);
-    float side = 1.0 - abs(n.y);
-    amb *= mix(1.0, mix(0.86, 1.04, h), side);
-    vec3 c = mix(u_SkyAmbient * 1.1 + u_LightColor * 0.35 * up, sun + amb, u_Look.x);
+    // Clouds scatter all colours alike: take the sky light's brightness with only part of its blue, or every
+    // cloud turns blue-grey (the references are near-white with a lavender tint in shade).
+    vec3 skyL = mix(u_SkyAmbient, vec3(luminance(u_SkyAmbient)), 0.55);
+
+    vec3 top = skyL * 1.30 + u_LightColor * 0.55 * ndl * up;
+    float drift = noise(p.xz, vec2(1.0), 256.0, vec2(0.0));
+    vec3 belly = (skyL * vec3(0.98, 0.96, 1.08) + u_LightColor * 0.14 * up) * (0.93 + 0.14 * drift);
+    vec3 side = (skyL * 1.20 + u_LightColor * 0.45 * ndl * up) * mix(0.90, 1.02, h);
+    // Blend by facing: flat faces get their own tone, the rounded edges blend smoothly between them.
+    float topW = smoothstep(0.35, 0.9, n.y), botW = smoothstep(0.35, 0.9, -n.y);
+    vec3 c = side * (1.0 - topW - botW) + top * topW + belly * botW;
+    c = mix(u_SkyAmbient * 1.1 + u_LightColor * 0.35 * up, c, u_Look.x);
+    if (layer == 1) c *= vec3(1.03, 1.05, 1.10);
     float toSun = saturate(dot(dir, u_SunDir));
-    c += u_SunGlow.rgb * pow(toSun, 6.0) * side * (0.3 + 0.7 * u_SunGlow.a);
+    float rim = (1.0 - abs(n.y)) * saturate(dot(n, u_LightDir));
+    c += u_SunGlow.rgb * (pow(toSun, 6.0) * (1.0 - abs(n.y)) + rim * 0.25) * (0.3 + 0.7 * u_SunGlow.a);
     return c * u_Tint * u_Look.y * (1.0 - 0.45 * u_Shape.z);
 }
 
@@ -191,12 +212,6 @@ vec4 clouds(vec3 dir, vec3 sky) {
 
 const int STEPS = 18;
 const float BOTTOM = -2.0, TOP = 30.0;   // volume, relative to the cloud base
-// Baked tiling noise in world space, moving with the cloud layout. Tile sizes and stretch factors are chosen
-// so 4096 blocks is a whole number of tiles: the CPU-side wrap never shows as a seam.
-float noise(vec2 xz, vec2 stretch, float blocksPerTile, vec2 evolve) {
-    return texture(u_Noise, ((xz + u_NoiseCam) * stretch + evolve) / blocksPerTile).r;
-}
-
 // Density at a point, plus how deep below the local cloud top it is (for self-shadowing).
 float density(vec3 p, out float belowTop, out float height) {
     belowTop = 0.0;
@@ -208,7 +223,7 @@ float density(vec3 p, out float belowTop, out float height) {
     if (raw > 2.2) return 0.0;
     float warp = noise(p.xz, vec2(1.0), 256.0, vec2(0.0)) - 0.5;
     float d2 = cloud2d(p.xz + vec2(warp, -warp) * 26.0, u_Offset.xy, s) / s;
-    float cover = smoothstep(1.3, -0.9, d2);
+    float cover = smoothstep(1.6, -0.7, d2);
     if (cover <= 0.0) return 0.0;
     float n = noise(p.xz, vec2(1.0, 1.5), 64.0, vec2(y * 2.5, u_Layers.z * 0.25));
     float top = mix(5.0, TOP - 2.0, cover * cover) * (0.65 + 0.7 * n);

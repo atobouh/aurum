@@ -85,10 +85,11 @@ float cloudEntry(vec3 dir) {
 
 // Volumetric light texture, smoothed with four extra bilinear taps (hides the march jitter).
 vec2 volumetricLit(vec2 uv) {
-    vec2 h = 1.0 / vec2(textureSize(u_Volumetric, 0));
-    return texture(u_Volumetric, uv).rg * 0.36
-         + (texture(u_Volumetric, uv + h * vec2(0.75, 0.75)).rg + texture(u_Volumetric, uv + h * vec2(-0.75, 0.75)).rg
-         + texture(u_Volumetric, uv + h * vec2(0.75, -0.75)).rg + texture(u_Volumetric, uv - h * 0.75).rg) * 0.16;
+    // Wider than one texel: beams are soft-edged in the references, and the march jitter must not show.
+    vec2 h = 1.5 / vec2(textureSize(u_Volumetric, 0));
+    return texture(u_Volumetric, uv).rg * 0.2
+         + (texture(u_Volumetric, uv + h * vec2(1.0, 0.4)).rg + texture(u_Volumetric, uv + h * vec2(-0.4, 1.0)).rg
+         + texture(u_Volumetric, uv + h * vec2(-1.0, -0.4)).rg + texture(u_Volumetric, uv + h * vec2(0.4, -1.0)).rg) * 0.2;
 }
 
 // A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
@@ -189,17 +190,29 @@ void main() {
             vec2 v = volumetricLit(v_Uv);
             float cave = u_Volumetric2.y;
             float litBlocks = v.r * v.g * u_Volumetric2.x;
-            // Enclosed spaces get denser, all-round scattering: a beam from an opening into a dark cave.
-            float glow = 1.0 - exp(-litBlocks * 0.02 * (1.0 + 4.0 * cave));
-            float phase = 0.12 + 1.6 * pow(toSun, 5.0) + 0.8 * pow(toSun, 40.0) + 1.2 * cave;
+            // Enclosed spaces get denser scattering: a beam from an opening into a dark cave.
+            float glow = 1.0 - exp(-litBlocks * 0.16 * (1.0 + cave));
+            // In enclosed spaces light from the beam also scatters into the surrounding haze.
+            glow += cave * 0.25 * (1.0 - exp(-litBlocks * 0.02));
+            // Broad phase: beams through a canopy must show when looking across them under a high sun, not
+            // only when looking into the sun (0.3.1 was almost all forward lobe and vanished from the side).
+            float phase = 0.45 + 0.45 * toSun * toSun + 1.2 * pow(toSun, 6.0) + 0.6 * pow(toSun, 40.0) + 0.8 * cave;
+            // Beams are the contrast between lit and shadowed air. Where the whole ray is sunlit (open fields)
+            // the glow is only a light veil; where shadow fills most of the ray (under trees, in caves) the few
+            // lit stretches are the beams and keep full strength.
+            glow *= mix(1.0, 0.02, smoothstep(0.3, 0.9, v.r));
             scene += rayColor * glow * phase * u_Extras.w;
         }
         if (u_Extras.x > 0.0) {
             // Screen-space shafts: open sky along the line to the sun (also through cloud gaps), fading with
             // distance from the sun.
+            // Streaks reach far across the frame like the references (Complementary 0). Cubing the mask keeps the
+            // gaps between shafts dark, and over open sky (already bright around the sun) they are kept weak:
+            // rays show as bright streaks across whatever blocks the sun (trees, terrain, clouds), not as a veil.
             float rays = texture(u_Rays, v_Uv).r;
             float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
-            scene += rayColor * rays * exp(-r * 3.0) * u_Extras.x;
+            float openSky = (depth >= 1.0 ? 1.0 : 0.0) * (1.0 - texture(u_Clouds, v_Uv).a);
+            scene += rayColor * (rays * rays * rays) * exp(-r * 2.2) * (1.0 - 0.75 * openSky) * u_Extras.x;
         }
     }
     if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;
