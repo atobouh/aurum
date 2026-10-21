@@ -85,6 +85,9 @@ public final class AurumConfig {
     public boolean godRaysEnabled = true;
     public int godRayStrength = 100;
     public boolean cloudsEnabled = true;
+    public CloudStyle cloudStyle = CloudStyle.BLOCKY;
+    public boolean cloudsFullRes = false;
+    public int cloudHeight = 0;
     public int cloudCoverage = 50;
     public int cloudShading = 100;
 
@@ -144,6 +147,7 @@ public final class AurumConfig {
     private AurumConfig sanitized() {
         if (preset == null) preset = Preset.LOW;
         if (tonemap == null) tonemap = Tonemap.FILMIC;
+        if (cloudStyle == null) cloudStyle = CloudStyle.BLOCKY;
         if (configVersion < 2) {
             // 0.1.0 shipped a grade that crushed blue (AgX + extra saturation). Move everyone to the new look.
             AurumConfig d = new AurumConfig();
@@ -166,6 +170,7 @@ public final class AurumConfig {
         };
         shadowDistance = clamp(shadowDistance, 2, 8);
         pomDistance = clamp(pomDistance, 4, 16);
+        cloudHeight = clamp(cloudHeight, 0, 160);
         return this;
     }
 

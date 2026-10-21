@@ -20,15 +20,17 @@ import java.util.Set;
 public final class ShaderManager {
     private static final String ROOT = "/assets/aurum/shaders/";
 
-    /** Programs compiled at startup: name -> {vertex, fragment} paths. */
+    /** Programs compiled at startup: name -> {vertex, fragment} paths, then optional defines. */
     private static final String[][] PROGRAMS = {
             {"sky/sky", "post/fullscreen.vsh", "sky/sky.fsh"},
             {"post/composite", "post/fullscreen.vsh", "post/composite.fsh"},
             {"post/bounce_gather", "post/fullscreen.vsh", "post/bounce_gather.fsh"},
             {"post/bounce_blend", "post/fullscreen.vsh", "post/bounce_blend.fsh"},
-            {"post/clouds", "post/fullscreen.vsh", "post/clouds.fsh"},
+            {"post/clouds_blocky", "post/fullscreen.vsh", "post/clouds.fsh"},
+            {"post/clouds_soft", "post/fullscreen.vsh", "post/clouds.fsh", "CLOUD_SOFT"},
             {"post/rays_mask", "post/fullscreen.vsh", "post/rays_mask.fsh"},
             {"post/rays_blur", "post/fullscreen.vsh", "post/rays_blur.fsh"},
+            {"post/volumetric", "post/fullscreen.vsh", "post/volumetric.fsh"},
             {"post/flare_occlusion", "post/fullscreen.vsh", "post/flare_occlusion.fsh"},
             {"post/bloom_prefilter", "post/fullscreen.vsh", "post/bloom_prefilter.fsh"},
             {"post/bloom_down", "post/fullscreen.vsh", "post/bloom_down.fsh"},
@@ -45,7 +47,9 @@ public final class ShaderManager {
         deleteAll();
         for (String[] p : PROGRAMS) {
             try {
-                programs.put(p[0], compile(p[0], p[1], p[2], Map.of()));
+                Map<String, String> defines = new LinkedHashMap<>();
+                for (int i = 3; i < p.length; i++) defines.put(p[i], "1");
+                programs.put(p[0], compile(p[0], p[1], p[2], defines));
             } catch (ShaderException e) {
                 AurumMod.LOGGER.error("Shader '{}' failed:\n{}", p[0], e.getMessage());
                 deleteAll();

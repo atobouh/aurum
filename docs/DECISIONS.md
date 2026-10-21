@@ -61,3 +61,9 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Lens-flare occlusion is a 1x1 GPU pass (16 depth taps + cloud alpha, eased) read directly by the composite | No CPU readback at all, so nothing can stall; same effect as the spec's one-frame-late read |
 | 2026-10-21 | Lens flare is procedural in the composite (halo, streak, 4 ghosts), subtle | References show little or no flare; avoids extra draw calls |
 | 2026-10-21 | Composite uses texture units 3-5 for rays, bloom and flare | Minecraft's GlStateManager tracks only 12 units; terrain rebinds 3-5 before each of its draws |
+| 2026-10-21 | Two cloud styles (Blocky = Nostalgia layered boxes, Soft = Better Clouds-like volume), one shader source compiled twice | User request after 0.3.0; a define keeps each variant's loop lean |
+| 2026-10-21 | Flat high cloud sheet removed | User saw it as pixelated squares; depth now comes from a real second 3D layer (blocky) or smooth noise cirrus (soft) |
+| 2026-10-21 | Blocky cloud edges: closest-approach anti-aliasing + edge re-steepening in the composite; optional full-resolution clouds (on in High) | Fixes "blurry/pixelated close-up" without paying full resolution on Low/Medium |
+| 2026-10-21 | Cloud height slider (+0 to +160 blocks) | The user's world has high floating islands; vanilla's 192 can sit low there |
+| 2026-10-21 | Volumetric light from the shadow map at 1/4 resolution (12 steps), added over terrain only; dims shadowed haze | User: rays "shy" vs references; the references' beams come from shadowed vs sunlit air, which a screen-space blur cannot make. Over the sky it double-counted the sky's own glow |
+| 2026-10-21 | "Enclosed" factor from sky light at the eye (any height) drives cave/room beam strength | The cave factor only counts below y 70; rooms and overhangs need beams too |

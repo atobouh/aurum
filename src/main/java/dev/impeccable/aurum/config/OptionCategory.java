@@ -84,6 +84,10 @@ public enum OptionCategory {
                     bool("god_rays_enabled", c.godRaysEnabled, v -> c.godRaysEnabled = v),
                     percent("god_ray_strength", 0, 200, () -> c.godRayStrength, v -> c.godRayStrength = v),
                     bool("clouds_enabled", c.cloudsEnabled, v -> c.cloudsEnabled = v),
+                    choice("cloud_style", List.of(CloudStyle.values()), c.cloudStyle,
+                            v -> Text.translatable("aurum.cloud_style." + v.name().toLowerCase()), v -> c.cloudStyle = v),
+                    bool("clouds_full_res", c.cloudsFullRes, v -> c.cloudsFullRes = v),
+                    ranged("cloud_height", 0, 160, "aurum.unit.blocks_above", () -> c.cloudHeight, v -> c.cloudHeight = v),
                     percent("cloud_coverage", 0, 100, () -> c.cloudCoverage, v -> c.cloudCoverage = v),
                     percent("cloud_shading", 0, 200, () -> c.cloudShading, v -> c.cloudShading = v),
             };

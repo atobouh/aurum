@@ -19,8 +19,10 @@ public final class FogDirector {
     public static float heightDensity;
     /** 0 = open air, 1 = deep in a cave (fog colour goes dark instead of sky-coloured). */
     public static float cave;
+    /** 0 = open sky above, 1 = closed in (cave, room, under an overhang) at any height. Drives cave light beams. */
+    public static float enclosed;
 
-    private static float tDistance, tHeight, tCave;
+    private static float tDistance, tHeight, tCave, tEnclosed;
     private static long lastNanos;
     private static int biomeCheckTicker;
     private static float swamp;
@@ -51,6 +53,7 @@ public final class FogDirector {
                 + 0.004f * swamp + 0.012f * underground);
         tHeight = c.fogEnabled && c.heightFog ? strength * (0.006f * golden + 0.02f * rain + 0.015f * swamp) * (1f - underground) : 0f;
         tCave = underground;
+        tEnclosed = clamp01((12f - skyLight) / 8f);
 
         long now = System.nanoTime();
         float dt = lastNanos == 0 ? 10f : Math.min((now - lastNanos) / 1e9f, 0.25f);
@@ -59,6 +62,7 @@ public final class FogDirector {
         distanceDensity += (tDistance - distanceDensity) * k;
         heightDensity += (tHeight - heightDensity) * k;
         cave += (tCave - cave) * k;
+        enclosed += (tEnclosed - enclosed) * k;
     }
 
     /** 0 outside [lo, hi], 1 at peak, smooth in between. */

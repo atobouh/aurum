@@ -162,16 +162,18 @@ public final class PostPass {
         comp.set1i("u_HandDepth", UNIT_C);
         comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
-        // GlStateManager tracks only 12 units; 3-5 are free here (terrain rebinds its own before every draw).
+        // GlStateManager tracks only 12 units; 2-5 are free here (vanilla and terrain rebind theirs before drawing).
         comp.set1i("u_Clouds", 11);
         comp.set1i("u_Rays", 3);
         comp.set1i("u_Bloom", 4);
         comp.set1i("u_Flare", 5);
+        comp.set1i("u_Volumetric", 2);
         float[] cs = SkyExtras.cloudSlab;
-        comp.set4f("u_CloudSlab", cs[0], cs[1], cs[2], SkyExtras.cloudsDrawn ? 1f : 0f);
+        comp.set4f("u_CloudSlab", cs[0], cs[1], cs[2], SkyExtras.cloudsDrawn ? cs[3] : 0f);
         float[] ss = SkyExtras.sunScreen;
         comp.set4f("u_SunScreen", ss[0], ss[1], ss[2], ss[3]);
-        comp.set4f("u_Extras", SkyExtras.rayStrength, SkyExtras.bloomStrength, SkyExtras.flareStrength, 0f);
+        comp.set4f("u_Extras", SkyExtras.rayStrength, SkyExtras.bloomStrength, SkyExtras.flareStrength, SkyExtras.volumetricStrength);
+        comp.set4f("u_Volumetric2", dev.impeccable.aurum.render.shadow.ShadowRenderer.range() * 0.95f, FogDirector.enclosed, 0f, 0f);
         comp.setMatrix("u_InvProj", invProj);
         comp.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;
@@ -199,12 +201,13 @@ public final class PostPass {
         GlUtil.bindTexture(3, SkyExtras.raysDrawn ? SkyExtras.raysTexture() : clear);
         GlUtil.bindTexture(4, SkyExtras.bloomDrawn ? SkyExtras.bloomTexture() : clear);
         GlUtil.bindTexture(5, SkyExtras.flareOn ? SkyExtras.flareTexture() : clear);
+        GlUtil.bindTexture(2, SkyExtras.volumetricDrawn ? SkyExtras.volumetricTexture() : clear);
         GlUtil.drawFullscreenTriangle();
         ShaderProgram.unbind();
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, main.getDepthAttachment(), 0);
 
         // Unbind our textures from the high units and restore the state vanilla expects next.
-        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
+        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         main.beginWrite(true);

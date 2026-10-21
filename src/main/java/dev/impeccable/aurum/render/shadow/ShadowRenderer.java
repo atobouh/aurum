@@ -108,6 +108,11 @@ public final class ShadowRenderer {
         return front.halfExtent * 2f / Math.max(1, resolution) * (1f - DISTORTION);
     }
 
+    /** Half the width of the area the front map covers, in blocks. */
+    public static float range() {
+        return front.halfExtent;
+    }
+
     public static float inverseResolution() {
         return 1f / Math.max(1, resolution);
     }

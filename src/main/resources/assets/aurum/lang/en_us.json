@@ -138,5 +138,14 @@
   "aurum.option.waving_speed.tooltip": "How fast plants move and gusts travel.",
   "aurum.tonemap.filmic": "Aurum Filmic",
   "aurum.option.white_balance": "White balance",
-  "aurum.option.white_balance.tooltip": "Makes midday light neutral white, like a camera. Lower it for a warmer, more vintage look. Sunsets stay warm either way."
+  "aurum.option.white_balance.tooltip": "Makes midday light neutral white, like a camera. Lower it for a warmer, more vintage look. Sunsets stay warm either way.",
+  "aurum.option.cloud_style": "Cloud style",
+  "aurum.option.cloud_style.tooltip": "Blocky: dense rounded boxes in layers (Story Mode style).\nSoft: fluffy, see-through clouds with high streaks (Better Clouds style).",
+  "aurum.cloud_style.blocky": "Blocky",
+  "aurum.cloud_style.soft": "Soft",
+  "aurum.option.clouds_full_res": "Full-resolution clouds",
+  "aurum.option.clouds_full_res.tooltip": "Draws clouds at full resolution instead of half: sharper up close, about 3-4x the cloud cost. On in High.",
+  "aurum.option.cloud_height": "Cloud height",
+  "aurum.option.cloud_height.tooltip": "Raises the clouds above vanilla's height (y 192).",
+  "aurum.unit.blocks_above": "+%s blocks"
 }

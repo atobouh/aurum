@@ -141,3 +141,50 @@ statistics did not change.
 
 **Not verifiable here:** cost on the UHD 620 (llvmpipe timings mean nothing), and shimmer in motion at
 half resolution. Both are on the user's test sheet.
+
+## Clouds and god rays, round two (0.3.1, after the user's 0.3.0 test)
+
+**User report (UHD 620, 925x530, HIGH):**
+
+- Performance was fine: Clouds 0.47 ms, Rays/flare/bloom 0.23 ms, Aurum post 2.45 ms, 74 FPS.
+- The look was not. The clouds "scream pixelated", the layers are "not proper", and the close-up "should be
+  rendered better".
+- God rays were "shy" next to the reference packs.
+- The user asked for two switchable styles: Better Clouds (soft, semi-realistic) and Nostalgia (dense rounded
+  cubes layered in depth).
+
+**What the screenshots showed**, studying the user's shots against full-resolution crops of Nostalgia 0 and 6
+and Better Clouds 0:
+
+| Problem in 0.3.0 | Cause | Fix |
+| --- | --- | --- |
+| Big pale squares behind the clouds ("pixelated") | The high layer was a flat, see-through copy of the blocky shapes, scaled 2.6x | Removed. Blocky gets a real second 3D layer; soft gets smooth cirrus from noise |
+| Blurry edges up close | A 10-block see-through rim on every cloud, plus a plain bilinear upscale from half resolution | Edges are now anti-aliased from the ray's closest approach in screen pixels, and the composite re-steepens the half-resolution edge to one pixel. A new "Full-resolution clouds" option is on in High |
+| Dark stepped band under a close cloud | A thickness darkening that followed the staircase outline | Removed. Shading now comes from the rounded normal only, with a gentle vertical gradient on the sides (as in Nostalgia 0) |
+| No depth ("layers not proper") | Nostalgia's depth comes from real boxes at several heights | Blocky: a second layer of rounded boxes 20 blocks higher, 1.15x larger and sparser, seen through the gaps |
+
+**The two styles now:**
+
+- **Blocky:** two sphere-traced layers. A layer is only sampled when it could be the nearer one.
+- **Soft:** an 18-step march through a 2.5D density, with a noise warp and erosion. The density comes from the
+  same layout distance field, so the soft clouds sit where the blocky ones would.
+  - Self-shadowing comes from the depth below each cloud's top. It is not stretched for a low sun, because that
+    turned golden-hour clouds grey.
+  - There is a high cirrus layer.
+  - The composite smooths the march jitter with a 4-tap tent filter.
+
+![styles](img/clouds_styles_0.3.1.jpg)
+
+**God rays.** The reference packs draw beams with volumetric light from the shadow map. A screen-space blur only
+streaks near the sun's edges.
+
+- 0.3.1 adds a 1/4-resolution march: 12 jittered shadow-map lookups per pixel, giving the sunlit share of the
+  air.
+- In the composite, that light adds glow over terrain, and shadowed lanes of haze are dimmed. Enclosed spaces
+  (low sky light, at any height) get denser, all-round scattering, so a hole in a cave roof throws a visible
+  beam.
+- First try: adding this light over the sky as well washed the area around the sun white, because the sky
+  colour already contains it. It now applies over terrain only.
+- The screen-space rays are a little stronger, with a longer reach, and still give shafts through cloud gaps.
+
+![rays](img/rays_0.3.1.jpg)

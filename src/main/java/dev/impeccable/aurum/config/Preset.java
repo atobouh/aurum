@@ -25,5 +25,7 @@ public enum Preset {
         c.vertexWaves = medium;
 
         c.pomEnabled = high;
+
+        c.cloudsFullRes = high;
     }
 }

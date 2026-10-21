@@ -16,6 +16,8 @@ uniform sampler2D u_Clouds;   // half resolution, premultiplied
 uniform sampler2D u_Rays;     // quarter resolution, open sky along the line to the sun
 uniform sampler2D u_Bloom;    // quarter resolution
 uniform sampler2D u_Flare;    // 1x1, visible share of the sun disc
+uniform sampler2D u_Volumetric; // quarter resolution: r sunlit share of the air, g distance covered / range
+uniform vec4 u_Volumetric2;    // x range (blocks), y enclosed (0 open sky .. 1 cave or room)
 
 uniform mat4 u_InvProj;
 uniform mat4 u_InvView;     // rotation only, view -> world
@@ -25,9 +27,10 @@ uniform vec4 u_Fog;         // x distance density, y height density, z height fa
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
 uniform vec4 u_Grade;       // x saturation, y vibrance, z contrast
-uniform vec4 u_CloudSlab;   // x layer A bottom, y layer A top, z layer B height (relative to camera), w clouds on
+uniform vec4 u_CloudSlab;   // x cloud volume bottom, y top, z high layer height (relative to camera),
+                            // w 0 off, 1 on, 2 on + sharpen edges, 3 on + smooth
 uniform vec4 u_SunScreen;   // xy sun position (uv), z width / height, w sun in front of the camera (0..1)
-uniform vec4 u_Extras;      // x god rays, y bloom, z flare strength
+uniform vec4 u_Extras;      // x god rays, y bloom, z flare, w volumetric light strength
 
 in vec2 v_Uv;
 out vec4 fragColor;
@@ -65,7 +68,7 @@ vec3 grade(vec3 c) {
     return pow(saturate(fromOklab(lab)), vec3(1.0 / 2.2));
 }
 
-// Distance along the ray to the nearest cloud layer (layer A's slab entry, or layer B's plane).
+// Distance along the ray to the nearest cloud layer (the cloud volume's entry, or the high layer's plane).
 float cloudEntry(vec3 dir) {
     float t = 1e9;
     if (abs(dir.y) > 1e-4) {
@@ -78,6 +81,14 @@ float cloudEntry(vec3 dir) {
         t = 0.0;
     }
     return t;
+}
+
+// Volumetric light texture, smoothed with four extra bilinear taps (hides the march jitter).
+vec2 volumetricLit(vec2 uv) {
+    vec2 h = 1.0 / vec2(textureSize(u_Volumetric, 0));
+    return texture(u_Volumetric, uv).rg * 0.36
+         + (texture(u_Volumetric, uv + h * vec2(0.75, 0.75)).rg + texture(u_Volumetric, uv + h * vec2(-0.75, 0.75)).rg
+         + texture(u_Volumetric, uv + h * vec2(0.75, -0.75)).rg + texture(u_Volumetric, uv - h * 0.75).rg) * 0.16;
 }
 
 // A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
@@ -131,6 +142,8 @@ void main() {
                 // Haze lit by the sun: looking toward a low sun, the air itself glows gold (Mie forward scattering).
                 float toSun = max(dot(dir, u_SunDir), 0.0);
                 vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 0.45 + pow(toSun, 30.0) * 0.8) * (0.15 + 0.85 * u_SunGlow.a);
+                // Haze in shadow does not glow: with volumetric light on, shadowed lanes of air stay darker.
+                if (u_Extras.w > 0.0) inscatter *= 0.35 + 0.65 * volumetricLit(v_Uv).r;
                 vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
@@ -153,14 +166,40 @@ void main() {
         // Clouds go over whatever the ray meets after reaching a cloud layer (sky, or terrain seen from above).
         if (u_CloudSlab.w > 0.5 && dist > cloudEntry(dir)) {
             vec4 cl = texture(u_Clouds, v_Uv);
+            if (u_CloudSlab.w > 2.5) {
+                // Soft clouds: four extra bilinear taps (a 4x4 texel tent) smooth out the ray-march jitter.
+                vec2 h = 1.0 / vec2(textureSize(u_Clouds, 0));
+                cl = cl * 0.36 + (texture(u_Clouds, v_Uv + vec2(h.x, h.y) * 0.75) + texture(u_Clouds, v_Uv + vec2(-h.x, h.y) * 0.75)
+                     + texture(u_Clouds, v_Uv + vec2(h.x, -h.y) * 0.75) + texture(u_Clouds, v_Uv - h * 0.75)) * 0.16;
+            } else if (u_CloudSlab.w > 1.5 && cl.a > 0.0) {
+                // Half-resolution blocky clouds: bilinear filtering smears a crisp edge over two pixels. Its
+                // coverage is a ramp across the edge, so re-steepening it gives a one-pixel, anti-aliased edge.
+                float a = smoothstep(0.12, 0.88, cl.a);
+                cl = vec4(cl.rgb * (a / cl.a), a);
+            }
             scene = scene * (1.0 - cl.a) + cl.rgb;
         }
+        vec3 hue = u_SunGlow.rgb / max(max(u_SunGlow.r, max(u_SunGlow.g, u_SunGlow.b)), 1e-4);
+        vec3 rayColor = mix(vec3(1.0), hue, 0.65);
+        float toSun = max(dot(dir, u_SunDir), 0.0);
+        if (u_Extras.w > 0.0 && depth < 1.0) {
+            // Volumetric light: glow from the sunlit air in front of terrain. Shadowed air adds nothing, so tree
+            // and terrain shadows cut dark lanes into the glow: beams. Not over the sky, whose colour already
+            // contains this light (adding it again washed the sky out around the sun).
+            vec2 v = volumetricLit(v_Uv);
+            float cave = u_Volumetric2.y;
+            float litBlocks = v.r * v.g * u_Volumetric2.x;
+            // Enclosed spaces get denser, all-round scattering: a beam from an opening into a dark cave.
+            float glow = 1.0 - exp(-litBlocks * 0.02 * (1.0 + 4.0 * cave));
+            float phase = 0.12 + 1.6 * pow(toSun, 5.0) + 0.8 * pow(toSun, 40.0) + 1.2 * cave;
+            scene += rayColor * glow * phase * u_Extras.w;
+        }
         if (u_Extras.x > 0.0) {
-            // Light shafts: open sky along the line to the sun, warm, fading with distance from the sun.
+            // Screen-space shafts: open sky along the line to the sun (also through cloud gaps), fading with
+            // distance from the sun.
             float rays = texture(u_Rays, v_Uv).r;
             float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
-            vec3 hue = u_SunGlow.rgb / max(max(u_SunGlow.r, max(u_SunGlow.g, u_SunGlow.b)), 1e-4);
-            scene += mix(vec3(1.0), hue, 0.65) * rays * exp(-r * 3.5) * u_Extras.x;
+            scene += rayColor * rays * exp(-r * 3.0) * u_Extras.x;
         }
     }
     if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;
