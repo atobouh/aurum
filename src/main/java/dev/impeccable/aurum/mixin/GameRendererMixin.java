@@ -4,6 +4,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.impeccable.aurum.director.FrameDirector;
 import dev.impeccable.aurum.render.GpuTimers;
+import dev.impeccable.aurum.render.PostPass;
+import net.minecraft.client.MinecraftClient;
 import dev.impeccable.aurum.render.TimerSection;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -57,6 +59,7 @@ public abstract class GameRendererMixin {
     private void aurum$timeWorld(WorldRenderer worldRenderer, MatrixStack matrices, float tickDelta, long limitTime,
                                  boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
                                  LightmapTextureManager lightmap, Matrix4f projection, Operation<Void> original) {
+        FrameDirector.beforeWorld(camera, matrices.peek().getPositionMatrix(), projection);
         int t = GpuTimers.begin(TimerSection.WORLD);
         original.call(worldRenderer, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmap, projection);
         GpuTimers.end(t);
@@ -68,6 +71,25 @@ public abstract class GameRendererMixin {
     private void aurum$timeHand(GameRenderer self, MatrixStack matrices, Camera camera, float tickDelta, Operation<Void> original) {
         int t = GpuTimers.begin(TimerSection.HAND);
         original.call(self, matrices, camera, tickDelta);
+        PostPass.afterHand(MinecraftClient.getInstance().getFramebuffer());
         GpuTimers.end(t);
+    }
+
+    /**
+     * Reason: vanilla clears depth right before drawing the hand (the only RenderSystem.clear in renderWorld).
+     * Aurum swaps in the hand's own depth texture first, so the clear hits that texture and the world depth
+     * survives for fog. The world depth is put back after renderHand.
+     */
+    @WrapOperation(method = "renderWorld", require = 1, at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(IZ)V"))
+    private void aurum$handDepth(int mask, boolean getError, Operation<Void> original) {
+        PostPass.beforeHand(MinecraftClient.getInstance().getFramebuffer());
+        original.call(mask, getError);
+    }
+
+    /** Reason: Aurum's combined post pass runs once the world and hand are drawn, before the HUD. */
+    @Inject(method = "renderWorld", at = @At("RETURN"), require = 1)
+    private void aurum$postPass(float tickDelta, long limitTime, MatrixStack matrices, CallbackInfo ci) {
+        PostPass.run(MinecraftClient.getInstance().getFramebuffer());
     }
 }

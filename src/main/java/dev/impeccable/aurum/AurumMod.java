@@ -1,6 +1,18 @@
 package dev.impeccable.aurum;
 
+import dev.impeccable.aurum.bake.AtlasBaker;
+import dev.impeccable.aurum.bake.NoiseBaker;
 import dev.impeccable.aurum.compat.Compat;
+import dev.impeccable.aurum.render.AurumTextures;
+import dev.impeccable.aurum.render.terrain.TerrainShaders;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.Identifier;
+import java.util.Collection;
+import java.util.List;
 import dev.impeccable.aurum.config.AurumConfig;
 import dev.impeccable.aurum.config.AurumSettingsScreen;
 import dev.impeccable.aurum.render.GlInfo;
@@ -54,8 +66,33 @@ public class AurumMod implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             GlInfo.capture();
             GpuTimers.init();
+            AurumTextures.init();
+            NoiseBaker.bake();
             if (ShaderManager.compileAll()) {
+                TerrainShaders.decide();
                 Pipeline.markActive();
+            }
+        });
+
+        // The normal and material atlas is rebuilt whenever resource packs (and so the block atlas) change.
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+            @Override
+            public Identifier getFabricId() {
+                return new Identifier(MOD_ID, "normal_atlas");
+            }
+
+            @Override
+            public Collection<Identifier> getFabricDependencies() {
+                return List.of(ResourceReloadListenerKeys.MODELS, ResourceReloadListenerKeys.TEXTURES);
+            }
+
+            @Override
+            public void reload(ResourceManager manager) {
+                try {
+                    AtlasBaker.bake();
+                } catch (RuntimeException e) {
+                    LOGGER.error("Normal atlas bake failed; terrain uses flat normals", e);
+                }
             }
         });
 

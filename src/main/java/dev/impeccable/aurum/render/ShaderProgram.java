@@ -24,8 +24,33 @@ public final class ShaderProgram {
         GlStateManager._glUseProgram(this.handle);
     }
 
+    /** Unbinds and tells vanilla its program is no longer bound, so its next draw rebinds it. */
     public static void unbind() {
         GlStateManager._glUseProgram(0);
+        dev.impeccable.aurum.mixin.ShaderProgramAccessor.aurum$setActiveProgramGlRef(-1);
+    }
+
+    public void set1i(String name, int v) {
+        org.lwjgl.opengl.GL20C.glUniform1i(this.uniform(name), v);
+    }
+
+    public void set1f(String name, float v) {
+        org.lwjgl.opengl.GL20C.glUniform1f(this.uniform(name), v);
+    }
+
+    public void set3f(String name, float x, float y, float z) {
+        org.lwjgl.opengl.GL20C.glUniform3f(this.uniform(name), x, y, z);
+    }
+
+    public void set4f(String name, float x, float y, float z, float w) {
+        org.lwjgl.opengl.GL20C.glUniform4f(this.uniform(name), x, y, z, w);
+    }
+
+    private final float[] matrixScratch = new float[16];
+
+    public void setMatrix(String name, org.joml.Matrix4f m) {
+        m.get(this.matrixScratch);
+        org.lwjgl.opengl.GL20C.glUniformMatrix4fv(this.uniform(name), false, this.matrixScratch);
     }
 
     /** Returns -1 when the uniform is absent or optimised out; GL ignores writes to -1. */

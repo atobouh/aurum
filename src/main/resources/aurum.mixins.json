@@ -4,8 +4,14 @@
   "package": "dev.impeccable.aurum.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "BackgroundRendererMixin",
     "GameRendererMixin",
-    "WorldRendererMixin"
+    "ShaderProgramAccessor",
+    "SpriteAtlasTextureAccessor",
+    "WorldRendererMixin",
+    "WorldRendererSkyMixin",
+    "sodium.ChunkShaderInterfaceMixin",
+    "sodium.ShaderLoaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

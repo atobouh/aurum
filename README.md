@@ -3,8 +3,8 @@
 A Fabric 1.20.1 client mod with its own rendering pipeline on top of Sodium 0.5.13: golden-hour sky, warm
 light, long shadows, soft haze and a sun flare, built to hold 60 FPS at 1080p on an Intel UHD 620.
 
-Status: **Phase 0 (Foundation)**. Settings screen, GPU cost overlay, version and conflict checks, shader
-loader. No visual changes yet. The full plan is `docs/AURUM_SPEC.md`.
+Status: **Phase 1 (Golden hour core)**. Aurum sky, sun and sky lighting, generated normals, fog, bounce
+glow, AgX Punchy grade, waving plants and leaves. Shadows, water, clouds and flare come next. The full plan is `docs/AURUM_SPEC.md`.
 
 ## Build
 

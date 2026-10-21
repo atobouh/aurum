@@ -70,3 +70,20 @@ above is the narrowest option.
 
 Loom's Linux runtime ships LWJGL 3.3.2 and Sodium's pre-launch check demands 3.3.1. The dev run config
 passes `-Dsodium.checks.issue2561=false`. Real launchers use 3.3.1 and need nothing.
+
+## Phase 1: what Aurum actually hooks (as built)
+
+| Hook | Where | Why |
+| --- | --- | --- |
+| `ShaderLoaderMixin` | `ShaderLoader.getShaderSource` RETURN | Returns `assets/aurum/shaders/terrain/block_layer_opaque.*` for `sodium:blocks/block_layer_opaque.*` when `TerrainShaders.installed()` |
+| `ChunkShaderInterfaceMixin` | `<init>` RETURN, `setupState` RETURN | Looks up Aurum's uniforms with raw GL (Sodium's binder throws on unknown names) and uploads them + textures on units 3-5 per pass |
+
+Facts the replacement shader relies on (all verified in 0.5.13 source):
+
+- `_vert_tex_diffuse_coord_bias.y < 0` means the vertex is on the **top** (smaller V) edge of its sprite
+  (`CompactChunkVertex.encodeTexture`: bias +1 when below the centroid, stored as sign bit 0, decoded as -1).
+- Vertex colour alpha = smooth-lighting AO x vanilla's per-face shade (`SmoothLightPipeline.applySidedBrightness`).
+  Aurum divides the shade back out using the derivative normal.
+- Light coords: `a_LightAndData.xy` = level * 16 + 8 (out of 256) for block and sky light.
+- Positions are camera-relative world space (model-view holds rotation only).
+- Sodium draws SOLID and CUTOUT both inside the `RenderLayer.getSolid()` call.

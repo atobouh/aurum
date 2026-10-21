@@ -18,3 +18,17 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Licence: all rights reserved (placeholder) | Spec default until the user chooses |
 | 2026-10-21 | Terrain hooks will switch on by checking that Sodium's shader lines match what Aurum edits, not by version string alone | Sodium's terrain shaders changed between 0.5.11 and 0.5.13, so the check is needed, but matching the actual code accepts any build where it is unchanged |
 | 2026-10-21 | Overlay shows the window size | The user plays windowed; the size is needed to read FPS numbers |
+| 2026-10-21 | Waving plants and leaves added to Phase 1 (spec feature 12) | User request; reuses the per-sprite material data Phase 1 builds anyway |
+| 2026-10-21 | Terrain shader is replaced only if Sodium's six shader files match 0.5.13's SHA-256, and only after a test compile + link on the player's driver | Any matching Sodium build works; a mismatch or a driver error leaves vanilla terrain instead of crashing Sodium |
+| 2026-10-21 | Sky table is indexed by (view elevation, horizontal angle to the sun) for the current sun elevation, not by (sun elevation, view-sun angle) | A 2D table keyed on sun elevation cannot represent zenith vs horizon; rebuilding per sun position costs nothing per frame |
+| 2026-10-21 | Sky table built on the CPU on a background thread (single scattering, Rayleigh + Mie + ozone), ~27 ms per build, rebuilt when the sun moves 0.15 degrees | The user is CPU-bound but has spare cores; a worker thread costs no frame time, and the CPU copy gives terrain its light colours |
+| 2026-10-21 | Skylight boosted 2.5x and horizon whitened at high sun | Single scattering misses multiple scattering: shade too dark, noon horizon yellow |
+| 2026-10-21 | Tonemap (AgX-style, own curve) runs in the terrain and sky shaders; the post pass only grades | Minecraft's framebuffer is 8-bit; an HDR (RGBA16F) scene target would double bandwidth on the UHD 620 |
+| 2026-10-21 | "Punchy" = AgX + 1.3x saturation after the curve | AgX greys colours by design; the user wants pop |
+| 2026-10-21 | Fog lives in the combined post pass (depth-based), vanilla terrain fog is pushed out while Aurum fog is active | One pass fogs terrain, entities, particles and clouds consistently (spec rule 1) |
+| 2026-10-21 | The hand gets its own depth texture, swapped in around vanilla's pre-hand depth clear | Keeps world depth for fog without a depth copy, and the hand is never fogged |
+| 2026-10-21 | Render-distance edge fade uses horizontal distance | Chunks load in a cylinder; vanilla's terrain fog does the same |
+| 2026-10-21 | Terrain normals: derivative face normal + baked per-texel slope map (luminance), cotangent frame from derivatives | No vertex normals or tangents in Sodium's format; works for every face orientation |
+| 2026-10-21 | Plants use an upward, softly wrapped normal; leaves blend toward up | Cross-shaped plant quads lit by their real normals look harsh and stripy |
+| 2026-10-21 | Material ids (which sprites move) come from block classes/tags plus a geometric rule (cutout, no collision, diagonal quads) | Makes modded plants sway in a 200-mod pack without a list |
+| 2026-10-21 | Sugar cane, bamboo, lily pads, torches and fire never move | Columns would tear when each block anchors separately; the rest look wrong moving |

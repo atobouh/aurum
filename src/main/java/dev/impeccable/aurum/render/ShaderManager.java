@@ -22,7 +22,10 @@ public final class ShaderManager {
 
     /** Programs compiled at startup: name -> {vertex, fragment} paths. */
     private static final String[][] PROGRAMS = {
-            {"post/composite", "post/composite.vsh", "post/composite.fsh"},
+            {"sky/sky", "post/fullscreen.vsh", "sky/sky.fsh"},
+            {"post/composite", "post/fullscreen.vsh", "post/composite.fsh"},
+            {"post/bounce_gather", "post/fullscreen.vsh", "post/bounce_gather.fsh"},
+            {"post/bounce_blend", "post/fullscreen.vsh", "post/bounce_blend.fsh"},
     };
 
     private static final Map<String, ShaderProgram> programs = new LinkedHashMap<>();
@@ -117,6 +120,10 @@ public final class ShaderManager {
                 int a = t.indexOf('"'), b = t.lastIndexOf('"');
                 if (a < 0 || b <= a) throw new ShaderException("Malformed include in " + path + ": " + line);
                 String inc = "include/" + t.substring(a + 1, b);
+                if (seen.add(inc)) out.append(expandIncludes(inc, seen));
+            } else if (t.startsWith("#import <aurum:")) {
+                // Same syntax as Sodium's parser, so include files can be shared with the terrain shader.
+                String inc = t.substring("#import <aurum:".length(), t.lastIndexOf('>'));
                 if (seen.add(inc)) out.append(expandIncludes(inc, seen));
             } else {
                 out.append(line).append('\n');

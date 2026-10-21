@@ -42,12 +42,12 @@ public class AurumSettingsScreen extends Screen {
                     AurumConfig.save();
                 }));
 
-        y += 32;
+        y += 26;
         OptionCategory[] categories = OptionCategory.values();
         for (int i = 0; i < categories.length; i++) {
             OptionCategory category = categories[i];
             int x = (i % 2 == 0) ? center - 155 : center + 5;
-            int row = y + (i / 2) * 24;
+            int row = y + (i / 2) * 22;
             this.addDrawableChild(ButtonWidget.builder(category.title(),
                             b -> this.client.setScreen(new AurumCategoryScreen(this, category)))
                     .dimensions(x, row, 150, 20).build());

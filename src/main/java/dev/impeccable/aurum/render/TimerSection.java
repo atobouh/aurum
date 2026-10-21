@@ -13,6 +13,7 @@ public enum TimerSection {
     CLOUDS("Clouds", 2),
     WEATHER("Weather", 2),
     HAND("Hand", 1),
+    AURUM_POST("Aurum post (fog, glow, grade)", 1),
     HUD("HUD", 1);
 
     public static final TimerSection[] VALUES = values();
