@@ -62,6 +62,32 @@ almost every great golden-hour shot. They are Phase 4 in the plan; moving them e
 
 ![facing the sunset](img/sunset_facing_sun.jpg)
 
+## Iteration 0.2.2: golden hour, round two (user: "not as good as the references")
+
+Measured on the user's 0.2.1 screenshots facing the sunset vs references facing the sun:
+
+| | User 0.2.1 | References |
+| --- | --- | --- |
+| Frame warmth | +0.04 / +0.14 | +0.09 .. +0.49 |
+| Foliage red/green | 0.71 - 0.95 (still green) | ~1.0 (foliage turns gold) |
+| Near the sun | pale beige-white (70,63,58)% | saturated gold-orange |
+| Upper sky | grey-lavender | clear pink-purple |
+
+Causes found with the look lab:
+1. The added glow was ~1/10 of the sky's own brightness next to the sun, so it vanished.
+2. Next to the sun the sky hit the top of the tone curve and the highlight roll-to-white bleached it pale pink.
+3. The exponential shoulder flattened everything above ~2 into one plateau: a glow with a hard rim.
+
+Fixes: glow scaled to the sky's brightness and saturated gold-orange; roll-to-white only for the white-hot core;
+a long rational shoulder so values 2..15 still differ (smooth glow falloff); stronger amber sunlight and peach
+shade so lit foliage turns gold; clearer pink-lavender upper sky; less milky haze.
+
+Result (look lab, sun at 4.6 and 9 degrees): warmth +0.08..+0.11, foliage R/G ~1.0, a large smooth gold glow.
+
+![golden hour 0.2.2](img/golden_0.2.2.jpg)
+
+Remaining gap vs references: bloom and god rays (Phase 4), and water that reflects the glow (Phase 3).
+
 ## Finding 3: shadows (user report on 0.2.0 + references)
 
 - References: soft, filtered shadows everywhere; long at golden hour but never crossing the whole view.

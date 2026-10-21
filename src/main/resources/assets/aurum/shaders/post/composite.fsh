@@ -82,7 +82,7 @@ void main() {
                 // Fog takes the sky's colour in that direction, so it is warmer toward the sun at golden hour.
                 // Haze lit by the sun: looking toward a low sun, the air itself glows gold (Mie forward scattering).
                 float toSun = max(dot(dir, u_SunDir), 0.0);
-                vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 1.4 + pow(toSun, 30.0) * 2.0) * (0.25 + 0.75 * u_SunGlow.a);
+                vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 0.45 + pow(toSun, 30.0) * 0.8) * (0.15 + 0.85 * u_SunGlow.a);
                 vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);

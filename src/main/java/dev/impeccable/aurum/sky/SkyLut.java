@@ -114,8 +114,8 @@ public final class SkyLut {
                 if (gh > 0.0 && e > 0.0) {
                     double l2 = 0.2126 * r + 0.7152 * g + 0.0722 * b;
                     double upper = Math.min(1.0, e * 3.0);
-                    double tr = 1.18, tg = 0.90, tb = 0.98; // peach-pink near the horizon side
-                    double ur = 1.05, ug = 0.88, ub = 1.12; // lavender higher up
+                    double tr = 1.30, tg = 0.86, tb = 0.80; // warm peach near the horizon side
+                    double ur = 1.16, ug = 0.80, ub = 1.22; // clear pink-lavender higher up
                     double pr = tr + (ur - tr) * upper, pg = tg + (ug - tg) * upper, pb = tb + (ub - tb) * upper;
                     double k = 0.8 * gh;
                     r = r + (l2 * pr - r) * k;
@@ -167,8 +167,10 @@ public final class SkyLut {
         for (int c = 0; c < 3; c++) {
             lut.sunDisc[c] = (float) (SkyModel.SUN * out[c] * 2.5 * discVisible);
             // Glow: the transmitted sun colour, a little extra warm at golden hour, fading out once the sun is gone.
-            double warmBias = c == 0 ? 1.0 : c == 1 ? 0.85 : 0.6;
-            lut.sunGlow[c] = (float) (out[c] * Math.pow(warmBias, low) * smooth(-0.06, 0.02, sy) * (1.0 - 0.8 * rain));
+            // Saturated gold-orange, not pale: the glow is what makes golden-hour shots read as golden.
+            double warmBias = c == 0 ? 1.0 : c == 1 ? 0.68 : 0.30;
+            // Scaled to the sky's own brightness near the sun (the physical aureole is bright but pale there).
+            lut.sunGlow[c] = (float) (SkyModel.SUN * 0.35 * out[c] * Math.pow(warmBias, low) * smooth(-0.06, 0.02, sy) * (1.0 - 0.8 * rain));
         }
         // Moonlight, cool and dim, crossfades in as the sun sets.
         double moon = smooth(-0.02, -0.15, sy) * (1.0 - 0.7 * rain);

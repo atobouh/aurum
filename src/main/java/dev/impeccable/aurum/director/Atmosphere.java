@@ -59,8 +59,9 @@ public final class Atmosphere {
         // warm, shade included). Physics alone gives near-neutral light until the sun is almost down, so the warmth
         // is pushed in from ~25 degrees: amber sunlight, peach light in the shade. Scaled by the Sunset slider.
         float g = golden * (c.sunsetIntensity / 100f);
-        float[] sunTint = {1.0f, 1f - 0.20f * g, 1f - 0.48f * g};
-        float[] ambTint = {1f + 0.06f * g, 1f - 0.06f * g, 1f - 0.22f * g};
+        // Strong enough that lit foliage turns gold (references: foliage red/green ~1.0 at golden hour).
+        float[] sunTint = {1.0f, 1f - 0.30f * g, 1f - 0.64f * g};
+        float[] ambTint = {1f + 0.10f * g, 1f - 0.08f * g, 1f - 0.30f * g};
         // The sky table is rebuilt in small sun steps; ease the light colours toward each new table over ~0.4 s
         // so lighting never steps, even by a fraction of a shade.
         long nowC = System.nanoTime();

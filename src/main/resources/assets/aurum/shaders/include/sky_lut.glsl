@@ -41,5 +41,5 @@ vec3 aurum_fogRadiance(vec3 dir, vec3 sunDir) {
     float cosA = min(aurum_cosToSun(dir, sunDir), 0.85);
     vec3 c = aurum_skyLut(clamp(dir.y, 0.04, 1.0), cosA);
     // Haze is a little darker than the open sky behind it, so it veils terrain without greying it out.
-    return mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.25) * 0.8;
+    return mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.12) * 0.75;
 }

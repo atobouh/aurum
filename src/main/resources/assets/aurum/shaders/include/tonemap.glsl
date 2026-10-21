@@ -49,15 +49,17 @@ vec3 aurum_filmic(vec3 color) {
     color = max(color, vec3(0.0));
     float peak = max(color.r, max(color.g, color.b));
     if (peak <= 1e-8) return vec3(0.0);
-    // Exactly linear through the mid-tones (texture colours stay true, like vanilla), then a soft exponential
-    // shoulder from 0.6 so the sun can make surfaces genuinely bright without clipping.
+    // Exactly linear through the mid-tones (texture colours stay true, like vanilla), then a soft shoulder from
+    // 0.6 so the sun can make surfaces genuinely bright without clipping.
     const float SHOULDER = 0.6;
-    float mappedPeak = peak <= SHOULDER ? peak
-            : SHOULDER + (1.0 - SHOULDER) * (1.0 - exp(-(peak - SHOULDER) / (1.0 - SHOULDER)));
+    // Long rational shoulder: very bright values (sun glow 2..15) still differ, so glows fade smoothly instead
+    // of flattening into a plateau with a hard rim.
+    float y = (peak - SHOULDER) / (1.0 - SHOULDER) * 0.6;
+    float mappedPeak = peak <= SHOULDER ? peak : SHOULDER + (1.0 - SHOULDER) * (y / (1.0 + y));
     // Same factor on all three channels: hue and saturation are preserved.
     vec3 mapped = color * (mappedPeak / peak);
     // Only the brightest highlights (sun, glare) roll toward white, as film and eyes do.
-    mapped = mix(mapped, vec3(mappedPeak), smoothstep(0.8, 1.0, mappedPeak) * 0.6);
+    mapped = mix(mapped, vec3(mappedPeak), smoothstep(0.97, 1.0, mappedPeak) * 0.5);
     return pow(clamp(mapped, 0.0, 1.0), vec3(1.0 / 2.2));
 }
 

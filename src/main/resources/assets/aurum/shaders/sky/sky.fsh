@@ -28,7 +28,7 @@ void main() {
     color += u_SunDisc * (disc * limb + halo);
     // The wide, warm glow every good golden-hour shot has around the sun (stronger when the sun is low).
     float cg = max(c, 0.0);
-    color += u_SunGlow.rgb * (pow(cg, 10.0) * 0.6 + pow(cg, 80.0) * 1.2) * (0.25 + 0.75 * u_SunGlow.a);
+    color += u_SunGlow.rgb * (pow(cg, 6.0) * 0.7 + pow(cg, 40.0) * 2.0 + pow(cg, 400.0) * 5.0) * (0.15 + 0.85 * u_SunGlow.a);
 
     fragColor = vec4(aurum_tonemap(color), 1.0);
 }
