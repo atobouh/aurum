@@ -31,7 +31,8 @@ public final class TimerOverlay {
         List<Row> rows = new ArrayList<>();
         rows.add(new Row("Aurum " + AurumMod.VERSION + " | " + cfg.preset + " | " + Pipeline.state(), "", "", HEADER));
         rows.add(new Row(GlInfo.renderer(), "", "", DIM));
-        rows.add(new Row(String.format("FPS %d   sun %+.1f°", client.getCurrentFps(), SunState.elevationDegrees()), "", "", TEXT));
+        rows.add(new Row(String.format("FPS %d   %dx%d   sun %+.1f°", client.getCurrentFps(),
+                client.getWindow().getFramebufferWidth(), client.getWindow().getFramebufferHeight(), SunState.elevationDegrees()), "", "", TEXT));
 
         if (!GpuTimers.isSupported()) {
             rows.add(new Row("GPU timers unsupported by this driver", "", "", DIM));
