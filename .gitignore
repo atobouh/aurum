@@ -10,3 +10,4 @@ run/
 bin/
 classes/
 .DS_Store
+release/
