@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "aurum",
+  "version": "${version}",
+  "name": "Aurum",
+  "description": "A hand-written golden-hour rendering pipeline for Sodium, built to hold 60 FPS on integrated graphics.",
+  "authors": ["Impeccable"],
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.impeccable.aurum.AurumMod"],
+    "modmenu": ["dev.impeccable.aurum.config.ModMenuIntegration"]
+  },
+  "mixins": ["aurum.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "1.20.1",
+    "java": ">=17",
+    "fabric-api": "*",
+    "sodium": ">=0.5.8 <0.6"
+  },
+  "suggests": {
+    "customtimecycle": "*"
+  },
+  "breaks": {
+    "iris": "*",
+    "oculus": "*",
+    "luxium": "*",
+    "canvas": "*",
+    "optifabric": "*"
+  }
+}
