@@ -4,13 +4,18 @@
 #import <aurum:include/tonemap.glsl>
 #import <aurum:include/sky_lut.glsl>
 
-// The one extra full-screen pass (spec rule 1): fog, edge fade, bounce tint and colour grade together.
+// The one extra full-screen pass (spec rule 1): fog, edge fade, bounce tint, clouds, god rays, bloom, lens flare
+// and colour grade together. Clouds, rays and bloom arrive pre-computed at reduced resolution.
 // Runs after the hand is drawn; the hand has its own depth texture so it never gets fogged.
 
 uniform sampler2D u_Scene;
 uniform sampler2D u_Depth;
 uniform sampler2D u_HandDepth;
 uniform sampler2D u_Bounce;
+uniform sampler2D u_Clouds;   // half resolution, premultiplied
+uniform sampler2D u_Rays;     // quarter resolution, open sky along the line to the sun
+uniform sampler2D u_Bloom;    // quarter resolution
+uniform sampler2D u_Flare;    // 1x1, visible share of the sun disc
 
 uniform mat4 u_InvProj;
 uniform mat4 u_InvView;     // rotation only, view -> world
@@ -20,6 +25,9 @@ uniform vec4 u_Fog;         // x distance density, y height density, z height fa
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
 uniform vec4 u_Grade;       // x saturation, y vibrance, z contrast
+uniform vec4 u_CloudSlab;   // x layer A bottom, y layer A top, z layer B height (relative to camera), w clouds on
+uniform vec4 u_SunScreen;   // xy sun position (uv), z width / height, w sun in front of the camera (0..1)
+uniform vec4 u_Extras;      // x god rays, y bloom, z flare strength
 
 in vec2 v_Uv;
 out vec4 fragColor;
@@ -57,16 +65,56 @@ vec3 grade(vec3 c) {
     return pow(saturate(fromOklab(lab)), vec3(1.0 / 2.2));
 }
 
+// Distance along the ray to the nearest cloud layer (layer A's slab entry, or layer B's plane).
+float cloudEntry(vec3 dir) {
+    float t = 1e9;
+    if (abs(dir.y) > 1e-4) {
+        float ta = u_CloudSlab.x / dir.y, tb = u_CloudSlab.y / dir.y;
+        float tn = max(min(ta, tb), 0.0), tf = max(ta, tb);
+        if (tf > 0.0) t = tn;
+        float t2 = u_CloudSlab.z / dir.y;
+        if (t2 > 0.0) t = min(t, t2);
+    } else if (u_CloudSlab.x <= 0.0 && u_CloudSlab.y >= 0.0) {
+        t = 0.0;
+    }
+    return t;
+}
+
+// A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
+vec3 flare(vec2 uv, float vis) {
+    vec2 aspect = vec2(u_SunScreen.z, 1.0);
+    vec2 s = u_SunScreen.xy;
+    vec2 d = (uv - s) * aspect;
+    vec3 c = vec3(1.0, 0.72, 0.42) * exp(-length(d) * 9.0) * 0.18;
+    c += vec3(1.0, 0.78, 0.55) * exp(-abs(d.y) * 260.0) * exp(-abs(d.x) * 5.0) * 0.10;
+    vec2 m = vec2(1.0) - s;
+    const vec3 GHOST_COLOR[4] = vec3[](vec3(1.0, 0.55, 0.25), vec3(0.45, 0.85, 0.65), vec3(0.65, 0.45, 1.0), vec3(1.0, 0.75, 0.40));
+    const float GHOST_POS[4] = float[](0.35, 0.70, 1.05, 1.40);
+    const float GHOST_SIZE[4] = float[](0.045, 0.025, 0.07, 0.11);
+    const float GHOST_GAIN[4] = float[](0.05, 0.05, 0.035, 0.025);
+    for (int i = 0; i < 4; i++) {
+        vec2 g = (uv - mix(s, m, GHOST_POS[i])) * aspect;
+        float r = length(g) / GHOST_SIZE[i];
+        // Soft disc with a slightly brighter rim, like an aperture ghost.
+        float disc = (1.0 - smoothstep(0.75, 1.0, r)) * (0.6 + 0.4 * smoothstep(0.3, 0.95, r));
+        c += GHOST_COLOR[i] * disc * GHOST_GAIN[i];
+    }
+    // Fade toward the screen edges so the ghosts never pop.
+    float edge = smoothstep(0.0, 0.12, min(min(s.x, 1.0 - s.x), min(s.y, 1.0 - s.y)) + 0.06);
+    return c * vis * edge;
+}
+
 void main() {
     vec3 scene = texture(u_Scene, v_Uv).rgb;
     float depth = texture(u_Depth, v_Uv).r;
     bool hand = u_Flags.z > 0.5 && texture(u_HandDepth, v_Uv).r < 1.0;
 
+    vec4 vp = u_InvProj * vec4(v_Uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec3 view = vp.xyz / vp.w;
+    float dist = depth < 1.0 ? length(view) : 1e9;
+    vec3 dir = mat3(u_InvView) * normalize(view);
+
     if (depth < 1.0 && !hand && (u_Flags.x > 0.5 || u_Flags.y > 0.5)) {
-        vec4 vp = u_InvProj * vec4(v_Uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-        vec3 view = vp.xyz / vp.w;
-        float dist = length(view);
-        vec3 dir = mat3(u_InvView) * (view / dist);
         // One sky lookup serves both the fog colour and the edge fade.
         vec3 sky = aurum_tonemap(aurum_skyRadiance(dir, u_SunDir));
 
@@ -99,6 +147,26 @@ void main() {
             float edge = smoothstep(u_Fog2.y, u_Fog2.z, length(dir.xz) * dist);
             scene = mix(scene, sky, edge);
         }
+    }
+
+    if (!hand) {
+        // Clouds go over whatever the ray meets after reaching a cloud layer (sky, or terrain seen from above).
+        if (u_CloudSlab.w > 0.5 && dist > cloudEntry(dir)) {
+            vec4 cl = texture(u_Clouds, v_Uv);
+            scene = scene * (1.0 - cl.a) + cl.rgb;
+        }
+        if (u_Extras.x > 0.0) {
+            // Light shafts: open sky along the line to the sun, warm, fading with distance from the sun.
+            float rays = texture(u_Rays, v_Uv).r;
+            float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
+            vec3 hue = u_SunGlow.rgb / max(max(u_SunGlow.r, max(u_SunGlow.g, u_SunGlow.b)), 1e-4);
+            scene += mix(vec3(1.0), hue, 0.65) * rays * exp(-r * 3.5) * u_Extras.x;
+        }
+    }
+    if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;
+    if (u_Extras.z > 0.0) {
+        float vis = texelFetch(u_Flare, ivec2(0), 0).r;
+        if (vis > 0.002) scene += flare(v_Uv, vis) * u_Extras.z;
     }
 
     if (u_Flags.w > 0.5) scene = grade(scene);

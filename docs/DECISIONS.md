@@ -50,3 +50,14 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Intentional golden-hour grade (amber sun, peach shade, pink-lavender sky, sun glow in haze) | References are warm in every sunset shot; physics alone was near-neutral |
 | 2026-10-21 | Shadow map cross-fade (3 maps) + 0.14 degree steps; shadows capped at ~10 degree elevation | User saw shadows step every second and stretch across the map |
 | 2026-10-21 | Every phase starts with screenshot research and a measured look target | User requirement; Phases 1-2 missed the look without it |
+| 2026-10-21 | Phase 4 (sky extras) built before Phase 3 (water) | User asked for clouds, golden hour, rays and bloom first; water research is ready for next |
+| 2026-10-21 | Clouds take their shapes from Minecraft's `clouds.png` (baked to an exact distance field at 4x, outer corners rounded) and are sphere-traced as rounded slabs | Story Mode / Nostalgia look the user asked for; resource-pack cloud shapes keep working; no noise, so the clouds stay Minecraft-like |
+| 2026-10-21 | Clouds are drawn at 1/2 resolution in the post stage, not in the sky pass, and applied in the composite where the ray reaches a cloud layer before the terrain (full-resolution analytic test) | Clouds must also cover terrain when seen from above; the analytic test keeps tree silhouettes sharp against half-resolution clouds |
+| 2026-10-21 | Second, higher cloud layer: same shapes 2.6x larger, flat, soft, slower drift | "Layered" look (depth) for one texture read per pixel |
+| 2026-10-21 | Vanilla clouds are skipped at the call site while Aurum clouds are on; the vanilla Clouds option set to Off turns Aurum's off too | One place to switch clouds off, as players expect |
+| 2026-10-21 | Bloom is on in every preset, including Low (spec said Medium+) | Bloom is most of the measured golden-hour gap; the chain is 1/4 resolution and below (5 tiny passes). User can switch it off; gate on their GPU timer report |
+| 2026-10-21 | Bloom works on the tonemapped 8-bit scene with a soft threshold at 0.85 | Aurum tonemaps per surface (see the Phase 1 decision on 8-bit targets); only the sun, lava and glare pass the threshold |
+| 2026-10-21 | God rays: sky mask (depth, clouds) at 1/4 resolution + 16-sample jittered radial blur, added in the composite | GPU Gems 3 ch. 13; cloud alpha in the mask gives rays through cloud gaps |
+| 2026-10-21 | Lens-flare occlusion is a 1x1 GPU pass (16 depth taps + cloud alpha, eased) read directly by the composite | No CPU readback at all, so nothing can stall; same effect as the spec's one-frame-late read |
+| 2026-10-21 | Lens flare is procedural in the composite (halo, streak, 4 ghosts), subtle | References show little or no flare; avoids extra draw calls |
+| 2026-10-21 | Composite uses texture units 3-5 for rays, bloom and flare | Minecraft's GlStateManager tracks only 12 units; terrain rebinds 3-5 before each of its draws |

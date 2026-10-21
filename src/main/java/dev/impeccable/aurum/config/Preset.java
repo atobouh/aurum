@@ -15,7 +15,8 @@ public enum Preset {
         c.normalStrength = medium ? 100 : 50;
         c.labPbr = medium;
 
-        c.bloomEnabled = medium;
+        // Bloom is cheap (1/4 resolution and below) and is most of the golden-hour gap, so every tier has it.
+        c.bloomEnabled = true;
 
         c.shadowResolution = high ? 2048 : medium ? 1536 : 1024;
         c.shadowDistance = high ? 6 : medium ? 5 : 4;

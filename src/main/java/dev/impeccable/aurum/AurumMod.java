@@ -1,6 +1,7 @@
 package dev.impeccable.aurum;
 
 import dev.impeccable.aurum.bake.AtlasBaker;
+import dev.impeccable.aurum.bake.CloudBaker;
 import dev.impeccable.aurum.bake.NoiseBaker;
 import dev.impeccable.aurum.compat.Compat;
 import dev.impeccable.aurum.render.AurumTextures;
@@ -92,6 +93,11 @@ public class AurumMod implements ClientModInitializer {
                     AtlasBaker.bake();
                 } catch (RuntimeException e) {
                     LOGGER.error("Normal atlas bake failed; terrain uses flat normals", e);
+                }
+                try {
+                    CloudBaker.bake(manager);
+                } catch (RuntimeException e) {
+                    LOGGER.error("Cloud shape bake failed; Aurum clouds stay empty", e);
                 }
             }
         });

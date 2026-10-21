@@ -4,6 +4,7 @@ import dev.impeccable.aurum.config.AurumConfig;
 import dev.impeccable.aurum.render.GpuTimers;
 import dev.impeccable.aurum.render.Pipeline;
 import dev.impeccable.aurum.render.PostPass;
+import dev.impeccable.aurum.render.SkyExtras;
 import dev.impeccable.aurum.render.SkyRenderer;
 import dev.impeccable.aurum.render.shadow.ShadowRenderer;
 import dev.impeccable.aurum.render.terrain.TerrainShaders;
@@ -54,6 +55,7 @@ public final class FrameDirector {
         AurumConfig c = AurumConfig.get();
         TerrainUniforms.mode = haveSky && TerrainShaders.installed() && c.lightingEnabled && !special ? 1 : 0;
         SkyRenderer.active = haveSky && c.skyEnabled && !special;
+        SkyExtras.cloudsActive = SkyExtras.wantsClouds(haveSky, special);
     }
 
     /** Called with the exact camera and matrices this frame's world is drawn with. */

@@ -3,6 +3,7 @@ package dev.impeccable.aurum.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.impeccable.aurum.render.GpuTimers;
+import dev.impeccable.aurum.render.SkyExtras;
 import dev.impeccable.aurum.render.TimerSection;
 import dev.impeccable.aurum.render.shadow.ShadowRenderer;
 import net.minecraft.client.render.Camera;
@@ -47,11 +48,12 @@ public abstract class WorldRendererMixin {
         GpuTimers.end(t);
     }
 
-    /** Reason: GPU time of clouds (replaced by Aurum's clouds in Phase 4). */
+    /** Reason: GPU time of vanilla clouds, and skipping them while Aurum draws its own (post pass). */
     @WrapOperation(method = "render", require = 1, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/render/WorldRenderer;renderClouds(Lnet/minecraft/client/util/math/MatrixStack;Lorg/joml/Matrix4f;FDDD)V"))
     private void aurum$timeClouds(WorldRenderer self, MatrixStack matrices, Matrix4f projection, float tickDelta,
                                   double x, double y, double z, Operation<Void> original) {
+        if (SkyExtras.cloudsActive) return;
         int t = GpuTimers.begin(TimerSection.CLOUDS);
         original.call(self, matrices, projection, tickDelta, x, y, z);
         GpuTimers.end(t);

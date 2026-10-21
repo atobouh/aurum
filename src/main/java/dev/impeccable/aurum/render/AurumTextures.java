@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
  * valid bound (a flat normal with no material, a neutral grey bounce colour, mid-grey noise).
  */
 public final class AurumTextures {
-    private static int flatNormal, greyBounce, midNoise;
+    private static int flatNormal, greyBounce, midNoise, clear;
     private static int normalAtlas, bounce, noise;
 
     private AurumTextures() {}
@@ -20,6 +20,7 @@ public final class AurumTextures {
         flatNormal = solid(128, 128, 128, 0);
         greyBounce = solid(128, 128, 128, 255);
         midNoise = solid(128, 128, 128, 255);
+        clear = solid(0, 0, 0, 0);
     }
 
     private static int solid(int r, int g, int b, int a) {
@@ -31,6 +32,11 @@ public final class AurumTextures {
         MemoryUtil.memFree(px);
         GlStateManager._bindTexture(0);
         return id;
+    }
+
+    /** Fully transparent black, for optional inputs that are absent this frame. */
+    public static int clear() {
+        return clear;
     }
 
     public static int normalAtlas() {

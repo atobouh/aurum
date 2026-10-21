@@ -20,7 +20,9 @@ import org.lwjgl.opengl.GL30C;
  * <ol>
  *   <li>Copy the scene colour (the pass cannot read and write the same texture).</li>
  *   <li>Bounce gather at 32x16 and a 1x1 temporal blend (the Badlands glow colour, used next frame by terrain).</li>
- *   <li>The composite: fog, edge fade and grade in one full-screen draw into the main framebuffer.</li>
+ *   <li>Sky extras at reduced resolution: clouds, god rays, flare occlusion, bloom ({@link SkyExtras}).</li>
+ *   <li>The composite: fog, edge fade, clouds, rays, bloom, flare and grade in one full-screen draw into the
+ *       main framebuffer.</li>
  * </ol>
  * The hand is drawn into its own depth texture (swapped in around renderHand) so world depth survives for fog
  * without a depth copy, and the hand is never fogged.
@@ -142,7 +144,14 @@ public final class PostPass {
             AurumTextures.setBounce(bounceTex[next]);
         }
 
-        // 3. Composite into the main framebuffer. Depth is detached so sampling it is not a feedback loop.
+        // 3. Sky extras: clouds, god rays, flare occlusion, bloom.
+        if (aurumWorld) {
+            SkyExtras.run(sceneTex, main.getDepthAttachment(), worldView, worldProjection, invProj, invView);
+        } else {
+            SkyExtras.cloudsDrawn = SkyExtras.raysDrawn = SkyExtras.flareOn = SkyExtras.bloomDrawn = false;
+        }
+
+        // 4. Composite into the main framebuffer. Depth is detached so sampling it is not a feedback loop.
         ShaderProgram comp = ShaderManager.get("post/composite");
         GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, main.fbo);
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, 0, 0);
@@ -153,6 +162,16 @@ public final class PostPass {
         comp.set1i("u_HandDepth", UNIT_C);
         comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
+        // GlStateManager tracks only 12 units; 3-5 are free here (terrain rebinds its own before every draw).
+        comp.set1i("u_Clouds", 11);
+        comp.set1i("u_Rays", 3);
+        comp.set1i("u_Bloom", 4);
+        comp.set1i("u_Flare", 5);
+        float[] cs = SkyExtras.cloudSlab;
+        comp.set4f("u_CloudSlab", cs[0], cs[1], cs[2], SkyExtras.cloudsDrawn ? 1f : 0f);
+        float[] ss = SkyExtras.sunScreen;
+        comp.set4f("u_SunScreen", ss[0], ss[1], ss[2], ss[3]);
+        comp.set4f("u_Extras", SkyExtras.rayStrength, SkyExtras.bloomStrength, SkyExtras.flareStrength, 0f);
         comp.setMatrix("u_InvProj", invProj);
         comp.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;
@@ -175,12 +194,17 @@ public final class PostPass {
         GlUtil.bindTexture(UNIT_C, handDepthTex);
         GlUtil.bindTexture(UNIT_D, AurumTextures.bounce());
         GlUtil.bindTexture(10, SkyState.texture());
+        int clear = AurumTextures.clear();
+        GlUtil.bindTexture(11, SkyExtras.cloudsDrawn ? SkyExtras.cloudTexture() : clear);
+        GlUtil.bindTexture(3, SkyExtras.raysDrawn ? SkyExtras.raysTexture() : clear);
+        GlUtil.bindTexture(4, SkyExtras.bloomDrawn ? SkyExtras.bloomTexture() : clear);
+        GlUtil.bindTexture(5, SkyExtras.flareOn ? SkyExtras.flareTexture() : clear);
         GlUtil.drawFullscreenTriangle();
         ShaderProgram.unbind();
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, main.getDepthAttachment(), 0);
 
         // Unbind our textures from the high units and restore the state vanilla expects next.
-        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10}) GlUtil.bindTexture(unit, 0);
+        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         main.beginWrite(true);
@@ -193,7 +217,8 @@ public final class PostPass {
         width = main.textureWidth;
         height = main.textureHeight;
 
-        sceneTex = GlUtil.createTexture(GL11C.GL_RGBA8, width, height, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_NEAREST);
+        // Linear so the bloom prefilter can average 2x2 pixels per tap; full-resolution reads hit texel centres.
+        sceneTex = GlUtil.createTexture(GL11C.GL_RGBA8, width, height, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         sceneFbo = fbo(sceneTex);
 
         // Hand depth matches the main depth format (some mods enable a stencil buffer).

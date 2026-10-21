@@ -26,6 +26,13 @@ public final class ShaderManager {
             {"post/composite", "post/fullscreen.vsh", "post/composite.fsh"},
             {"post/bounce_gather", "post/fullscreen.vsh", "post/bounce_gather.fsh"},
             {"post/bounce_blend", "post/fullscreen.vsh", "post/bounce_blend.fsh"},
+            {"post/clouds", "post/fullscreen.vsh", "post/clouds.fsh"},
+            {"post/rays_mask", "post/fullscreen.vsh", "post/rays_mask.fsh"},
+            {"post/rays_blur", "post/fullscreen.vsh", "post/rays_blur.fsh"},
+            {"post/flare_occlusion", "post/fullscreen.vsh", "post/flare_occlusion.fsh"},
+            {"post/bloom_prefilter", "post/fullscreen.vsh", "post/bloom_prefilter.fsh"},
+            {"post/bloom_down", "post/fullscreen.vsh", "post/bloom_down.fsh"},
+            {"post/bloom_up", "post/fullscreen.vsh", "post/bloom_up.fsh"},
     };
 
     private static final Map<String, ShaderProgram> programs = new LinkedHashMap<>();

@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 2;
+    public int configVersion = 3;
     public Preset preset = Preset.LOW;
 
     // Sky
@@ -51,7 +51,7 @@ public final class AurumConfig {
     // Glow
     public boolean bounceEnabled = true;
     public int bounceStrength = 100;
-    public boolean bloomEnabled = false;
+    public boolean bloomEnabled = true;
     public int bloomStrength = 100;
     public boolean sheenEnabled = true;
     public int sheenStrength = 100;
@@ -154,6 +154,11 @@ public final class AurumConfig {
             contrast = d.contrast;
             aoBoost = d.aoBoost;
             configVersion = 2;
+        }
+        if (configVersion < 3) {
+            // 0.3.0: bloom is on for every preset (it was a placeholder before).
+            bloomEnabled = true;
+            configVersion = 3;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

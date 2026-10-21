@@ -1,36 +1,54 @@
-# Testing: Phase 2 (Shadows)
+# Testing: Phase 4 (Sky extras)
 
-What's new in 0.2.0:
-- **Sun and moon shadows** from terrain, trees and buildings, soft-edged, sharpest near you, fading out at the
-  shadow distance (4 / 5 / 6 chunks on Low / Medium / High).
-- **Moving shadows** for you and mobs within 16 blocks (Medium and High; F7 > Shadows > Entity shadows).
-  Further mobs keep the vanilla round blob shadow.
-- **Lazy shadow updates**: the shadow map is a cache, redrawn only when the sun has moved a little, you walked
-  ~4 blocks, or blocks nearby changed, and each redraw is spread over 3 frames.
-- **Leaves** cast dappled shadows and glow slightly when shaded. Modded leaf blocks are now detected too.
-- **Sunset horizon**: softer, more natural orange glow, no hard red band, terrain no longer washed pink.
+What's new in 0.3.0:
+
+- **Clouds in the Story Mode style.** They replace vanilla's clouds.
+  - Your resource pack's cloud layout is kept, but shown as soft, rounded, puffy slabs.
+  - A second, higher layer adds depth.
+  - The colours follow the sky: lavender-white at noon, peach and pink at sunset, grey in rain.
+  - They are lit from the sun's side and glow at the edges when the sun is behind them.
+  - You can fly above them.
+- **God rays.** Warm light shafts come through trees, terrain edges and gaps between clouds. They are strongest
+  at golden hour and faint at noon.
+- **Bloom.** The sun gets a big, soft glow, as in the reference packs (measured; see
+  `docs/research/SKY_EXTRAS.md`). Lava and glowstone glow a little. It is now on in **every** preset, Low
+  included.
+- **Lens flare.** It is subtle: a warm halo, a short streak and faint coloured ghosts. It fades when trees,
+  mountains or clouds cover the sun.
 
 Test like before: **battery, Balanced**, render distance 10, your normal window.
 
 ## Checks
 
-1. Walk under trees at midday: dappled shadows on the ground, no flickering speckles ("acne") on open ground.
-2. Stand next to a wall or tree at golden hour: long shadows; their base should touch the object (no gap).
-3. Walk or fly around: shadows should not crawl or pop; if you see a visible "jump" every second or so, tell me.
-4. Place and break a block in the sun: its shadow should appear/disappear within a moment.
-5. Third person (F5) on open ground: your own shadow (Medium/High).
-6. Trees next to your house (custom tree mod): leaves should sway now. After launching, search
-   `logs/latest.log` for `treated as leaves` and send me that line.
+1. **Golden hour facing the sun** (`/time set 12100`, look west):
+   - Is the sun glow closer to the reference packs now?
+   - Is it too strong anywhere?
+2. **Trees between you and a low sun:**
+   - Do you see light shafts?
+   - Do they move cleanly when you turn, or do they flicker or look grainy?
+3. **Walk behind a tree or hill while facing the sun.** The flare should fade out smoothly, not pop.
+4. **Clouds:**
+   - Look at them while standing still for 20 seconds. Do the edges shimmer or crawl? Moving slowly is fine.
+     Flickering is not.
+   - Fly up through them (y 200+) and look down.
+5. **Rain** (`/weather rain`): the clouds should thicken and turn grey.
+6. **Vanilla Video Settings > Clouds: Off.** All clouds should disappear. Turn it back on and they return.
+7. **A cloud resource pack, if you use one.** Its shapes should show in Aurum's style.
 
 ## Numbers to send back
 
-Same scenes as Phase 1 if you can, at least: open plains at noon, a forest at golden hour, your base.
-From the overlay (F8), avg column: **Frame (GPU), Shadow map, Terrain, Aurum post**, and the FPS.
+From the overlay (F8), avg column: **Frame (GPU)**, **Aurum post (all passes)**, and under it **Clouds** and
+**Rays, flare, bloom**, plus the FPS. Take them at:
 
-- "Shadow map" is 0.00 most frames (the cache is reused); it rises briefly when the sun moves or you walk.
-- Compare FPS with Phase 1 at the same spot: the gate is "within 10%".
-- Watch for stutters when walking or flying; tell me if any.
+- noon looking up at clouds,
+- golden hour facing the sun,
+- noon looking down at the ground (the clouds and rays should drop to almost 0 there).
+
+Targets on your UHD 620: Clouds 1 ms or less; Rays, flare and bloom 0.5 ms or less. If one is over, tell me
+the number and I'll make it cheaper.
 
 ## Settings to try
 
-F7 > Shadows: map size (1024 / 1536 / 2048 / 3072), distance (2 to 8 chunks), softness, entity shadows.
+- **F7 > Flare, rays & clouds:** flare and god ray on/off and strength, Aurum clouds, cloud coverage (50% =
+  vanilla), cloud shading.
+- **F7 > Glow & bloom:** bloom on/off and strength.
