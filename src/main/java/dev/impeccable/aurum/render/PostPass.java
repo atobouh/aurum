@@ -167,6 +167,7 @@ public final class PostPass {
         comp.set4f("u_Flags", fog ? 1f : 0f, edge ? 1f : 0f, handValid ? 1f : 0f, 1f);
         comp.set4f("u_Grade", c.saturation / 100f, c.vibrance / 100f, c.contrast / 100f, 0f);
         comp.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
+        comp.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
         GlUtil.bindTexture(UNIT_A, sceneTex);
         GlUtil.bindTexture(UNIT_B, main.getDepthAttachment());
         GlUtil.bindTexture(UNIT_C, handDepthTex);

@@ -170,7 +170,7 @@ Each feature lists its technique, the trick that makes it cheap, and what change
 - **Lighting** is computed inside Sodium's terrain shader (forward shading, no G-buffer): sun or moon directional light × shadow, sky ambient tinted by the sky lookup, vanilla block light warmed slightly, and vanilla AO kept and boosted a little.
 - **Baked generated normals (Invention):** at resource reload, build a normal atlas parallel to the block atlas from each texture's luminance differences, with edge-aware filtering so pixel-art edges stay crisp. Also bake a small "coating" noise channel. In game this costs one extra texture read. It re-bakes when the resource packs change.
 - **LabPBR support (Medium+):** if a loaded pack provides `_n` and `_s` textures, use them instead of the generated ones.
-- **Grade:** an AgX-style tonemap with a punchy look, then vibrance and contrast. Tune it on the user's screenshots.
+- **Grade (updated 2026-10-21):** a hue-preserving filmic tonemap with daylight white balance, then Oklab saturation/vibrance/contrast. AgX available as an option. The first AgX "punchy" version shifted everything yellow; see `docs/research/LOOK.md`.
 - **Tiers:** Low = baked normals at reduced strength; Medium = full strength + LabPBR; High = adds POM (feature 10).
 
 ### 3. Badlands glow (P0)
@@ -215,7 +215,7 @@ Each feature lists its technique, the trick that makes it cheap, and what change
 ### 9. God rays and clouds (P1)
 
 - **God rays:** radial blur over a sky-occlusion mask at 1/4 resolution with about 12 samples; skip when the sun is off-screen. Strength follows the fog director, so rays appear in haze and stay subtle at clear noon.
-- **Clouds:** a 2D cloud layer at a fixed altitude from a baked tiling noise texture, 3 to 4 octaves, at 1/2 resolution. **Fake thickness (Invention):** sample density a second time offset toward the sun and darken where it is thicker, which gives lit rims and shaded bellies. Coverage follows weather. Optional later: a blocky volumetric mode studied from Better Clouds (MPL-2.0).
+- **Clouds (direction updated 2026-10-21):** the user prefers stylized, pretty, layered clouds (Story Mode-like) over realism; see `docs/research/LOOK.md`. Original plan: a 2D cloud layer at a fixed altitude from a baked tiling noise texture, 3 to 4 octaves, at 1/2 resolution. **Fake thickness (Invention):** sample density a second time offset toward the sun and darken where it is thicker, which gives lit rims and shaded bellies. Coverage follows weather. Optional later: a blocky volumetric mode studied from Better Clouds (MPL-2.0).
 
 ### 10. POM, High tier only (P2)
 

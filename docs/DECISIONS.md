@@ -32,3 +32,8 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Plants use an upward, softly wrapped normal; leaves blend toward up | Cross-shaped plant quads lit by their real normals look harsh and stripy |
 | 2026-10-21 | Material ids (which sprites move) come from block classes/tags plus a geometric rule (cutout, no collision, diagonal quads) | Makes modded plants sway in a 200-mod pack without a list |
 | 2026-10-21 | Sugar cane, bamboo, lily pads, torches and fire never move | Columns would tear when each block anchors separately; the rest look wrong moving |
+| 2026-10-21 | Default tonemap is now "Aurum Filmic" (hue-preserving curve on max channel + white balance); AgX kept as an option without extra saturation | User found 0.1.0 yellow and cheap; measured blue channel collapse to ~10% (see docs/research/LOOK.md) |
+| 2026-10-21 | Grade (saturation, vibrance, contrast) done in Oklab | Scaling chroma in a perceptual space cannot shift hue |
+| 2026-10-21 | Sky table axes changed to sin(a/2) and sqrt(sin e) | Removes asin/acos per pixel; sky measured 1.35 ms on the UHD 620 vs a 0.3 ms target |
+| 2026-10-21 | Composite does one sky lookup and one tonemap for fog and edge fade | Post measured 2.7 ms vs a 1.5 ms target |
+| 2026-10-21 | Clouds (Phase 4) will be stylized, layered 2D rather than realistic | User preference (Story Mode-like), see docs/research/LOOK.md |

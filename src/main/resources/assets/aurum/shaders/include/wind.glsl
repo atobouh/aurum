@@ -43,7 +43,7 @@ vec3 aurum_windOffset(int id, vec3 position, bool topVertex, float dist) {
     float mainAmp;
     float detailAmp;
     if (id == MAT_LEAVES) {
-        weight = 1.0; mainAmp = 0.035; detailAmp = 0.035;
+        weight = 1.0; mainAmp = 0.05; detailAmp = 0.045;
     } else if (id == MAT_VINE) {
         weight = 1.0; mainAmp = 0.03; detailAmp = 0.04;
     } else if (id == MAT_WATER_COLUMN) {

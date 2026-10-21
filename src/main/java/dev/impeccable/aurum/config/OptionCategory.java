@@ -95,6 +95,7 @@ public enum OptionCategory {
             case GRADE -> new SimpleOption<?>[]{
                     choice("tonemap", List.of(Tonemap.values()), c.tonemap,
                             v -> Text.translatable("aurum.tonemap." + v.name().toLowerCase()), v -> c.tonemap = v),
+                    percent("white_balance", 0, 100, () -> c.whiteBalance, v -> c.whiteBalance = v),
                     percent("exposure", 50, 200, () -> c.exposure, v -> c.exposure = v),
                     percent("saturation", 0, 200, () -> c.saturation, v -> c.saturation = v),
                     percent("vibrance", 0, 200, () -> c.vibrance, v -> c.vibrance = v),

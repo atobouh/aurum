@@ -12,7 +12,6 @@
   "aurum.status.disabled": "Pipeline: OFF, %s",
   "aurum.unit.chunks": "%s chunks",
   "aurum.unit.blocks": "%s blocks",
-  "aurum.tonemap.agx_punchy": "AgX Punchy",
   "aurum.tonemap.agx": "AgX",
   "aurum.tonemap.none": "Off",
   "key.categories.aurum": "Aurum",
@@ -119,7 +118,7 @@
   "aurum.option.pom_distance": "POM distance",
   "aurum.option.pom_distance.tooltip": "POM fades out past this distance.\n§7Arrives in Phase 5.",
   "aurum.option.tonemap": "Tonemap",
-  "aurum.option.tonemap.tooltip": "How bright colours are mapped to the screen. AgX Punchy is the Aurum look.",
+  "aurum.option.tonemap.tooltip": "How bright light is mapped to the screen. Aurum Filmic keeps colours true (no yellow shift). AgX is softer and shifts bright colours toward yellow.",
   "aurum.option.exposure": "Exposure",
   "aurum.option.exposure.tooltip": "Overall brightness.",
   "aurum.option.saturation": "Saturation",
@@ -136,5 +135,8 @@
   "aurum.option.waving_strength": "Sway amount",
   "aurum.option.waving_strength.tooltip": "How far plants and leaves move.",
   "aurum.option.waving_speed": "Wind speed",
-  "aurum.option.waving_speed.tooltip": "How fast plants move and gusts travel."
+  "aurum.option.waving_speed.tooltip": "How fast plants move and gusts travel.",
+  "aurum.tonemap.filmic": "Aurum Filmic",
+  "aurum.option.white_balance": "White balance",
+  "aurum.option.white_balance.tooltip": "Makes midday light neutral white, like a camera. Lower it for a warmer, more vintage look. Sunsets stay warm either way."
 }

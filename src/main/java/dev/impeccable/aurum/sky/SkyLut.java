@@ -4,8 +4,9 @@ package dev.impeccable.aurum.sky;
  * One baked sky: a 128 x 64 radiance table for the current sun elevation and weather, plus the light colours
  * terrain needs, all derived from the same model so blocks and sky always agree.
  *
- * <p>Table axes: x = horizontal angle between view and sun (0..PI), y = view elevation with a square-root
- * mapping that gives the horizon most of the rows ({@code v = 0.5 + 0.5 * sign(e) * sqrt(|e| / (PI/2))}).
+ * <p>Table axes, chosen so the shader needs no asin/acos (only a sqrt each):
+ * x = {@code sin(a/2)} where a is the horizontal angle between view and sun (fine detail near the sun);
+ * y = {@code 0.5 + 0.5 * sign(s) * sqrt(|s|)} where s is the sine of the view elevation (most rows near the horizon).
  */
 public final class SkyLut {
     public static final int WIDTH = 128;
@@ -40,10 +41,10 @@ public final class SkyLut {
         this.rainDesaturation = rainDesaturation;
     }
 
-    public static float elevationForRow(int row) {
-        double v = (row + 0.5) / HEIGHT;
-        double s = (v - 0.5) * 2.0;
-        return (float) (Math.signum(s) * s * s * (Math.PI / 2));
+    /** Sine of the view elevation at the centre of a row. */
+    public static double sinElevationForRow(int row) {
+        double t = ((row + 0.5) / HEIGHT - 0.5) * 2.0;
+        return Math.signum(t) * t * t;
     }
 
     public static SkyLut build(float sunY, float rain, float thunder, int sunsetIntensity, int horizonWarmth, int rainDesaturation) {
@@ -62,14 +63,16 @@ public final class SkyLut {
         double night = smooth(0.02, -0.25, sy);
 
         double irrR = 0, irrG = 0, irrB = 0;
-        double da = Math.PI / WIDTH;
         for (int row = 0; row < HEIGHT; row++) {
-            double e = elevationForRow(row);
-            double ce = Math.cos(e), se = Math.sin(e);
-            // Row height in radians: e = sign(s) s^2 PI/2 with s = 2v - 1, so de = 2 PI |s| dv.
-            double de = 2.0 * Math.PI * Math.abs(((row + 0.5) / HEIGHT - 0.5) * 2.0) / HEIGHT;
+            double se = sinElevationForRow(row);
+            double e = Math.asin(se);
+            double ce = Math.cos(e);
+            // Irradiance integrand: L sin(e) cos(e) de da = L y dy da, with y = t^2 so dy = 2|t| dt, dt = 2/H.
+            double dy = 4.0 * Math.abs(((row + 0.5) / HEIGHT - 0.5) * 2.0) / HEIGHT;
             for (int col = 0; col < WIDTH; col++) {
-                double a = (col + 0.5) / WIDTH * Math.PI;
+                double sHalf = (col + 0.5) / WIDTH;
+                double a = 2.0 * Math.asin(sHalf);
+                double da = 2.0 / Math.sqrt(1.0 - sHalf * sHalf) / WIDTH;
                 double vx = ce * Math.cos(a), vz = ce * Math.sin(a);
                 SkyModel.radiance(vx, se, vz, sx, sy, 0.0, out);
                 double r = out[0], g = out[1], b = out[2];
@@ -119,8 +122,8 @@ public final class SkyLut {
                 lut.rgb[i + 2] = (float) Math.max(b, 0);
 
                 if (e > 0) {
-                    // Irradiance on an upward surface: L * cos(zenith) * dOmega, dOmega = cos(e) de da.
-                    double w = se * ce * de * da;
+                    // Irradiance on an upward surface: L * cos(zenith) * dOmega.
+                    double w = se * dy * da;
                     irrR += r * w;
                     irrG += g * w;
                     irrB += b * w;
@@ -128,8 +131,9 @@ public final class SkyLut {
             }
         }
         // The table covers azimuth 0..PI; the sky is symmetric about the sun, so double it. Store E / PI.
-        // Single scattering underestimates skylight about 2.5x (no multiple scattering); compensate here.
-        double multi = 2.5;
+        // Single scattering underestimates skylight (no multiple scattering); compensate, but keep the sun
+        // clearly stronger than the sky so lit and shaded sides read as 3D.
+        double multi = 1.8;
         lut.skyAmbient[0] = (float) (irrR * 2.0 / Math.PI * multi);
         lut.skyAmbient[1] = (float) (irrG * 2.0 / Math.PI * multi);
         lut.skyAmbient[2] = (float) (irrB * 2.0 / Math.PI * multi);

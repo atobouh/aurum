@@ -47,7 +47,7 @@ public final class FogDirector {
         }
 
         float strength = c.fogEnabled ? c.fogStrength / 100f : 0f;
-        tDistance = strength * (0.0005f + 0.0016f * golden + 0.006f * rain + 0.006f * thunder
+        tDistance = strength * (0.00025f + 0.0016f * golden + 0.006f * rain + 0.006f * thunder
                 + 0.004f * swamp + 0.012f * underground);
         tHeight = c.fogEnabled && c.heightFog ? strength * (0.015f * golden + 0.02f * rain + 0.015f * swamp) * (1f - underground) : 0f;
         tCave = underground;

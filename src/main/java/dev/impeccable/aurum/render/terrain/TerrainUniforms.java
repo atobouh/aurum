@@ -15,7 +15,7 @@ public final class TerrainUniforms {
     static final String[] NAMES = {
             "u_AurumMode", "u_LightDir", "u_LightColor", "u_SkyAmbient", "u_GroundAmbient", "u_BlockLightColor",
             "u_TerrainParams", "u_NormalTex", "u_BounceTex", "u_WindPhase", "u_WindParams", "u_GustOffset",
-            "u_CameraMod", "u_NoiseTex", "u_ToneParams"
+            "u_CameraMod", "u_NoiseTex", "u_ToneParams", "u_WhiteBalance"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -55,6 +55,7 @@ public final class TerrainUniforms {
         GL20C.glUniform3fv(loc[12], cameraMod);
         GL20C.glUniform1i(loc[13], UNIT_NOISE);
         GL20C.glUniform4f(loc[14], c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
+        GL20C.glUniform3fv(loc[15], Atmosphere.whiteBalance);
 
         GlUtil.bindTexture(UNIT_NORMAL, AurumTextures.normalAtlas());
         GlUtil.bindTexture(UNIT_BOUNCE, AurumTextures.bounce());

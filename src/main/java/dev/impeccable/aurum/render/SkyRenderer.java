@@ -38,6 +38,7 @@ public final class SkyRenderer {
         program.set3f("u_SunDir", sun[0], sun[1], sun[2]);
         program.set3f("u_SunDisc", lut.sunDisc[0], lut.sunDisc[1], lut.sunDisc[2]);
         program.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
+        program.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
         program.set1i("u_SkyLut", UNIT_LUT);
         GlUtil.bindTexture(UNIT_LUT, SkyState.texture());
         GlUtil.drawFullscreenTriangle();

@@ -19,6 +19,10 @@ public final class Atmosphere {
     public static final float[] skyAmbient = new float[3];
     public static final float[] groundAmbient = new float[3];
     public static final float[] blockLight = new float[3];
+    /** Per-channel gains that make midday sun + sky read as neutral white (camera white balance). */
+    public static final float[] whiteBalance = {1f, 1f, 1f};
+    private static float[] daylight;
+
     /** Linear multiplier applied before the tonemap; adapts gently between day and night. */
     public static float exposure = BASE_EXPOSURE;
     public static float minLight;
@@ -64,6 +68,17 @@ public final class Atmosphere {
         lastNanos = now;
         adapt += (target - adapt) * (1f - (float) Math.exp(-dt * 0.5f));
         exposure = BASE_EXPOSURE * adapt * (c.exposure / 100f);
+
+        // White balance: measured once from a clear midday sky (sun ~58 degrees up), then blended by the slider.
+        // Golden hour stays warm because the balance is fixed to daylight, as a camera on "daylight" would be.
+        if (daylight == null) {
+            SkyLut ref = SkyLut.build(0.85f, 0f, 0f, 100, 100, 0);
+            daylight = new float[3];
+            for (int i = 0; i < 3; i++) daylight[i] = ref.sunColor[i] * 0.85f + ref.skyAmbient[i];
+        }
+        float dl = luminance(daylight);
+        float wb = c.whiteBalance / 100f;
+        for (int i = 0; i < 3; i++) whiteBalance[i] = 1f + (dl / daylight[i] - 1f) * wb;
 
         // Torch light is defined in display terms so it looks the same at noon and midnight.
         float warmth = c.blockLightWarmth / 100f;

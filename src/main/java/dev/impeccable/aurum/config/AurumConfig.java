@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 1;
+    public int configVersion = 2;
     public Preset preset = Preset.LOW;
 
     // Sky
@@ -38,7 +38,7 @@ public final class AurumConfig {
     public int sunStrength = 100;
     public int ambientStrength = 100;
     public int blockLightWarmth = 40;
-    public int aoBoost = 30;
+    public int aoBoost = 50;
     public boolean normalsEnabled = true;
     public int normalStrength = 50;
     public boolean labPbr = false;
@@ -94,11 +94,12 @@ public final class AurumConfig {
     public int pomDistance = 12;
 
     // Colour grade
-    public Tonemap tonemap = Tonemap.AGX_PUNCHY;
+    public Tonemap tonemap = Tonemap.FILMIC;
+    public int whiteBalance = 100;
     public int exposure = 100;
     public int saturation = 100;
-    public int vibrance = 120;
-    public int contrast = 105;
+    public int vibrance = 105;
+    public int contrast = 100;
 
     // Debug
     public boolean showOverlay = false;
@@ -115,7 +116,12 @@ public final class AurumConfig {
         }
         try (Reader reader = Files.newBufferedReader(PATH)) {
             AurumConfig loaded = GSON.fromJson(reader, AurumConfig.class);
+            int version = loaded != null ? loaded.configVersion : 0;
             instance = loaded != null ? loaded.sanitized() : new AurumConfig();
+            if (version != instance.configVersion) {
+                reader.close();
+                save();
+            }
         } catch (IOException | JsonParseException e) {
             AurumMod.LOGGER.error("Could not read {}, using defaults", PATH, e);
             instance = new AurumConfig();
@@ -137,7 +143,18 @@ public final class AurumConfig {
     /** Clamps values a hand-edited file could break, and fills enums Gson left null. */
     private AurumConfig sanitized() {
         if (preset == null) preset = Preset.LOW;
-        if (tonemap == null) tonemap = Tonemap.AGX_PUNCHY;
+        if (tonemap == null) tonemap = Tonemap.FILMIC;
+        if (configVersion < 2) {
+            // 0.1.0 shipped a grade that crushed blue (AgX + extra saturation). Move everyone to the new look.
+            AurumConfig d = new AurumConfig();
+            tonemap = d.tonemap;
+            whiteBalance = d.whiteBalance;
+            saturation = d.saturation;
+            vibrance = d.vibrance;
+            contrast = d.contrast;
+            aoBoost = d.aoBoost;
+            configVersion = 2;
+        }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;
             default -> 1024;
