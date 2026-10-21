@@ -42,6 +42,8 @@ skipped, logged, and the pipeline stays vanilla for terrain.
   `begin(pass)` (compile/bind program, `setupState`), set projection and model-view, then one multi-draw
   per region with `u_RegionOffset` set per region. `end(pass)` unbinds.
 - Passes: `DefaultTerrainRenderPasses.SOLID`, `CUTOUT` (fragment discard), `TRANSLUCENT` (reverse order).
+- `SodiumWorldRenderer.drawChunkLayer` draws **both SOLID and CUTOUT inside the `RenderLayer.getSolid()` call**;
+  the vanilla cutout/cutoutMipped calls draw nothing. Confirmed on the user's UHD 620 (cutout timer read 0.00).
 - `WorldRenderer.renderLayer` and `renderClouds` are `@Overwrite`n by Sodium; `renderSky` gets a cancellable
   `HEAD` inject (skips the sky under thick fog). Aurum's timers therefore wrap the **call sites** in
   `WorldRenderer.render`, never those methods.

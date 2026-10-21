@@ -29,19 +29,14 @@ public abstract class WorldRendererMixin {
         GpuTimers.end(t);
     }
 
-    /** Reason: GPU time of Sodium's terrain passes, split by layer. */
+    /** Reason: GPU time of Sodium's terrain passes, opaque and translucent. */
     @WrapOperation(method = "render", require = 1, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDDLorg/joml/Matrix4f;)V"))
     private void aurum$timeLayer(WorldRenderer self, RenderLayer layer, MatrixStack matrices, double x, double y, double z,
                                  Matrix4f projection, Operation<Void> original) {
-        TimerSection section;
-        if (layer == RenderLayer.getSolid()) {
-            section = TimerSection.TERRAIN_SOLID;
-        } else if (layer == RenderLayer.getCutoutMipped() || layer == RenderLayer.getCutout()) {
-            section = TimerSection.TERRAIN_CUTOUT;
-        } else {
-            section = TimerSection.TERRAIN_TRANSLUCENT;
-        }
+        // Sodium draws its SOLID and CUTOUT passes both inside the solid call; the cutout calls draw nothing.
+        TimerSection section = layer == RenderLayer.getTranslucent() || layer == RenderLayer.getTripwire()
+                ? TimerSection.TERRAIN_TRANSLUCENT : TimerSection.TERRAIN_SOLID;
         int t = GpuTimers.begin(section);
         original.call(self, layer, matrices, x, y, z, projection);
         GpuTimers.end(t);
