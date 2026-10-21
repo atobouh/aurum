@@ -56,7 +56,7 @@ public final class SkyLut {
         // How "golden hour" it is: 1 with the sun near the horizon, 0 at noon and deep night.
         double low = smooth(0.45, 0.02, sy) * smooth(-0.22, -0.02, sy);
         // At 100% golden hour is 20% more saturated than the raw model; 0% gives the raw model.
-        double sat = 1.0 + 0.20 * (sunsetIntensity / 100.0) * low;
+        double sat = 1.0 + 0.10 * (sunsetIntensity / 100.0) * low;
         double warmth = horizonWarmth / 100.0;
         double grey = rain * (rainDesaturation / 100.0);
         double dim = 1.0 - 0.55 * rain - 0.25 * thunder;
@@ -84,10 +84,11 @@ public final class SkyLut {
                 b = lum + (b - lum) * sat;
                 // Golden hour warmth: push the low sky toward orange (not yellow), strongest toward the sun.
                 double toward = 0.35 + 0.65 * Math.pow(Math.max(0.0, Math.cos(a)), 2.0);
-                double wk = warmth * toward * Math.exp(-Math.abs(e) * 4.0) * low * (sunsetIntensity / 100.0);
-                r *= 1.0 + 0.30 * wk;
-                g *= 1.0 - 0.12 * wk;
-                b *= 1.0 - 0.45 * wk;
+                // Spread over the lower sky (not a thin strip) and kept gentle so it reads as light, not paint.
+                double wk = warmth * toward * Math.exp(-Math.abs(e) * 1.8) * low * (sunsetIntensity / 100.0);
+                r *= 1.0 + 0.16 * wk;
+                g *= 1.0 - 0.04 * wk;
+                b *= 1.0 - 0.28 * wk;
 
                 // With the sun high, single scattering leaves the horizon slightly yellow (no multiple
                 // scattering). Real skies are white-blue there; whiten it. Also lift daytime saturation a little,

@@ -79,7 +79,7 @@ void main() {
             float f = 1.0 - (1.0 - fd) * (1.0 - fh);
             if (f > 0.002) {
                 // Fog takes the sky's colour in that direction, so it is warmer toward the sun at golden hour.
-                vec3 fogColor = sky;
+                vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) * 1.25);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
                 fogColor *= mix(vec3(1.0), clamp(bounce / bl, 0.0, 2.0), u_Fog2.w);

@@ -36,6 +36,7 @@ public final class MaterialClassifier {
         Random random = Random.create(42L);
         int[] counts = new int[9];
 
+        java.util.List<String> moddedLeaves = new java.util.ArrayList<>();
         for (Block block : Registries.BLOCK) {
             List<BlockState> states = block.getStateManager().getStates();
             // Crops have one sprite per age; most other blocks only need a few states.
@@ -44,6 +45,10 @@ public final class MaterialClassifier {
                 BlockState state = states.get(s);
                 int material = materialFor(block, state);
                 if (material == NONE) continue;
+                if (material == LEAVES && s == 0) {
+                    Identifier id = Registries.BLOCK.getId(block);
+                    if (!id.getNamespace().equals("minecraft")) moddedLeaves.add(id.toString());
+                }
                 BakedModel model;
                 try {
                     model = client.getBlockRenderManager().getModel(state);
@@ -61,6 +66,10 @@ public final class MaterialClassifier {
                 }
             }
         }
+        if (!moddedLeaves.isEmpty()) {
+            dev.impeccable.aurum.AurumMod.LOGGER.info("Modded blocks treated as leaves ({}): {}", moddedLeaves.size(),
+                    String.join(", ", moddedLeaves.subList(0, Math.min(40, moddedLeaves.size()))));
+        }
         dev.impeccable.aurum.AurumMod.LOGGER.info("Material map: {} plant, {} tall, {} leaves, {} vine, {} water, {} crop sprites",
                 counts[PLANT], counts[TALL_LOWER] + counts[TALL_UPPER], counts[LEAVES], counts[VINE],
                 counts[WATER_PLANT] + counts[WATER_COLUMN], counts[CROP]);
@@ -70,6 +79,7 @@ public final class MaterialClassifier {
     /** NONE for blocks that never move, -1 for "check the geometry", otherwise the material. */
     private static int materialFor(Block block, BlockState state) {
         if (block instanceof LeavesBlock || state.isIn(BlockTags.LEAVES)) return LEAVES;
+        if (looksLikeLeaves(block, state)) return LEAVES;
         if (block instanceof AbstractFireBlock || block instanceof TorchBlock || block instanceof SugarCaneBlock
                 || block instanceof BambooBlock || block instanceof LilyPadBlock || block instanceof FlowerPotBlock) return NONE;
         if (block instanceof KelpBlock || block instanceof KelpPlantBlock) return WATER_COLUMN;
@@ -85,6 +95,22 @@ public final class MaterialClassifier {
         }
         if (isCutout(state) && hasNoCollision(state)) return -1;
         return NONE;
+    }
+
+    /**
+     * Modded trees often use their own leaf blocks that are neither LeavesBlock nor tagged. Catch them by name
+     * plus shape: a cutout block called leaves/leaf/foliage/needles that is a full cube.
+     */
+    private static boolean looksLikeLeaves(Block block, BlockState state) {
+        String path = Registries.BLOCK.getId(block).getPath();
+        boolean named = path.contains("leaves") || path.contains("leaf") || path.contains("foliage") || path.contains("needles");
+        if (!named || path.contains("pile") || path.contains("carpet") || path.contains("litter")) return false;
+        if (!isCutout(state)) return false;
+        try {
+            return state.isFullCube(EmptyBlockView.INSTANCE, BlockPos.ORIGIN);
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private static boolean isCutout(BlockState state) {
