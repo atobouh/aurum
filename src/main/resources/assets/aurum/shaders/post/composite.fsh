@@ -15,6 +15,7 @@ uniform sampler2D u_Bounce;
 uniform mat4 u_InvProj;
 uniform mat4 u_InvView;     // rotation only, view -> world
 uniform vec3 u_SunDir;
+uniform vec4 u_SunGlow;     // rgb warm scattered sunlight, a = golden-hour amount
 uniform vec4 u_Fog;         // x distance density, y height density, z height falloff, w camera height above sea level
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
@@ -67,7 +68,7 @@ void main() {
         float dist = length(view);
         vec3 dir = mat3(u_InvView) * (view / dist);
         // One sky lookup serves both the fog colour and the edge fade.
-        vec3 sky = aurum_tonemap(aurum_skyRadiance(dir, u_SunDir) * 1.25);
+        vec3 sky = aurum_tonemap(aurum_skyRadiance(dir, u_SunDir));
 
         if (u_Flags.x > 0.5) {
             // Exponential distance fog (Quilez) plus exact height fog for valleys (analytic integral).
@@ -79,7 +80,10 @@ void main() {
             float f = 1.0 - (1.0 - fd) * (1.0 - fh);
             if (f > 0.002) {
                 // Fog takes the sky's colour in that direction, so it is warmer toward the sun at golden hour.
-                vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) * 1.25);
+                // Haze lit by the sun: looking toward a low sun, the air itself glows gold (Mie forward scattering).
+                float toSun = max(dot(dir, u_SunDir), 0.0);
+                vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 1.4 + pow(toSun, 30.0) * 2.0) * (0.25 + 0.75 * u_SunGlow.a);
+                vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
                 fogColor *= mix(vec3(1.0), clamp(bounce / bl, 0.0, 2.0), u_Fog2.w);

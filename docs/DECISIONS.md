@@ -46,3 +46,7 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Leaves keep 35% of direct light when shadowed | Stand-in for light passing through leaves; fully shadowed crowns looked black at golden hour |
 | 2026-10-21 | Below-horizon sky uses the sky ~2 degrees up (desaturated, darker); fog colour excludes the bright glow around the sun | The horizon row stretched below the horizon made a hard red band; fog toward the sun washed terrain pink-white (user feedback) |
 | 2026-10-21 | Modded leaves detected by name (leaves/leaf/foliage/needles) + full cutout cube, and logged | User's custom-tree mod leaves did not sway |
+| 2026-10-21 | Tone curve linear through mid-tones with a soft shoulder above 0.6 (replaces log-space filmic) | Measured: sunlit surfaces capped at ~0.62 on screen; references reach 0.7-0.9 (docs/research/LOOK_PHASE1_2.md) |
+| 2026-10-21 | Intentional golden-hour grade (amber sun, peach shade, pink-lavender sky, sun glow in haze) | References are warm in every sunset shot; physics alone was near-neutral |
+| 2026-10-21 | Shadow map cross-fade (3 maps) + 0.14 degree steps; shadows capped at ~10 degree elevation | User saw shadows step every second and stretch across the map |
+| 2026-10-21 | Every phase starts with screenshot research and a measured look target | User requirement; Phases 1-2 missed the look without it |

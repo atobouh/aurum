@@ -19,7 +19,8 @@ public final class TerrainUniforms {
             "u_TerrainParams", "u_NormalTex", "u_BounceTex", "u_WindPhase", "u_WindParams", "u_GustOffset",
             "u_CameraMod", "u_NoiseTex", "u_ToneParams", "u_WhiteBalance",
             "u_ShadowMap", "u_ShadowMatrix", "u_ShadowParams", "u_ShadowParams2",
-            "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams"
+            "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams",
+            "u_ShadowMapPrev", "u_ShadowMatrixPrev"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -27,6 +28,7 @@ public final class TerrainUniforms {
     public static final int UNIT_NOISE = 5;
     public static final int UNIT_SHADOW = 6;
     public static final int UNIT_ENTITY_SHADOW = 7;
+    public static final int UNIT_SHADOW_PREV = 8;
 
     private static final float[] matrix = new float[16];
 
@@ -78,10 +80,17 @@ public final class TerrainUniforms {
             ShadowRenderer.samplingMatrix().get(matrix);
             GL20C.glUniformMatrix4fv(loc[17], false, matrix);
         }
-        float strength = shadows ? smooth(0.06f, 0.16f, Atmosphere.lightDir[1]) : 0f;
+        float strength = shadows ? smooth(0.08f, 0.20f, Atmosphere.lightDir[1]) : 0f;
         float radius = 1.0f + 1.5f * (c.shadowSoftness / 100f);
         GL20C.glUniform4f(loc[18], ShadowRenderer.DISTORTION, strength, ShadowRenderer.centreTexelWorld(), radius);
-        GL20C.glUniform4f(loc[19], ShadowRenderer.inverseResolution(), c.shadowResolution >= 1536 ? 8f : 4f, 0.00004f, 0f);
+        float blend = ShadowRenderer.blend();
+        GL20C.glUniform4f(loc[19], ShadowRenderer.inverseResolution(), c.shadowResolution >= 1536 ? 8f : 4f, 0.00004f, blend);
+        GL20C.glUniform1i(loc[23], UNIT_SHADOW_PREV);
+        if (shadows && blend < 1f) {
+            ShadowRenderer.previousSamplingMatrix().get(matrix);
+            GL20C.glUniformMatrix4fv(loc[24], false, matrix);
+        }
+        GlUtil.bindTexture(UNIT_SHADOW_PREV, ShadowRenderer.previousTexture());
 
         GlUtil.bindTexture(UNIT_NORMAL, AurumTextures.normalAtlas());
         GlUtil.bindTexture(UNIT_BOUNCE, AurumTextures.bounce());

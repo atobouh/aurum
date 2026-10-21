@@ -27,6 +27,8 @@ public final class SkyLut {
     public final float[] sunColor = new float[3];
     /** Radiance of the sun disc itself (zero below the horizon and in rain). */
     public final float[] sunDisc = new float[3];
+    /** Warm light the sun scatters into haze (fog in-scattering and the glow around the sun). */
+    public final float[] sunGlow = new float[3];
     /** Light from the sky dome on an upward surface, as irradiance / PI. */
     public final float[] skyAmbient = new float[3];
     /** Light bounced up from the ground onto a downward surface. */
@@ -54,7 +56,7 @@ public final class SkyLut {
         double[] out = new double[3];
 
         // How "golden hour" it is: 1 with the sun near the horizon, 0 at noon and deep night.
-        double low = smooth(0.45, 0.02, sy) * smooth(-0.22, -0.02, sy);
+        double low = smooth(0.45, 0.05, sy) * smooth(-0.22, -0.02, sy);
         // At 100% golden hour is 20% more saturated than the raw model; 0% gives the raw model.
         double sat = 1.0 + 0.10 * (sunsetIntensity / 100.0) * low;
         double warmth = horizonWarmth / 100.0;
@@ -85,10 +87,10 @@ public final class SkyLut {
                 // Golden hour warmth: push the low sky toward orange (not yellow), strongest toward the sun.
                 double toward = 0.35 + 0.65 * Math.pow(Math.max(0.0, Math.cos(a)), 2.0);
                 // Spread over the lower sky (not a thin strip) and kept gentle so it reads as light, not paint.
-                double wk = warmth * toward * Math.exp(-Math.abs(e) * 1.8) * low * (sunsetIntensity / 100.0);
-                r *= 1.0 + 0.16 * wk;
-                g *= 1.0 - 0.04 * wk;
-                b *= 1.0 - 0.28 * wk;
+                double wk = warmth * toward * Math.exp(-Math.abs(e) * 1.5) * low * (sunsetIntensity / 100.0);
+                r *= 1.0 + 0.30 * wk;
+                g *= 1.0 - 0.02 * wk;
+                b *= 1.0 - 0.40 * wk;
 
                 // With the sun high, single scattering leaves the horizon slightly yellow (no multiple
                 // scattering). Real skies are white-blue there; whiten it. Also lift daytime saturation a little,
@@ -104,6 +106,22 @@ public final class SkyLut {
                 r = lum + (r - lum) * daySat;
                 g = lum + (g - lum) * daySat;
                 b = lum + (b - lum) * daySat;
+
+                // Golden-hour palette (from the reference study, docs/research/LOOK_PHASE1_2.md): the good packs
+                // turn the whole upper sky peach-pink-lavender at low sun, not just the horizon strip. Blend the
+                // sky's chroma toward that palette, strongest away from the horizon glow.
+                double gh = low * (sunsetIntensity / 100.0);
+                if (gh > 0.0 && e > 0.0) {
+                    double l2 = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    double upper = Math.min(1.0, e * 3.0);
+                    double tr = 1.18, tg = 0.90, tb = 0.98; // peach-pink near the horizon side
+                    double ur = 1.05, ug = 0.88, ub = 1.12; // lavender higher up
+                    double pr = tr + (ur - tr) * upper, pg = tg + (ug - tg) * upper, pb = tb + (ub - tb) * upper;
+                    double k = 0.8 * gh;
+                    r = r + (l2 * pr - r) * k;
+                    g = g + (l2 * pg - g) * k;
+                    b = b + (l2 * pb - b) * k;
+                }
 
                 // Night: a simple dark blue gradient under the vanilla stars and moon.
                 double up = Math.sqrt(Math.max(0.0, se));
@@ -134,7 +152,7 @@ public final class SkyLut {
         // The table covers azimuth 0..PI; the sky is symmetric about the sun, so double it. Store E / PI.
         // Single scattering underestimates skylight (no multiple scattering); compensate, but keep the sun
         // clearly stronger than the sky so lit and shaded sides read as 3D.
-        double multi = 1.8;
+        double multi = 1.75;
         lut.skyAmbient[0] = (float) (irrR * 2.0 / Math.PI * multi);
         lut.skyAmbient[1] = (float) (irrG * 2.0 / Math.PI * multi);
         lut.skyAmbient[2] = (float) (irrB * 2.0 / Math.PI * multi);
@@ -148,6 +166,9 @@ public final class SkyLut {
         double discVisible = smooth(-0.02, 0.01, sy) * (1.0 - rain);
         for (int c = 0; c < 3; c++) {
             lut.sunDisc[c] = (float) (SkyModel.SUN * out[c] * 2.5 * discVisible);
+            // Glow: the transmitted sun colour, a little extra warm at golden hour, fading out once the sun is gone.
+            double warmBias = c == 0 ? 1.0 : c == 1 ? 0.85 : 0.6;
+            lut.sunGlow[c] = (float) (out[c] * Math.pow(warmBias, low) * smooth(-0.06, 0.02, sy) * (1.0 - 0.8 * rain));
         }
         // Moonlight, cool and dim, crossfades in as the sun sets.
         double moon = smooth(-0.02, -0.15, sy) * (1.0 - 0.7 * rain);

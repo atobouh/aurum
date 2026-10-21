@@ -44,7 +44,9 @@ import java.util.List;
  *
  * <p>Lazy and smooth (spec feature 4): the map is a cache. It is redrawn only when the light has moved, the player
  * has moved a few blocks, or a chunk mesh nearby changed. A redraw is spread over several frames into a back map
- * while the front map stays in use, then the two swap, so there is never a frame-time spike.
+ * while the front map stays in use, then the two swap, so there is never a frame-time spike. After a swap the old
+ * map is kept for {@value #BLEND_SECONDS} s and the terrain shader cross-fades from it, so shadows glide instead of
+ * visibly stepping (user feedback: "I see it move every second").
  *
  * <p>Detail is concentrated near the player with the usual radial distortion (shaderLABS shadow tutorial).
  */
@@ -55,7 +57,9 @@ public final class ShadowRenderer {
     /** Radial distortion strength: higher puts more texels near the player. */
     public static final float DISTORTION = 0.82f;
     /** Rebuild when the light direction has turned this much (radians), or the player moved this far (blocks). */
-    private static final float ANGLE_THRESHOLD = 0.004f;
+    private static final float ANGLE_THRESHOLD = 0.0025f;
+    /** Cross-fade time from the previous map to a freshly built one. */
+    public static final float BLEND_SECONDS = 0.45f;
     private static final double MOVE_THRESHOLD = 4.0;
     private static final int SLICES = 3;
     private static final int MIN_FRAMES_BETWEEN_DIRTY_REBUILDS = 20;
@@ -72,7 +76,8 @@ public final class ShadowRenderer {
         boolean valid;
     }
 
-    private static Map front = new Map(), back = new Map();
+    private static Map front = new Map(), back = new Map(), previous = new Map();
+    private static long swapNanos;
     private static int resolution;
     private static int dummyDepth;
     private static boolean building;
@@ -105,6 +110,27 @@ public final class ShadowRenderer {
 
     public static float inverseResolution() {
         return 1f / Math.max(1, resolution);
+    }
+
+    /** 0..1 progress of the cross-fade from the previous map to the front map (1 = done, sample front only). */
+    public static float blend() {
+        if (!previous.valid) return 1f;
+        float t = (System.nanoTime() - swapNanos) / 1e9f / BLEND_SECONDS;
+        return Math.max(0f, Math.min(1f, t));
+    }
+
+    public static int previousTexture() {
+        return previous.valid ? previous.texture : frontTexture();
+    }
+
+    private static final Matrix4f samplingPrev = new Matrix4f();
+
+    /** Same as {@link #samplingMatrix()} for the previous map. */
+    public static Matrix4f previousSamplingMatrix() {
+        Map m = previous.valid ? previous : front;
+        samplingPrev.set(m.projection).mul(m.view)
+                .translate((float) (cameraX - m.camX), (float) (cameraY - m.camY), (float) (cameraZ - m.camZ));
+        return samplingPrev;
     }
 
     /** Light clip space from the current frame's camera-relative positions, for the front map. */
@@ -148,9 +174,12 @@ public final class ShadowRenderer {
                 if (slice >= sliceCount) {
                     building = false;
                     back.valid = true;
-                    Map swap = front;
+                    // Rotate: the old front becomes "previous" for the cross-fade, the old previous is reused.
+                    Map recycled = previous;
+                    previous = front;
                     front = back;
-                    back = swap;
+                    back = recycled;
+                    swapNanos = System.nanoTime();
                 }
             }
             EntityShadows.update(buildLightDir(), MinecraftClient.getInstance().getTickDelta());
@@ -174,9 +203,13 @@ public final class ShadowRenderer {
         return dirty && frame - lastBuildStart >= MIN_FRAMES_BETWEEN_DIRTY_REBUILDS;
     }
 
-    /** The light direction used for the map: never lower than ~7 degrees, where shadows would stretch to infinity. */
+    /**
+     * The light direction used for the map: never lower than ~10 degrees. Real shadows keep stretching toward the
+     * horizon, but past ~6x an object's height they cross half the map and read as a glitch (user feedback), so
+     * they stop lengthening there and fade out as the sun goes lower.
+     */
     private static float[] buildLightDir() {
-        float x = Atmosphere.lightDir[0], y = Math.max(Atmosphere.lightDir[1], 0.12f), z = Atmosphere.lightDir[2];
+        float x = Atmosphere.lightDir[0], y = Math.max(Atmosphere.lightDir[1], 0.17f), z = Atmosphere.lightDir[2];
         float len = (float) Math.sqrt(x * x + y * y + z * z);
         return new float[]{x / len, y / len, z / len};
     }
@@ -290,7 +323,7 @@ public final class ShadowRenderer {
 
     private static void recreate(int res) {
         building = false;
-        for (Map m : new Map[]{front, back}) {
+        for (Map m : new Map[]{front, back, previous}) {
             if (m.texture != 0) {
                 GlStateManager._deleteTexture(m.texture);
                 GlStateManager._glDeleteFramebuffers(m.fbo);
@@ -310,7 +343,7 @@ public final class ShadowRenderer {
         }
         resolution = res;
         MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
-        AurumMod.LOGGER.info("Shadow maps: 2 x {}x{}", res, res);
+        AurumMod.LOGGER.info("Shadow maps: 3 x {}x{}", res, res);
     }
 
     static int depthTexture(int res) {

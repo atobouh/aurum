@@ -10,7 +10,7 @@ import dev.impeccable.aurum.sky.SkyLut;
 public final class Atmosphere {
     /** Noon reference brightness (sun + sky on an upward surface), used to anchor exposure. */
     private static final float REFERENCE = 6.2f;
-    private static final float BASE_EXPOSURE = 0.25f;
+    private static final float BASE_EXPOSURE = 0.19f;
 
     public static final float[] lightDir = {0, 1, 0};
     /** Direction toward the sun (even at night), world space. */
@@ -27,8 +27,12 @@ public final class Atmosphere {
     public static float exposure = BASE_EXPOSURE;
     public static float minLight;
     public static float sunY;
+    /** 0..1: how much "golden hour" it is (sun low but up), for the glow and the warm grade. */
+    public static float golden;
 
     private static float adapt = 1f;
+    private static long lastColorNanos;
+    private static SkyLut lastLut;
     private static long lastNanos;
 
     private Atmosphere() {}
@@ -39,6 +43,8 @@ public final class Atmosphere {
         float angle = SunState.angle();
         // Sun direction from the sky angle (0 = noon): rises in +X (east), sets in -X (west).
         float sx = (float) -Math.sin(angle), sy = (float) Math.cos(angle);
+        float t1 = Math.max(0f, Math.min(1f, (0.45f - sy) / 0.40f)), t2 = Math.max(0f, Math.min(1f, (sy + 0.12f) / 0.10f));
+        golden = t1 * t1 * (3f - 2f * t1) * t2 * t2 * (3f - 2f * t2);
         sunDir[0] = sx;
         sunDir[1] = sy;
         sunDir[2] = 0f;
@@ -49,10 +55,23 @@ public final class Atmosphere {
 
         float sun = c.sunStrength / 100f;
         float amb = c.ambientStrength / 100f;
+        // Golden-hour grade on the light itself (reference study: in every good sunset shot the whole frame is
+        // warm, shade included). Physics alone gives near-neutral light until the sun is almost down, so the warmth
+        // is pushed in from ~25 degrees: amber sunlight, peach light in the shade. Scaled by the Sunset slider.
+        float g = golden * (c.sunsetIntensity / 100f);
+        float[] sunTint = {1.0f, 1f - 0.20f * g, 1f - 0.48f * g};
+        float[] ambTint = {1f + 0.06f * g, 1f - 0.06f * g, 1f - 0.22f * g};
+        // The sky table is rebuilt in small sun steps; ease the light colours toward each new table over ~0.4 s
+        // so lighting never steps, even by a fraction of a shade.
+        long nowC = System.nanoTime();
+        float dtC = lastColorNanos == 0 ? 1f : Math.min((nowC - lastColorNanos) / 1e9f, 0.5f);
+        lastColorNanos = nowC;
+        float kC = lastLut == null || Math.abs(lastLut.sunY - lut.sunY) > 0.05f ? 1f : 1f - (float) Math.exp(-dtC / 0.4f);
+        lastLut = lut;
         for (int i = 0; i < 3; i++) {
-            lightColor[i] = lut.sunColor[i] * sun;
-            skyAmbient[i] = lut.skyAmbient[i] * amb;
-            groundAmbient[i] = lut.groundAmbient[i] * amb;
+            lightColor[i] += (lut.sunColor[i] * sun * sunTint[i] - lightColor[i]) * kC;
+            skyAmbient[i] += (lut.skyAmbient[i] * amb * ambTint[i] - skyAmbient[i]) * kC;
+            groundAmbient[i] += (lut.groundAmbient[i] * amb * sunTint[i] - groundAmbient[i]) * kC;
         }
 
         // Gentle eye adaptation: nights and storms are darker than noon, but not black. Smoothed over ~2 s.
@@ -60,7 +79,7 @@ public final class Atmosphere {
         // and only allow a strong boost once the sun is gone. This keeps golden hour saturated, not bleached.
         float illum = luminance(lut.sunColor) * Math.max(sy, 0.42f) + luminance(lut.skyAmbient) * 2.5f + 1e-4f;
         float sunUp = Math.max(0f, Math.min(1f, (sy + 0.05f) / 0.15f));
-        float maxBoost = 7.0f + (1.8f - 7.0f) * sunUp * sunUp * (3f - 2f * sunUp);
+        float maxBoost = 7.0f + (1.35f + 0.7f * golden - 7.0f) * sunUp * sunUp * (3f - 2f * sunUp);
         float target = (float) Math.min(Math.max(Math.pow(REFERENCE / illum, 0.42), 1.0), maxBoost);
         target *= 1f + 0.35f * gamma;
         long now = System.nanoTime();

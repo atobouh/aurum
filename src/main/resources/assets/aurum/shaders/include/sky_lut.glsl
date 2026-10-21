@@ -2,12 +2,16 @@
 
 uniform sampler2D u_SkyLut;
 
+// The sky is viewed directly and through haze; with the linear tone curve it needs its own gain to read as the
+// bright, open Minecraft sky (terrain exposure is anchored on lit surfaces, not on sky radiance).
+const float SKY_GAIN = 3.0;
+
 vec3 aurum_skyLut(float y, float cosA) {
     // Skip the table's first sky row (a sliver under 0.1 degrees of the deepest, longest-path red, which reads
     // as a painted stripe) and never filter into the below-horizon half.
     float v = 0.5 + 0.5 * sqrt(max(y, 0.0045));
     float u = sqrt(clamp(0.5 - 0.5 * cosA, 0.0, 1.0));
-    return texture(u_SkyLut, vec2(u, v)).rgb;
+    return texture(u_SkyLut, vec2(u, v)).rgb * SKY_GAIN;
 }
 
 float aurum_cosToSun(vec3 dir, vec3 sunDir) {
@@ -25,8 +29,10 @@ vec3 aurum_skyRadiance(vec3 dir, vec3 sunDir) {
     float below = -dir.y;
     vec3 horizon = aurum_skyLut(0.0, cosA);
     vec3 haze = aurum_skyLut(0.035, cosA);
-    vec3 ground = mix(haze, vec3(dot(haze, vec3(0.2126, 0.7152, 0.0722))), 0.45) * 0.55;
-    return mix(horizon, ground, smoothstep(0.0, 0.08, below));
+    // Mix horizon and haze so a sunset horizon fades into warm dusk, not a navy band (user feedback).
+    vec3 base = mix(horizon, haze, 0.5);
+    vec3 ground = mix(base, vec3(dot(base, vec3(0.2126, 0.7152, 0.0722))), 0.35) * 0.6;
+    return mix(horizon, ground, smoothstep(0.0, 0.15, below));
 }
 
 // Fog colour: the sky a little above the horizon in that direction, without the bright glow right around
@@ -34,5 +40,6 @@ vec3 aurum_skyRadiance(vec3 dir, vec3 sunDir) {
 vec3 aurum_fogRadiance(vec3 dir, vec3 sunDir) {
     float cosA = min(aurum_cosToSun(dir, sunDir), 0.85);
     vec3 c = aurum_skyLut(clamp(dir.y, 0.04, 1.0), cosA);
-    return mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.25);
+    // Haze is a little darker than the open sky behind it, so it veils terrain without greying it out.
+    return mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.25) * 0.8;
 }

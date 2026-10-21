@@ -157,6 +157,8 @@ public final class PostPass {
         comp.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;
         comp.set3f("u_SunDir", sun[0], sun[1], sun[2]);
+        dev.impeccable.aurum.sky.SkyLut glut = SkyState.current();
+        if (glut != null) comp.set4f("u_SunGlow", glut.sunGlow[0], glut.sunGlow[1], glut.sunGlow[2], Atmosphere.golden);
         float cameraHeight = (float) Math.max(-8.0, MinecraftClient.getInstance().gameRenderer.getCamera().getPos().y - 63.0);
         comp.set4f("u_Fog", FogDirector.distanceDensity, FogDirector.heightDensity, 0.07f, cameraHeight);
         float far = MinecraftClient.getInstance().gameRenderer.getViewDistance();

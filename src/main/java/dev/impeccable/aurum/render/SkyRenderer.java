@@ -37,6 +37,7 @@ public final class SkyRenderer {
         float[] sun = Atmosphere.sunDir;
         program.set3f("u_SunDir", sun[0], sun[1], sun[2]);
         program.set3f("u_SunDisc", lut.sunDisc[0], lut.sunDisc[1], lut.sunDisc[2]);
+        program.set4f("u_SunGlow", lut.sunGlow[0], lut.sunGlow[1], lut.sunGlow[2], Atmosphere.golden);
         program.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
         program.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
         program.set1i("u_SkyLut", UNIT_LUT);
