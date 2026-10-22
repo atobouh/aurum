@@ -67,12 +67,17 @@ public class AurumSettingsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
+        SeeThrough.background(this, context);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
         context.drawCenteredTextWithShadow(this.textRenderer, Pipeline.statusLine(), this.width / 2, this.height - 52, 0xA0A0A0);
         context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.translatable("aurum.settings.phase_note", AurumMod.VERSION), this.width / 2, this.height - 40, 0x707070);
         super.render(context, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return this.client.world == null;
     }
 
     @Override

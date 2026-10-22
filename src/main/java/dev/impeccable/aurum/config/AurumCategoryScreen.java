@@ -23,6 +23,11 @@ public class AurumCategoryScreen extends Screen {
     protected void init() {
         this.list = new OptionListWidget(this.client, this.width, this.height, 32, this.height - 32, 25);
         this.list.addAll(this.category.options());
+        // See-through in game: the world stays visible (and live) behind the options while tweaking.
+        if (this.client.world != null) {
+            this.list.setRenderBackground(false);
+            this.list.setRenderHorizontalShadows(false);
+        }
         this.addSelectableChild(this.list);
         this.addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, b -> this.close())
                 .dimensions(this.width / 2 - 100, this.height - 27, 200, 20).build());
@@ -30,10 +35,16 @@ public class AurumCategoryScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
+        SeeThrough.background(this, context);
         this.list.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
         super.render(context, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public boolean shouldPause() {
+        // The world keeps moving (wind, clouds, water) so changes show as they would in play.
+        return this.client.world == null;
     }
 
     @Override

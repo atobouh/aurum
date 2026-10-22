@@ -1,6 +1,6 @@
 {
   "aurum.settings.title": "Aurum",
-  "aurum.settings.phase_note": "Version %s. Water and POM arrive in later phases.",
+  "aurum.settings.phase_note": "Version %s. POM and LabPBR arrive in a later phase.",
   "aurum.preset": "Preset",
   "aurum.preset.tooltip": "Low holds 60 FPS on integrated graphics. High adds POM and a larger shadow map. Moving any single option switches to Custom.",
   "aurum.preset.low": "Low",

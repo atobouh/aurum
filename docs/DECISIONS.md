@@ -93,3 +93,5 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Master on/off (F6 and settings) | User request; off = Sodium visuals with no Aurum passes, for A/B looks and FPS |
 | 2026-10-22 | No underwater work | User: not wanted; underwater keeps the vanilla path |
 | 2026-10-22 | Contact shadows: fixed 4x4 rotation pattern + matching 4x4 edge-aware average, partial weight for thin occluders, radius 1.4, strength 0.6 | User: dark smearing blotches on grass and mobs when moving (per-pixel random noise crawled) |
+| 2026-10-22 | Square sun evaluated only within ~18 degrees of the sun, edge width capped | Unbounded fwidth at 90 degrees from the sun drew a dotted white line across the daytime sky (user) |
+| 2026-10-22 | Settings screens see-through in game (narrow soft panel, no dirt list background) and do not pause | User: see changes live in the world while tweaking |
