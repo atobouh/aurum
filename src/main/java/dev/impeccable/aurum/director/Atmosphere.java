@@ -118,8 +118,10 @@ public final class Atmosphere {
         for (int i = 0; i < 3; i++) whiteBalance[i] = 1f + (dl / daylight[i] - 1f) * wb;
         // Look presets: overall colour temperature (camera-style warm/cool shift).
         float temp = c.temperature / 50f;
-        whiteBalance[0] *= 1f + 0.08f * temp;
-        whiteBalance[2] *= 1f - 0.10f * temp;
+        // Strong enough to move a whole frame by ~0.2 in red-minus-blue at the ends (measured on the look renders).
+        whiteBalance[0] *= 1f + 0.24f * temp;
+        whiteBalance[1] *= 1f + 0.04f * temp;
+        whiteBalance[2] *= 1f - 0.28f * temp;
         skyTone[0] = (c.skySaturation - 100) / 100f;
         skyTone[1] = c.skyLavender / 50f;
 

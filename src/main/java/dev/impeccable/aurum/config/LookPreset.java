@@ -64,11 +64,11 @@ public enum LookPreset {
                 c.exposure = 104;
                 c.saturation = 96;
                 c.contrast = 108;
-                c.temperature = -6;
+                c.temperature = 3;
                 c.skySaturation = 92;
-                c.skyLavender = -8;
-                c.sunsetIntensity = 145;
-                c.horizonWarmth = 135;
+                c.skyLavender = -22;
+                c.sunsetIntensity = 175;
+                c.horizonWarmth = 160;
                 c.fogStrength = 75;
                 c.bloomStrength = 90;
                 c.cloudStyle = CloudStyle.SOFT;
@@ -79,7 +79,7 @@ public enum LookPreset {
                 c.exposure = 106;
                 c.saturation = 100;
                 c.vibrance = 108;
-                c.temperature = 14;
+                c.temperature = 16;
                 c.shadeWarmth = 22;
                 c.skyLavender = 30;
                 c.sunsetIntensity = 115;
@@ -92,7 +92,7 @@ public enum LookPreset {
                 c.saturation = 108;
                 c.vibrance = 118;
                 c.contrast = 96;
-                c.temperature = -10;
+                c.temperature = -8;
                 c.shadeWarmth = -12;
                 c.skySaturation = 128;
                 c.skyLavender = -14;
