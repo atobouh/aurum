@@ -275,6 +275,7 @@ public final class SkyExtras {
         p.set1i("u_Noise", UNIT_B);
         p.set1i("u_SkyLut", 10);
         p.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
+        p.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], 0f, 0f);
         p.setMatrix("u_InvProj", invProj);
         p.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;

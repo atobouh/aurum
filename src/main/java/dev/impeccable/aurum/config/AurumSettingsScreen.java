@@ -43,6 +43,18 @@ public class AurumSettingsScreen extends Screen {
                     AurumConfig.save();
                 }));
 
+        y += 24;
+        this.addDrawableChild(CyclingButtonWidget.<LookPreset>builder(l -> Text.translatable("aurum.look." + l.name().toLowerCase()))
+                .values(LookPreset.AURUM, LookPreset.AIRY, LookPreset.CLEAR, LookPreset.WARM, LookPreset.VIVID, LookPreset.CUSTOM)
+                .initially(c.look)
+                .tooltip(l -> Tooltip.of(Text.translatable("aurum.look." + l.name().toLowerCase() + ".tooltip")))
+                .build(center - 155, y, 310, 20, Text.translatable("aurum.look"), (button, look) -> {
+                    look.applyTo(c);
+                    c.look = look;
+                    AurumConfig.save();
+                }));
+        y -= 24;
+
         this.addDrawableChild(CyclingButtonWidget.onOffBuilder(c.showOverlay)
                 .tooltip(v -> Tooltip.of(Text.translatable("aurum.option.show_overlay.tooltip")))
                 .build(center + 5, y, 150, 20, Text.translatable("aurum.option.show_overlay"), (button, v) -> {
@@ -50,7 +62,7 @@ public class AurumSettingsScreen extends Screen {
                     AurumConfig.save();
                 }));
 
-        y += 26;
+        y += 26 + 24;
         OptionCategory[] categories = OptionCategory.values();
         for (int i = 0; i < categories.length; i++) {
             OptionCategory category = categories[i];

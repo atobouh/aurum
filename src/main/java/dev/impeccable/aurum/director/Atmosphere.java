@@ -23,6 +23,8 @@ public final class Atmosphere {
     public static final float[] blockLight = new float[3];
     /** Per-channel gains that make midday sun + sky read as neutral white (camera white balance). */
     public static final float[] whiteBalance = {1f, 1f, 1f};
+    /** Look-preset sky tone for the shaders: saturation offset, lavender/teal tint. */
+    public static final float[] skyTone = {0f, 0f};
     private static float[] daylight;
 
     /** Linear multiplier applied before the tonemap; adapts gently between day and night. */
@@ -67,6 +69,10 @@ public final class Atmosphere {
         float[] sunTint = {1.0f, 0.975f - 0.30f * g, 0.92f - 0.60f * g};
         // Golden-hour shade stays warm and readable (references: amber shade; ours went navy once the haze cleared).
         float[] ambTint = {1f + 0.32f * g, 1f + 0.08f * g, 1f - 0.22f * g};
+        // Look presets: warmer or cooler shade.
+        float sw = c.shadeWarmth / 50f;
+        ambTint[0] *= 1f + 0.10f * sw;
+        ambTint[2] *= 1f - 0.12f * sw;
         // The sky table is rebuilt in small sun steps; ease the light colours toward each new table over ~0.4 s
         // so lighting never steps, even by a fraction of a shade.
         long nowC = System.nanoTime();
@@ -110,6 +116,12 @@ public final class Atmosphere {
         float dl = luminance(daylight);
         float wb = c.whiteBalance / 100f;
         for (int i = 0; i < 3; i++) whiteBalance[i] = 1f + (dl / daylight[i] - 1f) * wb;
+        // Look presets: overall colour temperature (camera-style warm/cool shift).
+        float temp = c.temperature / 50f;
+        whiteBalance[0] *= 1f + 0.08f * temp;
+        whiteBalance[2] *= 1f - 0.10f * temp;
+        skyTone[0] = (c.skySaturation - 100) / 100f;
+        skyTone[1] = c.skyLavender / 50f;
 
         // Torch light is defined in display terms so it looks the same at noon and midnight.
         float warmth = c.blockLightWarmth / 100f;

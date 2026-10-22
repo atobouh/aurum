@@ -108,12 +108,22 @@ public enum OptionCategory {
                     percent("saturation", 0, 200, () -> c.saturation, v -> c.saturation = v),
                     percent("vibrance", 0, 200, () -> c.vibrance, v -> c.vibrance = v),
                     percent("contrast", 50, 150, () -> c.contrast, v -> c.contrast = v),
+                    ranged("temperature", -50, 50, "aurum.unit.plain", () -> c.temperature, v -> c.temperature = v),
+                    ranged("shade_warmth", -50, 50, "aurum.unit.plain", () -> c.shadeWarmth, v -> c.shadeWarmth = v),
+                    percent("sky_saturation", 50, 160, () -> c.skySaturation, v -> c.skySaturation = v),
+                    ranged("sky_lavender", -50, 50, "aurum.unit.plain", () -> c.skyLavender, v -> c.skyLavender = v),
             };
             case DEBUG -> new SimpleOption<?>[]{
                     bool("show_overlay", c.showOverlay, v -> c.showOverlay = v),
             };
         };
     }
+
+    /** Options that belong to the look presets. */
+    private static final java.util.Set<String> LOOK_IDS = java.util.Set.of("exposure", "saturation", "vibrance",
+            "contrast", "temperature", "shade_warmth", "sky_saturation", "sky_lavender", "sunset_intensity",
+            "horizon_warmth", "fog_strength", "bloom_strength", "god_ray_strength", "cloud_style", "cloud_coverage",
+            "cloud_shading", "ao_boost");
 
     private static String key(String id) {
         return "aurum.option." + id;
@@ -129,6 +139,7 @@ public enum OptionCategory {
             setter.accept(v);
             if (!id.equals("show_overlay")) {
                 AurumConfig.get().preset = Preset.CUSTOM;
+                if (LOOK_IDS.contains(id)) AurumConfig.get().look = LookPreset.CUSTOM;
             }
         };
     }

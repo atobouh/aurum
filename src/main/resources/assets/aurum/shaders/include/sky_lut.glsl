@@ -3,6 +3,8 @@
 uniform sampler2D u_SkyLut;
 // Daytime sky grade amount: 1 by day, 0 at golden hour and night (set per program; unset means 0).
 uniform float u_SkyGrade;
+// Look-preset sky tone: x saturation offset (0 = as is), y lavender (+) / teal (-) tint. Unset = neutral.
+uniform vec4 u_SkyTone;
 
 // The sky is viewed directly and through haze; with the linear tone curve it needs its own gain to read as the
 // bright, open Minecraft sky (terrain exposure is anchored on lit surfaces, not on sky radiance).
@@ -17,7 +19,10 @@ vec3 aurum_skyLut(float y, float cosA) {
     // gives): desaturation and lift. Faded out for golden hour, whose colours it washed out (look lab: warmth
     // +0.06 -> -0.04). Also applies to fog and cloud light, which read the same table.
     vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * SKY_GAIN;
-    return mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.32) * 1.12, u_SkyGrade);
+    c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.32) * 1.12, u_SkyGrade);
+    float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x), vec3(0.0));
+    return c * (vec3(1.0) + u_SkyTone.y * vec3(0.07, -0.05, 0.09));
 }
 
 float aurum_cosToSun(vec3 dir, vec3 sunDir) {

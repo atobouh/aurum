@@ -108,6 +108,14 @@ public final class AurumConfig {
     public int saturation = 92;
     public int vibrance = 105;
     public int contrast = 100;
+    public LookPreset look = LookPreset.AURUM;
+    /** -50 cool .. +50 warm. */
+    public int temperature = 0;
+    /** -50 cool shade .. +50 warm shade. */
+    public int shadeWarmth = 0;
+    public int skySaturation = 100;
+    /** -50 teal .. +50 lavender. */
+    public int skyLavender = 0;
 
     // Debug
     public boolean showOverlay = false;
@@ -154,6 +162,7 @@ public final class AurumConfig {
         if (tonemap == null) tonemap = Tonemap.FILMIC;
         if (cloudStyle == null) cloudStyle = CloudStyle.BLOCKY;
         if (sunShape == null) sunShape = SunShape.ROUND;
+        if (look == null) look = LookPreset.AURUM;
         if (configVersion < 2) {
             // 0.1.0 shipped a grade that crushed blue (AgX + extra saturation). Move everyone to the new look.
             AurumConfig d = new AurumConfig();

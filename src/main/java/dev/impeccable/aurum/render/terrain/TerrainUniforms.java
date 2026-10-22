@@ -23,7 +23,7 @@ public final class TerrainUniforms {
             "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams",
             "u_ShadowMapPrev", "u_ShadowMatrixPrev",
             "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
-            "u_WaterParams", "u_WaterScroll", "u_SunDirW"
+            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -119,6 +119,7 @@ public final class TerrainUniforms {
         if (water) {
             GL20C.glUniform1i(loc[26], UNIT_SKY_LUT);
             GL20C.glUniform1f(loc[27], Atmosphere.skyGrade());
+            GL20C.glUniform4f(loc[34], Atmosphere.skyTone[0], Atmosphere.skyTone[1], 0f, 0f);
             GL20C.glUniform1i(loc[28], UNIT_OPAQUE_DEPTH);
             GL20C.glUniform1i(loc[29], UNIT_OPAQUE_COLOR);
             GL20C.glUniform1i(loc[30], UNIT_WATER_NORMAL);
