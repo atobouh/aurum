@@ -198,8 +198,8 @@ public final class AurumConfig {
         if (configVersion < 7) {
             // 0.5.0: LabPBR on for every preset; 3D blocks (parallax) on Medium and High.
             labPbr = true;
-            if (preset == Preset.MEDIUM || preset == Preset.HIGH) pomEnabled = true;
-            pomDistance = 24;
+            pomEnabled = true;
+            pomDistance = preset == Preset.LOW ? 16 : 24;
             configVersion = 7;
         }
         shadowResolution = switch (shadowResolution) {

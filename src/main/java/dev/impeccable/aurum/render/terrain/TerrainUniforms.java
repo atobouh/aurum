@@ -23,7 +23,7 @@ public final class TerrainUniforms {
             "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams",
             "u_ShadowMapPrev", "u_ShadowMatrixPrev",
             "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
-            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams"
+            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -128,6 +128,7 @@ public final class TerrainUniforms {
         float pomDepth = pbr && c.pomEnabled && !translucent ? 0.25f * c.pomDepth / 100f : 0f;
         GL20C.glUniform4f(loc[36], pbr ? 1f : 0f, pomDepth, (float) c.pomDistance, pbr ? 2.5f : 0f);
         GlUtil.bindTextureHigh(UNIT_PBR, AurumTextures.pbrAtlas());
+        GL20C.glUniform1f(loc[37], dev.impeccable.aurum.bake.AtlasBaker.scale);
 
         boolean water = translucent && WaterPass.captured && dev.impeccable.aurum.sky.SkyState.current() != null;
         GL20C.glUniform1i(loc[25], water ? 1 : 0);

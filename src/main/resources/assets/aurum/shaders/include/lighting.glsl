@@ -28,11 +28,18 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     bool foliage = aurum_isFoliage(material);
     vec3 n = ng;
     float coating = 0.0;
-    if (u_TerrainParams.x > 0.0 && !foliage) {
+    bool packData = (aurum_atlasFlags(suv) & 0x40) != 0;
+    if (g_pomWall != vec3(0.0)) {
+        // A wall of a parallax pixel-cube: shade it as its own block face.
+        n = g_pomWall;
+    } else if ((u_TerrainParams.x > 0.0 || packData) && !foliage) {
         vec4 nt = suv == uv ? texture(u_NormalTex, uv, mipBias) : textureGrad(u_NormalTex, suv, dFdx(uv), dFdy(uv));
-        vec3 ts = normalize(vec3((nt.rg * 2.0 - 1.0) * u_TerrainParams.x, 1.0));
+        // Resource-pack normals are authored detail: full strength (stored at half slope). Generated ones follow
+        // the Normal strength setting.
+        float strength = packData ? 2.0 : u_TerrainParams.x;
+        vec3 ts = normalize(vec3((nt.rg * 2.0 - 1.0) * strength, 1.0));
         coating = nt.b - 0.5;
-        if ((aurum_atlasFlags(suv) & 0x40) != 0) {
+        if (packData) {
             // Resource-pack data: B is the pack's ambient occlusion, not a coating variation.
             ao *= mix(1.0, nt.b, 0.8);
             coating = 0.0;
@@ -76,6 +83,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         float lit = material == 4 ? max(sh.x, 0.22) : sh.x;
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
+    directVis *= g_pomShadow;
     vec3 direct = u_LightColor * (ndl * directVis);
 
     vec3 ambient = mix(u_GroundAmbient, u_SkyAmbient, n.y * 0.5 + 0.5) * skyVis;

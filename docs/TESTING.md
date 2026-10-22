@@ -1,3 +1,10 @@
+# Testing: 0.5.1 (PBR, round two)
+
+- Pack detail kept: 64x normal/height maps are no longer shrunk to 16x.
+- **Pixel 3D (voxel parallax)** on every preset: each texture pixel of a LabPBR pack stands up as a tiny cube with
+  lit/shaded sides and its own shadow (Seraphic, SPBR, Vanilla Mashup). F7 > POM: depth, distance.
+- Check: grass, logs, dirt paths, stone bricks in sun, at noon and golden hour; FPS with POM on and off.
+
 # Testing: 0.5.0 (looks + PBR)
 
 - **Look** selector at the top of F7: Aurum, Airy (Bliss-inspired), Clear (Photon), Warm (Complementary), Vivid (BSL).

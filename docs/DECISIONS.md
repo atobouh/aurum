@@ -97,3 +97,6 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Settings screens see-through in game (narrow soft panel, no dirt list background) and do not pause | User: see changes live in the world while tweaking |
 | 2026-10-22 | Look presets (Airy/Clear/Warm/Vivid) tuned against matched-biome scenes; sky tint axis golden..lavender, weighted toward golden hour, clouds follow | User: compare same biome / same scene, aim for the same feel |
 | 2026-10-22 | LabPBR read from resource packs (_n, _s): pack normals and AO, GGX sun + sky reflections, metals, emission, parallax (Medium/High) | User: SPBR / Vanilla Mashup look (sharp, glossy, glowing ores, 3D blocks) |
+| 2026-10-22 | PBR atlases built at the pack's map detail (up to 4x the block atlas, 200 MB budget) | Packs ship 64x normal/height maps over 16x colours; resampling to 16x erased the detail (user: "PBR isn't visible") |
+| 2026-10-22 | Pack normals at full strength regardless of the generated-normal slider | Low preset scaled them to 45% |
+| 2026-10-22 | Voxel parallax: 2D DDA over the height texels, wall normals, self-shadow toward the light; on all presets (Low 16 blocks, Medium 24, High 32) | Seraphic's trailer look: every pixel a tiny lit cube; smooth POM smeared the steps |

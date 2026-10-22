@@ -27,7 +27,9 @@ public enum Preset {
         // Terrain reflections in water (screen-space) on Medium and High; Low reflects the sky only.
         c.waterReflections = medium;
 
-        c.pomEnabled = medium;
+        // 3D blocks on every preset (the user's favourite PBR effect); Low keeps them closer.
+        c.pomEnabled = true;
+        c.pomDistance = high ? 32 : medium ? 24 : 16;
 
         c.cloudsFullRes = high;
     }

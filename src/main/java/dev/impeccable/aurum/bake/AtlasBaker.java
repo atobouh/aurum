@@ -42,8 +42,20 @@ public final class AtlasBaker {
     /** True when the loaded resource packs ship LabPBR data for at least one block texture. */
     public static boolean packHasPbr;
 
-    /** One sprite's LabPBR maps, resampled to the sprite's size. Null maps mean "not provided". */
-    private record PackMaps(int[] normal, int[] specular) {}
+    /** Atlas texels per block-atlas texel: above 1 when the resource pack's PBR maps are more detailed. */
+    public static int scale = 1;
+    /** Most memory the two atlases (normal + PBR, with mips) may use on the GPU. */
+    private static final long BUDGET_BYTES = 200L << 20;
+
+    /** One map's ARGB pixels at its own resolution (first animation frame). */
+    private record PackMap(int[] px, int w, int h) {
+        int at(int x, int y, int outW, int outH) {
+            return px[(y * h / outH) * w + x * w / outW];
+        }
+    }
+
+    /** One sprite's LabPBR maps. Null maps mean "not provided". */
+    private record PackMaps(PackMap normal, PackMap specular) {}
 
     private AtlasBaker() {}
 
@@ -70,17 +82,8 @@ public final class AtlasBaker {
         // Water surfaces get Aurum's water shading (translucent pass).
         materials.put(new Identifier("minecraft", "block/water_still"), MaterialClassifier.WATER);
         materials.put(new Identifier("minecraft", "block/water_flow"), MaterialClassifier.WATER);
-        ByteBuffer dst = MemoryUtil.memCalloc(w * h * 4);
-        // Untouched texels (gaps between sprites): flat normal, no material.
-        for (int i = 0; i < w * h; i++) {
-            dst.put(i * 4, (byte) 128);
-            dst.put(i * 4 + 1, (byte) 128);
-            dst.put(i * 4 + 2, (byte) 128);
-        }
-
         List<Sprite> list = new ArrayList<>(sprites.values());
-        final int fw = w;
-        // LabPBR maps from the resource packs, read once per sprite.
+        // LabPBR maps from the resource packs, read once per sprite at their own resolution.
         Map<Sprite, PackMaps> pack = new java.util.concurrent.ConcurrentHashMap<>();
         if (dev.impeccable.aurum.config.AurumConfig.get().labPbr) {
             net.minecraft.resource.ResourceManager rm = client.getResourceManager();
@@ -90,11 +93,35 @@ public final class AtlasBaker {
             });
         }
         packHasPbr = !pack.isEmpty();
+
+        // Many PBR packs ship 4x more detailed normal maps than the 16x textures they pair with (Seraphic: 64x
+        // normals over vanilla colours). Resampling them down to 16x threw that detail away, so the atlases are
+        // built at the pack's detail (same layout, k times the texels), within a GPU memory budget.
+        int ratio = 1;
+        for (Map.Entry<Sprite, PackMaps> e : pack.entrySet()) {
+            int sw = e.getKey().getContents().getWidth();
+            if (e.getValue().normal != null) ratio = Math.max(ratio, e.getValue().normal.w / Math.max(sw, 1));
+            if (e.getValue().specular != null) ratio = Math.max(ratio, e.getValue().specular.w / Math.max(sw, 1));
+        }
+        int k = Math.min(4, Integer.highestOneBit(Math.max(1, ratio)));
+        int maxSize = GL11C.glGetInteger(GL11C.GL_MAX_TEXTURE_SIZE);
+        while (k > 1 && ((long) w * k > maxSize || (long) h * k > maxSize || (long) w * k * h * k * 8L * 4 / 3 > BUDGET_BYTES)) k >>= 1;
+        final int fk = k;
+        final int W = w * k, H = h * k;
+
+        ByteBuffer dst = MemoryUtil.memCalloc(W * H * 4);
+        // Untouched texels (gaps between sprites): flat normal, no material.
+        for (int i = 0; i < W * H; i++) {
+            dst.put(i * 4, (byte) 128);
+            dst.put(i * 4 + 1, (byte) 128);
+            dst.put(i * 4 + 2, (byte) 128);
+        }
+        final int fw = w;
         // Packs disagree on the normal map's green direction (OpenGL vs DirectX); pick the one that agrees with
         // the luminance slopes on this pack's own textures.
         final float flipY = packHasPbr ? normalYSign(src, fw, pack) : 1f;
-        ByteBuffer pbr = MemoryUtil.memAlloc(w * h * 4);
-        for (int i = 0; i < w * h; i++) {
+        ByteBuffer pbr = MemoryUtil.memAlloc(W * H * 4);
+        for (int i = 0; i < W * H; i++) {
             // Neutral: rough, dielectric (F0 10/255 = 4 %), no emission, flat (height at the top).
             pbr.put(i * 4, (byte) 0).put(i * 4 + 1, (byte) 10).put(i * 4 + 2, (byte) 0).put(i * 4 + 3, (byte) 255);
         }
@@ -111,54 +138,48 @@ public final class AtlasBaker {
             }
             PackMaps m = pack.get(sprite);
             if (m != null) flags |= 0x40;
-            bakeSprite(src, dst, fw, sprite.getX(), sprite.getY(), sw, sh, flags, m, flipY);
-            if (m != null) bakePbr(pbr, fw, sprite.getX(), sprite.getY(), sw, sh, m);
+            bakeSprite(src, dst, fw, fk, sprite.getX(), sprite.getY(), sw, sh, flags, m, flipY);
+            if (m != null) bakePbr(pbr, fw * fk, sprite.getX() * fk, sprite.getY() * fk, sw * fk, sh * fk, m);
         });
 
-        if (texture == 0 || width != w || height != h) {
-            if (texture != 0) GlStateManager._deleteTexture(texture);
-            texture = GlUtil.createTexture(GL11C.GL_RGBA8, w, h, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_NEAREST);
-            width = w;
-            height = h;
-        }
-        GlStateManager._bindTexture(texture);
-        GlUtil.resetUnpack();
-        GL11C.glTexSubImage2D(GL11C.GL_TEXTURE_2D, 0, 0, 0, w, h, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, dst);
-        // Same mip setup as the block atlas so normals line up with what the terrain shader samples.
-        int levels = Math.max(0, maxLevel);
-        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL12C.GL_TEXTURE_MAX_LEVEL, levels);
-        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER,
-                levels > 0 ? GL11C.GL_NEAREST_MIPMAP_LINEAR : GL11C.GL_NEAREST);
-        if (levels > 0) GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
-        GlStateManager._bindTexture(0);
-
+        int levels = Math.max(0, maxLevel) + Integer.numberOfTrailingZeros(k);
+        texture = upload(texture, dst, W, H, levels);
+        pbrTexture = upload(pbrTexture, pbr, W, H, levels);
+        width = W;
+        height = H;
+        scale = k;
         MemoryUtil.memFree(src);
         MemoryUtil.memFree(dst);
-        AurumTextures.setNormalAtlas(texture);
-
-        // PBR atlas: same layout and mips as the block atlas (smoothness and height filter well).
-        if (pbrTexture == 0 || width != w || height != h) {
-            if (pbrTexture != 0) GlStateManager._deleteTexture(pbrTexture);
-            pbrTexture = GlUtil.createTexture(GL11C.GL_RGBA8, w, h, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_NEAREST);
-        }
-        GlStateManager._bindTexture(pbrTexture);
-        GlUtil.resetUnpack();
-        GL11C.glTexSubImage2D(GL11C.GL_TEXTURE_2D, 0, 0, 0, w, h, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, pbr);
-        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL12C.GL_TEXTURE_MAX_LEVEL, levels);
-        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER,
-                levels > 0 ? GL11C.GL_NEAREST_MIPMAP_LINEAR : GL11C.GL_NEAREST);
-        if (levels > 0) GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
-        GlStateManager._bindTexture(0);
         MemoryUtil.memFree(pbr);
+        AurumTextures.setNormalAtlas(texture);
         AurumTextures.setPbrAtlas(pbrTexture);
-        AurumMod.LOGGER.info("LabPBR: {} of {} block textures have pack PBR data{}; {} sprites can use parallax",
+        AurumMod.LOGGER.info("LabPBR: {} of {} block textures have pack PBR data{}; detail {}x; {} sprites can use parallax",
                 pack.size(), list.size(), packHasPbr ? (flipY < 0 ? " (DirectX normals)" : " (OpenGL normals)") : "",
-                aligned.get());
-        AurumMod.LOGGER.info("Baked normal atlas {}x{} ({} sprites, {} mip levels) in {} ms", w, h, list.size(), levels,
+                k, aligned.get());
+        AurumMod.LOGGER.info("Baked normal + PBR atlases {}x{} ({} sprites, {} mip levels) in {} ms", W, H, list.size(), levels,
                 (System.nanoTime() - start) / 1_000_000);
     }
 
-    private static void bakeSprite(ByteBuffer src, ByteBuffer dst, int atlasWidth, int x0, int y0, int sw, int sh, int flags,
+    /** (Re)creates a texture of the given size if needed, uploads the pixels and builds its mips. */
+    private static int upload(int tex, ByteBuffer data, int w, int h, int levels) {
+        if (tex == 0 || width != w || height != h) {
+            if (tex != 0) GlStateManager._deleteTexture(tex);
+            tex = GlUtil.createTexture(GL11C.GL_RGBA8, w, h, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_NEAREST);
+        }
+        GlStateManager._bindTexture(tex);
+        GlUtil.resetUnpack();
+        GL11C.glTexSubImage2D(GL11C.GL_TEXTURE_2D, 0, 0, 0, w, h, GL11C.GL_RGBA, GL11C.GL_UNSIGNED_BYTE, data);
+        // Mips follow the block atlas (plus the extra detail levels) so lookups line up with the colour texture.
+        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL12C.GL_TEXTURE_MAX_LEVEL, levels);
+        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER,
+                levels > 0 ? GL11C.GL_NEAREST_MIPMAP_LINEAR : GL11C.GL_NEAREST);
+        if (levels > 0) GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
+        GlStateManager._bindTexture(0);
+        return tex;
+    }
+
+    /** Writes one sprite into the normal atlas at k x its block-atlas resolution. */
+    private static void bakeSprite(ByteBuffer src, ByteBuffer dst, int atlasWidth, int k, int x0, int y0, int sw, int sh, int flags,
                                    PackMaps pack, float flipY) {
         float[] lum = new float[sw * sh];
         boolean[] solid = new boolean[sw * sh];
@@ -171,10 +192,11 @@ public final class AtlasBaker {
                 solid[y * sw + x] = a > 25;
             }
         }
-        for (int y = 0; y < sh; y++) {
-            for (int x = 0; x < sw; x++) {
-                int k = y * sw + x;
-                float c = lum[k];
+        int ow = sw * k, oh = sh * k, dw = atlasWidth * k;
+        for (int Y = 0; Y < oh; Y++) {
+            for (int X = 0; X < ow; X++) {
+                int x = X / k, y = Y / k;
+                float c = lum[y * sw + x];
                 // Block textures tile, so wrap inside the sprite. Transparent neighbours count as flat.
                 float l = sample(lum, solid, sw, sh, x - 1, y, c), r = sample(lum, solid, sw, sh, x + 1, y, c);
                 float u = sample(lum, solid, sw, sh, x, y - 1, c), d = sample(lum, solid, sw, sh, x, y + 1, c);
@@ -183,15 +205,16 @@ public final class AtlasBaker {
                 int hash = (x0 + x) * 73856093 ^ (y0 + y) * 19349663;
                 int coat = 128 + ((hash >>> 8) & 31) - 16;
                 if (pack != null && pack.normal != null) {
-                    // LabPBR normal: RG = xy in [0,1], z reconstructed; slope = xy / z. B = ambient occlusion.
-                    int n = pack.normal[k];
+                    // LabPBR normal: RG = xy in [0,1], z reconstructed; slope = xy / z, stored at half scale.
+                    // B = ambient occlusion.
+                    int n = pack.normal.at(X, Y, ow, oh);
                     float nx = ((n >>> 16) & 0xFF) / 127.5f - 1f, ny = (((n >>> 8) & 0xFF) / 127.5f - 1f) * flipY;
                     float nz = (float) Math.sqrt(Math.max(0.05f, 1f - nx * nx - ny * ny));
                     sx = clamp(nx / nz * 0.5f);
                     sy = clamp(ny / nz * 0.5f);
                     coat = n & 0xFF;
                 }
-                int o = ((y0 + y) * atlasWidth + (x0 + x)) * 4;
+                int o = ((y0 * k + Y) * dw + (x0 * k + X)) * 4;
                 dst.put(o, (byte) Math.round((sx * 0.5f + 0.5f) * 255f));
                 dst.put(o + 1, (byte) Math.round((sy * 0.5f + 0.5f) * 255f));
                 dst.put(o + 2, (byte) coat);
@@ -203,17 +226,16 @@ public final class AtlasBaker {
     private static void bakePbr(ByteBuffer pbr, int atlasWidth, int x0, int y0, int sw, int sh, PackMaps m) {
         for (int y = 0; y < sh; y++) {
             for (int x = 0; x < sw; x++) {
-                int k = y * sw + x;
                 int o = ((y0 + y) * atlasWidth + (x0 + x)) * 4;
                 int smooth = 0, f0 = 10, emission = 0, height = 255;
                 if (m.specular != null) {
-                    int sp = m.specular[k];
+                    int sp = m.specular.at(x, y, sw, sh);
                     smooth = (sp >>> 16) & 0xFF;
                     f0 = (sp >>> 8) & 0xFF;
                     int a = (sp >>> 24) & 0xFF;
                     emission = a == 255 ? 0 : a; // LabPBR: alpha 0-254 is emission, 255 means none
                 }
-                if (m.normal != null) height = (m.normal[k] >>> 24) & 0xFF;
+                if (m.normal != null) height = (m.normal.at(x, y, sw, sh) >>> 24) & 0xFF;
                 pbr.put(o, (byte) smooth);
                 pbr.put(o + 1, (byte) f0);
                 pbr.put(o + 2, (byte) emission);
@@ -222,32 +244,34 @@ public final class AtlasBaker {
         }
     }
 
-    /** Reads {@code <texture>_n.png} and {@code <texture>_s.png} for a sprite, first frame, at the sprite's size. */
+    /** Reads {@code <texture>_n.png} and {@code <texture>_s.png} for a sprite (first frame, own resolution). */
     private static PackMaps loadPack(net.minecraft.resource.ResourceManager rm, Sprite sprite) {
         Identifier id = sprite.getContents().getId();
         int sw = sprite.getContents().getWidth(), sh = sprite.getContents().getHeight();
-        int[] n = readMap(rm, new Identifier(id.getNamespace(), "textures/" + id.getPath() + "_n.png"), sw, sh);
-        int[] s = readMap(rm, new Identifier(id.getNamespace(), "textures/" + id.getPath() + "_s.png"), sw, sh);
+        PackMap n = readMap(rm, new Identifier(id.getNamespace(), "textures/" + id.getPath() + "_n.png"), sw, sh);
+        PackMap s = readMap(rm, new Identifier(id.getNamespace(), "textures/" + id.getPath() + "_s.png"), sw, sh);
         return n == null && s == null ? null : new PackMaps(n, s);
     }
 
-    /** ARGB pixels of the map's first frame, nearest-resampled to sw x sh, or null if the pack has no such map. */
-    private static int[] readMap(net.minecraft.resource.ResourceManager rm, Identifier path, int sw, int sh) {
+    /** ARGB pixels of the map's first frame at its own resolution (at most 4x the sprite), or null if absent. */
+    private static PackMap readMap(net.minecraft.resource.ResourceManager rm, Identifier path, int sw, int sh) {
         java.util.Optional<net.minecraft.resource.Resource> res = rm.getResource(path);
         if (res.isEmpty()) return null;
         try (java.io.InputStream in = res.get().getInputStream();
              net.minecraft.client.texture.NativeImage img = net.minecraft.client.texture.NativeImage.read(in)) {
             int iw = img.getWidth();
             int ih = Math.min(img.getHeight(), iw * sh / Math.max(sw, 1)); // animated maps: first frame
-            int[] out = new int[sw * sh];
-            for (int y = 0; y < sh; y++) {
-                for (int x = 0; x < sw; x++) {
-                    int abgr = img.getColor(x * iw / sw, y * ih / sh);
+            // Keep at most 4x the sprite's detail (nearest downsample beyond that).
+            int ow = Math.min(iw, sw * 4), oh = Math.max(1, ow * sh / Math.max(sw, 1));
+            int[] out = new int[ow * oh];
+            for (int y = 0; y < oh; y++) {
+                for (int x = 0; x < ow; x++) {
+                    int abgr = img.getColor(x * iw / ow, y * ih / oh);
                     // NativeImage is ABGR; return ARGB.
-                    out[y * sw + x] = (abgr & 0xFF00FF00) | ((abgr & 0xFF) << 16) | ((abgr >>> 16) & 0xFF);
+                    out[y * ow + x] = (abgr & 0xFF00FF00) | ((abgr & 0xFF) << 16) | ((abgr >>> 16) & 0xFF);
                 }
             }
-            return out;
+            return new PackMap(out, ow, oh);
         } catch (Exception e) {
             return null;
         }
@@ -268,7 +292,7 @@ public final class AtlasBaker {
                 for (int x = 0; x < sw; x++) {
                     float u = lumAt(src, atlasWidth, sp.getX() + x, sp.getY() + y - 1);
                     float d = lumAt(src, atlasWidth, sp.getX() + x, sp.getY() + y + 1);
-                    float ny = ((e.getValue().normal[y * sw + x] >>> 8) & 0xFF) / 127.5f - 1f;
+                    float ny = ((e.getValue().normal.at(x, y, sw, sh) >>> 8) & 0xFF) / 127.5f - 1f;
                     sum += -(d - u) * ny;
                     count++;
                 }

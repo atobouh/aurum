@@ -7,58 +7,105 @@ int aurum_atlasFlags(vec2 uv) {
     return int(textureLod(u_NormalTex, uv, 0.0).a * 255.0 + 0.5);
 }
 
-// Parallax occlusion mapping: steps through the pack's height map along the view ray, inside the sprite (wrapping
-// at its edges, so neighbouring textures never bleed in). Returns the uv to sample everything at. Pixel-art
-// friendly: the height is read with nearest filtering, so depth steps keep crisp texel edges.
+// Voxel parallax ("3D blocks"), the look of LabPBR packs like Seraphic and SPBR: every texel of the pack's height
+// map is a tiny column, so each texture pixel stands up as a small cube. The view ray walks the texel grid (2D DDA)
+// inside the sprite, wrapping at its edges. Where it enters a column from the side it hit a wall: the wall gets its
+// own normal (lit or shaded by the sun like a real block face). A short march toward the sun from the hit point
+// gives each little cube its shadow. Results for the lighting: g_pomWall (world normal of a hit wall, or zero) and
+// g_pomShadow (1 lit, 0 shadowed by the relief).
+vec3 g_pomWall = vec3(0.0);
+float g_pomShadow = 1.0;
+
+float aurum_pomDepthAt(ivec2 cell, ivec2 tmin, ivec2 tsize) {
+    ivec2 c = tmin + ((cell - tmin) % tsize + tsize) % tsize;
+    return 1.0 - texelFetch(u_PbrTex, c, 0).a;
+}
+
 vec2 aurum_parallax(vec2 uv, vec3 pos) {
+    // Derivatives first, in uniform control flow.
+    vec3 dpdx = dFdx(pos), dpdy = dFdy(pos);
+    vec2 duvx = dFdx(uv), duvy = dFdy(uv);
+    g_pomWall = vec3(0.0);
+    g_pomShadow = 1.0;
     if (u_PbrParams.y <= 0.0) return uv;
     float dist = length(pos);
     if (dist > u_PbrParams.z) return uv;
     int flags = aurum_atlasFlags(uv);
     if ((flags & 0xC0) != 0xC0) return uv;
 
-    vec3 dpdx = dFdx(pos), dpdy = dFdy(pos);
-    vec2 duvx = dFdx(uv), duvy = dFdy(uv);
     vec3 ng = normalize(cross(dpdx, dpdy));
     if (dot(ng, pos) > 0.0) ng = -ng;
-    // Gradients of u and v over the surface (exact for a flat face): uv change for a world-space step.
+    // Gradients of u and v over the surface (exact for a flat face): uv change per world-space step.
     vec3 dp2perp = cross(dpdy, ng), dp1perp = cross(ng, dpdx);
     float det = dot(dpdx, dp2perp);
     if (abs(det) < 1e-12) return uv;
     vec3 gu = (dp2perp * duvx.x + dp1perp * duvy.x) / det;
     vec3 gv = (dp2perp * duvx.y + dp1perp * duvy.y) / det;
 
-    vec3 d = pos / dist;
-    float cosV = max(-dot(d, ng), 0.2);
-    vec2 uvPerDepth = vec2(dot(gu, d), dot(gv, d)) / cosV;
+    vec2 atlas = vec2(textureSize(u_PbrTex, 0));
+    ivec2 tsize = ivec2(16 * (1 << ((flags >> 4) & 3))) * int(max(u_PbrScale, 1.0));
+    vec2 p0 = uv * atlas;                                   // texel coordinates
+    ivec2 tmin = ivec2(floor(p0 / vec2(tsize))) * tsize;
 
-    vec2 atlas = vec2(textureSize(u_NormalTex, 0));
-    vec2 tile = (16.0 * float(1 << ((flags >> 4) & 3))) / atlas;
-    vec2 tileMin = floor(uv / tile) * tile;
-
-    // Fewer steps far away and at steep views; fade the depth out toward the distance limit.
+    // Fade the relief out toward the distance limit.
     float depth = u_PbrParams.y * (1.0 - smoothstep(u_PbrParams.z * 0.6, u_PbrParams.z, dist));
-    int steps = int(mix(24.0, 8.0, clamp(dist / u_PbrParams.z, 0.0, 1.0)));
-    float layer = 1.0 / float(steps);
-    vec2 prevUv = uv;
-    float prevDiff = 0.0;
-    float t = 0.0;
-    for (int i = 0; i < 32; i++) {
-        if (i >= steps) break;
-        t += layer;
-        vec2 suv = tileMin + mod(uv + uvPerDepth * depth * t - tileMin, tile);
-        float h = textureLod(u_PbrTex, suv, 0.0).a;
-        float diff = (1.0 - h) - t; // > 0: still above the surface
-        if (diff <= 0.0) {
-            // Linear refine between the last two layers.
-            float w = prevDiff / max(prevDiff - diff, 1e-4);
-            float tt = t - layer + w * layer;
-            return tileMin + mod(uv + uvPerDepth * depth * tt - tileMin, tile);
-        }
-        prevDiff = diff;
-        prevUv = suv;
+    vec3 d = pos / dist;
+    float cosV = max(-dot(d, ng), 0.12);
+    // Texels travelled per unit of s, where s runs from 0 (top of the relief) to 1 (its full depth).
+    vec2 dp = vec2(dot(gu, d), dot(gv, d)) * atlas * depth / cosV;
+
+    // 2D DDA over texel cells along p(s) = p0 + dp * s.
+    ivec2 cell = ivec2(floor(p0));
+    ivec2 stepDir = ivec2(sign(dp));
+    vec2 inv = vec2(abs(dp.x) > 1e-6 ? 1.0 / abs(dp.x) : 1e9, abs(dp.y) > 1e-6 ? 1.0 / abs(dp.y) : 1e9);
+    vec2 frac = p0 - vec2(cell);
+    vec2 sNext = vec2(dp.x > 0.0 ? (1.0 - frac.x) * inv.x : frac.x * inv.x,
+                      dp.y > 0.0 ? (1.0 - frac.y) * inv.y : frac.y * inv.y);
+    float sEnter = 0.0;
+    int wallAxis = -1;
+    float sHit = -1.0;
+    for (int i = 0; i < 48; i++) {
+        float surf = aurum_pomDepthAt(cell, tmin, tsize);
+        if (surf <= sEnter) { sHit = sEnter; break; }           // entered through a wall (or the top at s = 0)
+        float sExit = min(sNext.x, sNext.y);
+        if (surf <= sExit) { sHit = surf; wallAxis = -1; break; } // landed on this column's top
+        if (sExit >= 1.0) break;
+        if (sNext.x < sNext.y) { cell.x += stepDir.x; sEnter = sNext.x; sNext.x += inv.x; wallAxis = 0; }
+        else { cell.y += stepDir.y; sEnter = sNext.y; sNext.y += inv.y; wallAxis = 1; }
     }
-    return prevUv;
+    if (sHit < 0.0) return uv;
+    if (sHit > 0.0 && wallAxis >= 0 && sHit == sEnter) {
+        // A wall faces back along the step: -u or -v (world direction of increasing u is along gu).
+        vec3 axis = wallAxis == 0 ? gu * float(stepDir.x) : gv * float(stepDir.y);
+        g_pomWall = -normalize(axis);
+    }
+    vec2 pHit = p0 + dp * sHit;
+    // Keep the lookup inside the hit cell (texel centre on the crossed axis) so walls show the cell's colour.
+    if (g_pomWall != vec3(0.0)) {
+        if (wallAxis == 0) pHit.x = float(cell.x) + 0.5; else pHit.y = float(cell.y) + 0.5;
+    }
+
+    // Self-shadow: from the hit point, walk toward the light over the height field.
+    vec3 L = u_LightDir;
+    float lz = dot(L, ng);
+    if (lz > 0.02) {
+        vec2 lp = vec2(dot(gu, L), dot(gv, L)) * atlas;     // texels per world unit along L
+        float stepW = 0.6 / max(max(abs(lp.x), abs(lp.y)), 1e-4);
+        float ds = stepW * lz / max(depth, 1e-4);           // s gained per step (rising toward the top)
+        float s = sHit - 0.001;
+        vec2 q = pHit;
+        for (int i = 0; i < 12; i++) {
+            q += lp * stepW;
+            s -= ds;
+            if (s <= 0.0) break;
+            if (aurum_pomDepthAt(ivec2(floor(q)), tmin, tsize) < s - 0.002) { g_pomShadow = 0.0; break; }
+        }
+    } else {
+        g_pomShadow = 1.0;
+    }
+
+    vec2 wrapped = vec2(tmin) + mod(pHit - vec2(tmin), vec2(tsize));
+    return wrapped / atlas;
 }
 
 // Specular light from the sun (GGX) and the sky (reflected sky colour), for the pack's smoothness / F0 / metal.

@@ -24,3 +24,4 @@ uniform sampler2D u_NoiseTex;     // 64x64 tiling value noise, one texel = 4 blo
 uniform sampler2D u_PbrTex;       // r smoothness, g F0 / metal, b emission, a height
 uniform vec4 u_PbrParams;         // x specular on, y parallax depth (blocks, 0 = off), z parallax distance, w emission strength
 uniform vec3 u_SunDirW;           // direction toward the sun, world space
+uniform float u_PbrScale;         // normal/PBR atlas texels per block-atlas texel (pack detail, 1-4)
