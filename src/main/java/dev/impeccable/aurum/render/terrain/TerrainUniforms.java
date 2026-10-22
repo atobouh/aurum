@@ -118,7 +118,7 @@ public final class TerrainUniforms {
         // Sky table and sun direction: water reflections and PBR sky reflections, every pass.
         GL20C.glUniform1i(loc[26], UNIT_SKY_LUT);
         GL20C.glUniform1f(loc[27], Atmosphere.skyGrade());
-        GL20C.glUniform4f(loc[34], Atmosphere.skyTone[0], Atmosphere.skyTone[1], 0f, 0f);
+        GL20C.glUniform4f(loc[34], Atmosphere.skyTone[0], Atmosphere.skyTone[1], Atmosphere.golden, 0f);
         GL20C.glUniform3f(loc[33], Atmosphere.sunDir[0], Atmosphere.sunDir[1], Atmosphere.sunDir[2]);
         GlUtil.bindTexture(UNIT_SKY_LUT, dev.impeccable.aurum.sky.SkyState.texture());
 

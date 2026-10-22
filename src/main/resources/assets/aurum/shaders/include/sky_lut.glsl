@@ -22,8 +22,9 @@ vec3 aurum_skyLut(float y, float cosA) {
     c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.32) * 1.12, u_SkyGrade);
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
     c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x), vec3(0.0));
-    vec3 tone = u_SkyTone.y >= 0.0 ? u_SkyTone.y * vec3(0.07, -0.05, 0.09) : -u_SkyTone.y * vec3(0.06, 0.0, -0.16);
-    return c * (vec3(1.0) + tone);
+    vec3 tone = u_SkyTone.y >= 0.0 ? u_SkyTone.y * vec3(0.07, -0.05, 0.09) : -u_SkyTone.y * vec3(0.12, 0.03, -0.38);
+    // The tint matters most at sunrise and sunset (z = golden-hour amount), where the packs differ most.
+    return c * max(vec3(1.0) + tone * (1.0 + 2.5 * u_SkyTone.z), vec3(0.2));
 }
 
 float aurum_cosToSun(vec3 dir, vec3 sunDir) {

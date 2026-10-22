@@ -95,3 +95,5 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Contact shadows: fixed 4x4 rotation pattern + matching 4x4 edge-aware average, partial weight for thin occluders, radius 1.4, strength 0.6 | User: dark smearing blotches on grass and mobs when moving (per-pixel random noise crawled) |
 | 2026-10-22 | Square sun evaluated only within ~18 degrees of the sun, edge width capped | Unbounded fwidth at 90 degrees from the sun drew a dotted white line across the daytime sky (user) |
 | 2026-10-22 | Settings screens see-through in game (narrow soft panel, no dirt list background) and do not pause | User: see changes live in the world while tweaking |
+| 2026-10-22 | Look presets (Airy/Clear/Warm/Vivid) tuned against matched-biome scenes; sky tint axis golden..lavender, weighted toward golden hour, clouds follow | User: compare same biome / same scene, aim for the same feel |
+| 2026-10-22 | LabPBR read from resource packs (_n, _s): pack normals and AO, GGX sun + sky reflections, metals, emission, parallax (Medium/High) | User: SPBR / Vanilla Mashup look (sharp, glossy, glowing ores, 3D blocks) |

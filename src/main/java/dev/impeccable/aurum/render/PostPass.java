@@ -163,7 +163,7 @@ public final class PostPass {
         comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
         comp.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
-        comp.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], 0f, 0f);
+        comp.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], dev.impeccable.aurum.director.Atmosphere.golden, 0f);
         // GlStateManager tracks only 12 units; 1-5 are free here (vanilla and terrain rebind theirs before drawing).
         comp.set1i("u_Clouds", 11);
         comp.set1i("u_Rays", 3);

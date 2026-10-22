@@ -44,8 +44,8 @@ public enum LookPreset {
         switch (this) {
             case AIRY -> {
                 // Measured: L 0.55-0.59, saturation 0.18-0.26, warmth ~0, near-white sky, heavy haze.
-                c.exposure = 102;
-                c.saturation = 80;
+                c.exposure = 98;
+                c.saturation = 94;
                 c.vibrance = 100;
                 c.contrast = 110;
                 c.skySaturation = 62;

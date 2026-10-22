@@ -1,3 +1,12 @@
+# Testing: 0.5.0 (looks + PBR)
+
+- **Look** selector at the top of F7: Aurum, Airy (Bliss-inspired), Clear (Photon), Warm (Complementary), Vivid (BSL).
+- **LabPBR packs now work** (SPBR, Vanilla Mashup PBR, SPBR Glowing Ore): sharp pack bumps, gloss and sky
+  reflections, gold/iron metal, glowing ores, 3D blocks on Medium/High (F7 > POM: depth, distance).
+  Note: SPBR Glowing Ore is labelled for 1.21 (pack format 45); Minecraft 1.20.1 marks it "incompatible" -
+  enable it anyway when asked, it works.
+- Check: diamond/redstone ore in a dark cave, a gold block in sun, stone bricks close up, a sunset per look.
+
 # Testing: 0.4.2
 
 - **Fixed:** the dark, smearing blotches on grass and mobs. That was the contact-shadow effect's noise; it is

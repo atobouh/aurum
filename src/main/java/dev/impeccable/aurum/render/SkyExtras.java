@@ -275,7 +275,7 @@ public final class SkyExtras {
         p.set1i("u_Noise", UNIT_B);
         p.set1i("u_SkyLut", 10);
         p.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
-        p.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], 0f, 0f);
+        p.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], dev.impeccable.aurum.director.Atmosphere.golden, 0f);
         p.setMatrix("u_InvProj", invProj);
         p.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;
@@ -294,7 +294,9 @@ public final class SkyExtras {
         p.set4f("u_Look", Math.min(c.cloudShading / 100f, 1.5f), soft ? 0.85f : 1.3f, 0f, FogDirector.distanceDensity * 0.25f);
         p.set1f("u_TexSize", size);
         float g = Atmosphere.golden * c.sunsetIntensity / 100f;
-        p.set3f("u_Tint", 1f, 1f - 0.16f * g, 1f + 0.30f * g);
+        float lav = Math.max(-1f, Math.min(1f, c.skyLavender / 50f));
+        // Golden-hour cloud tint: mauve-pink by default, toward orange-gold when the sky tint is golden.
+        p.set3f("u_Tint", 1f + 0.10f * g * Math.max(-lav, 0f), 1f - 0.16f * g + 0.06f * g * Math.max(-lav, 0f), 1f + 0.30f * g * (1f + 1.6f * Math.min(lav, 0f)));
         p.set1f("u_PixelAngle", 2f / (projection.m11() * cloudH));
         p.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
         p.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
