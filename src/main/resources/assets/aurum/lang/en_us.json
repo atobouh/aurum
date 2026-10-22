@@ -182,6 +182,6 @@
   "aurum.option.sky_saturation": "Sky saturation",
   "aurum.option.sky_saturation.tooltip": "Pale, near-white sky or deep, rich blue.",
   "aurum.option.sky_lavender": "Sky tint",
-  "aurum.option.sky_lavender.tooltip": "Teal (left) or lavender-pink (right) sky.",
+  "aurum.option.sky_lavender.tooltip": "Golden (left) or lavender-pink (right) sky, strongest at sunrise and sunset.",
   "aurum.unit.plain": "%s"
 }

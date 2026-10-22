@@ -44,10 +44,10 @@ public enum LookPreset {
         switch (this) {
             case AIRY -> {
                 // Measured: L 0.55-0.59, saturation 0.18-0.26, warmth ~0, near-white sky, heavy haze.
-                c.exposure = 108;
-                c.saturation = 78;
+                c.exposure = 102;
+                c.saturation = 80;
                 c.vibrance = 100;
-                c.contrast = 104;
+                c.contrast = 110;
                 c.skySaturation = 62;
                 c.sunsetIntensity = 80;
                 c.horizonWarmth = 85;
@@ -66,7 +66,7 @@ public enum LookPreset {
                 c.contrast = 108;
                 c.temperature = 3;
                 c.skySaturation = 92;
-                c.skyLavender = -22;
+                c.skyLavender = -30;
                 c.sunsetIntensity = 175;
                 c.horizonWarmth = 160;
                 c.fogStrength = 75;
@@ -88,14 +88,14 @@ public enum LookPreset {
             }
             case VIVID -> {
                 // Measured: L 0.37-0.48, cool (-0.03 to -0.07), saturated blue sky, sunsets +0.30, strong bloom.
-                c.exposure = 92;
-                c.saturation = 108;
-                c.vibrance = 118;
-                c.contrast = 96;
+                c.exposure = 88;
+                c.saturation = 106;
+                c.vibrance = 115;
+                c.contrast = 110;
                 c.temperature = -8;
                 c.shadeWarmth = -12;
                 c.skySaturation = 128;
-                c.skyLavender = -14;
+                c.skyLavender = -32;
                 c.sunsetIntensity = 130;
                 c.horizonWarmth = 125;
                 c.fogStrength = 90;
