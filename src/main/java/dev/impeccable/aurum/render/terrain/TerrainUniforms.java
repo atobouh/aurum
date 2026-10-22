@@ -23,7 +23,7 @@ public final class TerrainUniforms {
             "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams",
             "u_ShadowMapPrev", "u_ShadowMatrixPrev",
             "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
-            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone"
+            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -37,6 +37,7 @@ public final class TerrainUniforms {
     public static final int UNIT_OPAQUE_COLOR = 11;
     /** Above GlStateManager's 12 tracked units: bound with raw GL. */
     public static final int UNIT_WATER_NORMAL = 12;
+    public static final int UNIT_PBR = 13;
 
     private static final float[] matrix = new float[16];
 
@@ -114,12 +115,23 @@ public final class TerrainUniforms {
         GL20C.glUniform4f(loc[22], entities ? 1f : 0f, EntityShadows.inverseResolution(), 0f, 0f);
         GlUtil.bindTexture(UNIT_ENTITY_SHADOW, entities ? EntityShadows.texture() : ShadowRenderer.frontTexture());
 
+        // Sky table and sun direction: water reflections and PBR sky reflections, every pass.
+        GL20C.glUniform1i(loc[26], UNIT_SKY_LUT);
+        GL20C.glUniform1f(loc[27], Atmosphere.skyGrade());
+        GL20C.glUniform4f(loc[34], Atmosphere.skyTone[0], Atmosphere.skyTone[1], 0f, 0f);
+        GL20C.glUniform3f(loc[33], Atmosphere.sunDir[0], Atmosphere.sunDir[1], Atmosphere.sunDir[2]);
+        GlUtil.bindTexture(UNIT_SKY_LUT, dev.impeccable.aurum.sky.SkyState.texture());
+
+        // LabPBR: specular and emission whenever pack data exists; parallax (3D blocks) only in opaque passes.
+        boolean pbr = c.labPbr && dev.impeccable.aurum.bake.AtlasBaker.packHasPbr;
+        GL20C.glUniform1i(loc[35], UNIT_PBR);
+        float pomDepth = pbr && c.pomEnabled && !translucent ? 0.25f * c.pomDepth / 100f : 0f;
+        GL20C.glUniform4f(loc[36], pbr ? 1f : 0f, pomDepth, (float) c.pomDistance, pbr ? 2.5f : 0f);
+        GlUtil.bindTextureHigh(UNIT_PBR, AurumTextures.pbrAtlas());
+
         boolean water = translucent && WaterPass.captured && dev.impeccable.aurum.sky.SkyState.current() != null;
         GL20C.glUniform1i(loc[25], water ? 1 : 0);
         if (water) {
-            GL20C.glUniform1i(loc[26], UNIT_SKY_LUT);
-            GL20C.glUniform1f(loc[27], Atmosphere.skyGrade());
-            GL20C.glUniform4f(loc[34], Atmosphere.skyTone[0], Atmosphere.skyTone[1], 0f, 0f);
             GL20C.glUniform1i(loc[28], UNIT_OPAQUE_DEPTH);
             GL20C.glUniform1i(loc[29], UNIT_OPAQUE_COLOR);
             GL20C.glUniform1i(loc[30], UNIT_WATER_NORMAL);
@@ -130,9 +142,7 @@ public final class TerrainUniforms {
             double t = WaterPass.time();
             GL20C.glUniform4f(loc[32], (float) ((t * 0.045) % 1.0), (float) ((t * 0.018) % 1.0),
                     (float) ((t * -0.040) % 1.0), (float) ((t * 0.055) % 1.0));
-            GL20C.glUniform3f(loc[33], Atmosphere.sunDir[0], Atmosphere.sunDir[1], Atmosphere.sunDir[2]);
             GlUtil.bindTexture(UNIT_OPAQUE_DEPTH, WaterPass.depthTexture());
-            GlUtil.bindTexture(UNIT_SKY_LUT, dev.impeccable.aurum.sky.SkyState.texture());
             GlUtil.bindTexture(UNIT_OPAQUE_COLOR, WaterPass.colorTexture());
             GlUtil.bindTextureHigh(UNIT_WATER_NORMAL, AurumTextures.waterNormal());
         }

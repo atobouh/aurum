@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 6;
+    public int configVersion = 7;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -44,7 +44,7 @@ public final class AurumConfig {
     public int aoBoost = 50;
     public boolean normalsEnabled = true;
     public int normalStrength = 50;
-    public boolean labPbr = false;
+    public boolean labPbr = true;
 
     // Waving plants
     public boolean wavingEnabled = true;
@@ -99,7 +99,7 @@ public final class AurumConfig {
     // POM (High tier)
     public boolean pomEnabled = false;
     public int pomDepth = 100;
-    public int pomDistance = 12;
+    public int pomDistance = 24;
 
     // Colour grade
     public Tonemap tonemap = Tonemap.FILMIC;
@@ -195,12 +195,19 @@ public final class AurumConfig {
             if (preset == Preset.LOW) waterReflections = false;
             configVersion = 6;
         }
+        if (configVersion < 7) {
+            // 0.5.0: LabPBR on for every preset; 3D blocks (parallax) on Medium and High.
+            labPbr = true;
+            if (preset == Preset.MEDIUM || preset == Preset.HIGH) pomEnabled = true;
+            pomDistance = 24;
+            configVersion = 7;
+        }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;
             default -> 1024;
         };
         shadowDistance = clamp(shadowDistance, 2, 8);
-        pomDistance = clamp(pomDistance, 4, 16);
+        pomDistance = clamp(pomDistance, 8, 48);
         cloudHeight = clamp(cloudHeight, 0, 160);
         cloudSpeed = clamp(cloudSpeed, 0, 300);
         return this;

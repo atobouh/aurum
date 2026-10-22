@@ -56,7 +56,7 @@ void main() {
 #ifdef USE_FRAGMENT_DISCARD
     // Plants and leaves live in the cutout pass; solid terrain never pays for the material lookup.
     if (u_AurumMode >= 1) {
-        int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5);
+        int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5) & 15; // low bits: material
         v_Material = id;
         if (u_AurumMode == 2 && id != 0 && id != MAT_LEAVES && id != MAT_VINE) {
             // Shadow pass: grass, flowers and crops never cast shadows (cheap and they would only add noise).

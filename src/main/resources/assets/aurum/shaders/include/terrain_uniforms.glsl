@@ -19,3 +19,8 @@ uniform vec4 u_WindParams;        // xy wind direction (xz plane), z strength (0
 uniform vec2 u_GustOffset;        // gust field offset in blocks, already wrapped to the noise period
 uniform vec3 u_CameraMod;         // camera position modulo 256 blocks, keeps world phases precise and seamless
 uniform sampler2D u_NoiseTex;     // 64x64 tiling value noise, one texel = 4 blocks
+
+// LabPBR (resource-pack material data, see AtlasBaker)
+uniform sampler2D u_PbrTex;       // r smoothness, g F0 / metal, b emission, a height
+uniform vec4 u_PbrParams;         // x specular on, y parallax depth (blocks, 0 = off), z parallax distance, w emission strength
+uniform vec3 u_SunDirW;           // direction toward the sun, world space

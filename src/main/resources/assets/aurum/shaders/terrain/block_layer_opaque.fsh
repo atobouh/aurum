@@ -7,8 +7,9 @@
 #import <aurum:include/terrain_uniforms.glsl>
 #import <aurum:include/tonemap.glsl>
 #import <aurum:include/shadow.glsl>
-#import <aurum:include/lighting.glsl>
 #import <aurum:include/sky_lut.glsl>
+#import <aurum:include/pbr.glsl>
+#import <aurum:include/lighting.glsl>
 #import <aurum:include/water.glsl>
 
 in vec4 v_Color;
@@ -32,7 +33,11 @@ uniform float u_FogEnd;
 out vec4 fragColor;
 
 void main() {
-    vec4 diffuseColor = texture(u_BlockTex, v_TexCoord, v_MaterialMipBias);
+    // 3D blocks: move the texture lookup along the pack's height map (Aurum lighting only, opaque passes).
+    vec2 uv = v_TexCoord;
+    if (u_AurumMode == 1 && u_AurumPass == 0) uv = aurum_parallax(v_TexCoord, v_Position);
+    vec4 diffuseColor = uv == v_TexCoord ? texture(u_BlockTex, v_TexCoord, v_MaterialMipBias)
+                                         : textureGrad(u_BlockTex, uv, dFdx(v_TexCoord), dFdy(v_TexCoord));
 
 #ifdef USE_FRAGMENT_DISCARD
     if (diffuseColor.a < v_MaterialAlphaCutoff) {
@@ -55,13 +60,13 @@ void main() {
 
     if (u_AurumPass == 1) {
         // Translucent pass: water sprites get Aurum water; glass, ice and the rest keep the normal lighting.
-        int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5);
+        int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5) & 15;
         if (id == 9) {
             fragColor = vec4(aurum_shadeWater(diffuseColor, v_Color, v_LightCoord, v_Position), 1.0);
             return;
         }
     }
 
-    vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, v_MaterialMipBias, v_Material);
+    vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, uv, v_MaterialMipBias, v_Material);
     fragColor = vec4(lit, diffuseColor.a);
 }

@@ -10,7 +10,8 @@ bool aurum_isFoliage(int material) {
     return material == 1 || material == 2 || material == 3 || material == 6 || material == 7 || material == 8;
 }
 
-vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec2 uv, float mipBias, int material) {
+// uv drives derivatives (tangent frame, mips); suv is where to sample (moved by parallax, else equal to uv).
+vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec2 uv, vec2 suv, float mipBias, int material) {
     vec3 albedo = pow(tex.rgb * vertexColor.rgb, vec3(2.2));
 
     // Face normal from screen-space derivatives (Sodium has no vertex normals). Flip to face the camera.
@@ -28,9 +29,14 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     vec3 n = ng;
     float coating = 0.0;
     if (u_TerrainParams.x > 0.0 && !foliage) {
-        vec4 nt = texture(u_NormalTex, uv, mipBias);
+        vec4 nt = suv == uv ? texture(u_NormalTex, uv, mipBias) : textureGrad(u_NormalTex, suv, dFdx(uv), dFdy(uv));
         vec3 ts = normalize(vec3((nt.rg * 2.0 - 1.0) * u_TerrainParams.x, 1.0));
         coating = nt.b - 0.5;
+        if ((aurum_atlasFlags(suv) & 0x40) != 0) {
+            // Resource-pack data: B is the pack's ambient occlusion, not a coating variation.
+            ao *= mix(1.0, nt.b, 0.8);
+            coating = 0.0;
+        }
         // Cotangent frame from position and UV derivatives: works for any face orientation and texture rotation.
         vec2 duvx = dFdx(uv);
         vec2 duvy = dFdy(uv);
@@ -83,5 +89,15 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     vec3 light = (direct + ambient) * ao + u_BlockLightColor * (blockBrightness * ao) + vec3(u_TerrainParams.z);
 
     vec3 color = albedo * light * (1.0 + coating * 0.08);
+    if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {
+        vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv), dFdy(uv));
+        if (pbr.r > 0.004 || pbr.g > 0.05) {
+            float diffuseScale = 1.0;
+            vec3 spec = aurum_pbrSpecular(albedo, pbr, n, pos, ndl > 0.0 ? directVis : 0.0, skyVis, diffuseScale);
+            color = color * diffuseScale + spec * ao;
+        }
+        // Emission (glowing ores, lamps): the texture glows in its own colour, picked up by bloom.
+        color += albedo * pbr.b * u_PbrParams.w * u_BlockLightColor.r;
+    }
     return aurum_tonemap(color);
 }

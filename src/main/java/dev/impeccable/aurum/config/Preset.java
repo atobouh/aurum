@@ -13,7 +13,8 @@ public enum Preset {
         boolean high = this == HIGH;
 
         c.normalStrength = medium ? 100 : 50;
-        c.labPbr = medium;
+        // LabPBR data is used whenever the resource pack has it (cheap); 3D blocks from Medium up.
+        c.labPbr = true;
 
         // Bloom is cheap (1/4 resolution and below) and is most of the golden-hour gap, so every tier has it.
         c.bloomEnabled = true;
@@ -26,7 +27,7 @@ public enum Preset {
         // Terrain reflections in water (screen-space) on Medium and High; Low reflects the sky only.
         c.waterReflections = medium;
 
-        c.pomEnabled = high;
+        c.pomEnabled = medium;
 
         c.cloudsFullRes = high;
     }

@@ -13,7 +13,6 @@ uniform sampler2D u_OpaqueColor;
 uniform sampler2D u_WaterNormalTex; // tiling ripples: rg slope, b height
 uniform vec4 u_WaterParams;        // xy 1 / framebuffer size, z screen-space reflections on, w wave strength
 uniform vec4 u_WaterScroll;        // ripple layer offsets (tile units, wrapped)
-uniform vec3 u_SunDirW;            // direction toward the sun, world space
 uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_ModelViewMatrix;
 
