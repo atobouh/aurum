@@ -25,7 +25,7 @@ import org.lwjgl.opengl.GL30C;
  * <ol>
  *   <li>Clouds, blocky or soft style, at 1/2 or full resolution (replace vanilla's clouds).</li>
  *   <li>God rays at 1/4 resolution: open-sky mask, then a radial blur toward the sun; and volumetric light, the
- *       sunlit share of the air along each ray from the shadow map (1/2 resolution).</li>
+ *       sunlit share of the air along each ray from the shadow map (1/4 resolution).</li>
  *   <li>Lens-flare occlusion into one texel, read directly by the composite (no CPU readback).</li>
  *   <li>Bloom: threshold to 1/4, dual-filter down to 1/32 and back up to 1/4.</li>
  * </ol>
@@ -166,11 +166,11 @@ public final class SkyExtras {
         // 2b. Volumetric light from the shadow map: beams through trees, past islands and into caves, also with
         // the sun off-screen. Not faded in caves (that is where a beam from an opening looks best).
         volumetricStrength = c.godRaysEnabled && ShadowRenderer.usable()
-                ? c.godRayStrength / 100f * 1.0f * (0.6f + 0.4f * Math.max(Atmosphere.golden, FogDirector.enclosed)) * sunUp * (1f - 0.7f * rain) : 0f;
+                ? c.godRayStrength / 100f * (0.5f + 0.5f * Math.max(Atmosphere.golden, FogDirector.enclosed)) * sunUp * (1f - 0.7f * rain) : 0f;
         ShaderProgram vl = ShaderManager.get("post/volumetric");
         if (volumetricStrength > 0.002f && vl != null) {
             GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, vlFbo);
-            GlStateManager._viewport(0, 0, halfW, halfH);
+            GlStateManager._viewport(0, 0, quarterW, quarterH);
             vl.bind();
             vl.set1i("u_Depth", UNIT_A);
             vl.set1i("u_ShadowMap", UNIT_B);
@@ -385,10 +385,11 @@ public final class SkyExtras {
         maskFbo = fbo(maskTex);
         raysTex = GlUtil.createTexture(GL30C.GL_R8, quarterW, quarterH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         raysFbo = fbo(raysTex);
-        // Half resolution: quarter was too coarse for crisp beam edges.
         halfW = Math.max(1, w / 2);
         halfH = Math.max(1, h / 2);
-        vlTex = GlUtil.createTexture(GL30C.GL_RG8, halfW, halfH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
+        // Quarter resolution: with realistic density the beams are soft, and the edge-aware upscale keeps
+        // silhouettes clean; a quarter of the cost of 0.3.3-0.4.0's half resolution.
+        vlTex = GlUtil.createTexture(GL30C.GL_RG8, quarterW, quarterH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         vlFbo = fbo(vlTex);
         aoTex = GlUtil.createTexture(GL30C.GL_RG8, halfW, halfH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         aoFbo = fbo(aoTex);

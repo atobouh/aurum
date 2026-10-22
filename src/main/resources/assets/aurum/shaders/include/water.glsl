@@ -152,8 +152,23 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     if (ng.y > 0.3 && sunUp > 0.0) {
         vec3 L = u_LightDir;
         vec3 H = normalize(L - V);
+        // Glitter (Photon's signature): the sun catches thousands of tiny, steep wave facets. Two very fine
+        // layers (1 and 0.5 blocks per tile) tilt a separate glint normal much more than the visible ripples,
+        // so the highlight shatters into bright points spread over a wide path. Faded with distance (the
+        // texture's mips smooth them anyway) so far water keeps a clean path instead of noise.
+        // Sampled on skewed grids (integer matrices: still exactly periodic over 256 blocks) so the facets never
+        // line up into a visible grid of dots.
+        float sparkleFade = 1.0 / (1.0 + dist * 0.03);
+        vec2 s1 = vec2(3.0 * wp.x + wp.z, 3.0 * wp.z - wp.x) / 4.0;
+        vec2 s2 = vec2(2.0 * wp.x - 3.0 * wp.z, 3.0 * wp.x + 2.0 * wp.z) / 3.0;
+        vec2 g1 = texture(u_WaterNormalTex, s1 + u_WaterScroll.wz * 2.3).rg * 2.0 - 1.0;
+        vec2 g2 = texture(u_WaterNormalTex, s2 + u_WaterScroll.xy * 3.1).rg * 2.0 - 1.0;
+        // Facets steep enough to catch the sun across a wide field around its reflection, as in Photon.
+        vec2 gs = (g1 * 0.32 + vec2(g2.y, -g2.x) * 0.26) * sparkleFade * u_WaterParams.w;
+        vec3 ns = normalize(n + vec3(-gs.x, 0.0, -gs.y));
         float nh = max(dot(n, H), 0.0);
-        float spec = pow(nh, 2400.0) * 60.0 + pow(nh, 260.0) * 1.2;
+        float nhs = max(dot(ns, H), 0.0);
+        float spec = pow(nhs, 2200.0) * 110.0 * sparkleFade + pow(nh, 1800.0) * 20.0 + pow(nh, 220.0) * 1.0;
         vec2 sh = aurum_shadow(pos, ng);
         float lit = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
         vec3 glint = u_LightColor * spec * lit * fresnel * 6.0;

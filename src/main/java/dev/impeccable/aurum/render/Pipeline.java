@@ -31,8 +31,9 @@ public final class Pipeline {
                         .formatted(Formatting.RED)));
     }
 
+    /** True when Aurum renders this frame: started fine and switched on by the player (F6 or the settings). */
     public static boolean isActive() {
-        return state == State.ACTIVE;
+        return state == State.ACTIVE && dev.impeccable.aurum.config.AurumConfig.get().enabled;
     }
 
     public static State state() {

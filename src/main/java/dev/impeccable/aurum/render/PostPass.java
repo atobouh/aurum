@@ -175,7 +175,8 @@ public final class PostPass {
         float[] ss = SkyExtras.sunScreen;
         comp.set4f("u_SunScreen", ss[0], ss[1], ss[2], ss[3]);
         comp.set4f("u_Extras", SkyExtras.rayStrength, SkyExtras.bloomStrength, SkyExtras.flareStrength, SkyExtras.volumetricStrength);
-        comp.set4f("u_Volumetric2", dev.impeccable.aurum.render.shadow.ShadowRenderer.range() * 0.95f, FogDirector.enclosed, 0f, 0f);
+        comp.set4f("u_Volumetric2", dev.impeccable.aurum.render.shadow.ShadowRenderer.range() * 0.95f, FogDirector.enclosed,
+                Math.min(1f, FogDirector.distanceDensity / 0.0015f), 0f);
         comp.setMatrix("u_InvProj", invProj);
         comp.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;

@@ -19,7 +19,7 @@ uniform sampler2D u_Flare;    // 1x1, visible share of the sun disc
 uniform sampler2D u_Volumetric; // half resolution: r sunlit share of the air, g distance covered / range
 uniform sampler2D u_Ao;     // half resolution: r ambient occlusion, g distance / range
 uniform vec4 u_AoParams;    // x strength, y range (blocks)
-uniform vec4 u_Volumetric2;    // x range (blocks), y enclosed (0 open sky .. 1 cave or room)
+uniform vec4 u_Volumetric2;    // x range (blocks), y enclosed (0 open sky .. 1 cave or room), z haze (0..1)
 
 uniform mat4 u_InvProj;
 uniform mat4 u_InvView;     // rotation only, view -> world
@@ -240,22 +240,19 @@ void main() {
             // Volumetric light: glow from the sunlit air in front of terrain. Shadowed air adds nothing, so tree
             // and terrain shadows cut dark lanes into the glow: beams. Not over the sky, whose colour already
             // contains this light (adding it again washed the sky out around the sun).
+            // Single scattering with a realistic air density (0.4.1): clear air scatters ~1.5% per lit block,
+            // hazier air (golden hour, rain, fog) more, caves and rooms much more. 0.4.0 used ~10x too much, so the
+            // shadow lanes of hills and houses turned into heavy, blurry stripes over everything near the player
+            // (user screenshots). Now open land gets a faint glow and the beams only stand out where they should:
+            // toward a low sun, in haze, and from openings into dark spaces.
             vec2 v = vl;
             float cave = u_Volumetric2.y;
+            float density = 0.015 * (1.0 + 3.0 * u_Volumetric2.z) * (1.0 + 7.0 * cave);
             float litBlocks = v.r * v.g * u_Volumetric2.x;
-            // Enclosed spaces get denser scattering: a beam from an opening into a dark cave.
-            float glow = 1.0 - exp(-litBlocks * 0.16 * (1.0 + cave));
-            // In enclosed spaces light from the beam also scatters into the surrounding haze.
-            glow += cave * 0.25 * (1.0 - exp(-litBlocks * 0.02));
-            // Broad phase: beams through a canopy must show when looking across them under a high sun, not
-            // only when looking into the sun (0.3.1 was almost all forward lobe and vanished from the side).
-            float phase = 0.45 + 0.45 * toSun * toSun + 1.2 * pow(toSun, 6.0) + 0.6 * pow(toSun, 40.0) + 0.8 * cave;
-            // Beams are the contrast between lit and shadowed air. Where the whole ray is sunlit (open fields)
-            // the glow is only a light veil; where shadow fills most of the ray (under trees, in caves) the few
-            // lit stretches are the beams and keep full strength.
-            glow *= mix(1.0, 0.02, smoothstep(0.3, 0.9, v.r));
-            // Capped: right next to the sun the lobes made a hazy blob over nearby trees.
-            scene += rayColor * min(glow * phase * u_Extras.w, 0.35);
+            float glow = 1.0 - exp(-litBlocks * density);
+            // Mie-like phase: mostly toward the sun; a small all-round part, larger in caves (beam seen from the side).
+            float phase = 0.25 + 1.1 * pow(toSun, 8.0) + 0.5 * pow(toSun, 40.0) + 1.5 * cave;
+            scene += rayColor * min(glow * phase * u_Extras.w, 0.25);
         }
         if (u_Extras.x > 0.0) {
             // Screen-space shafts, over open sky only: streaks through cloud gaps and past the edges of hills and
@@ -265,7 +262,8 @@ void main() {
             float rays = texture(u_Rays, v_Uv).r;
             float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
             float openSky = (depth >= 1.0 ? 1.0 : 0.0) * (1.0 - texture(u_Clouds, v_Uv).a);
-            scene += rayColor * (rays * rays * rays) * exp(-r * 2.2) * openSky * u_Extras.x;
+            // Rays start a little away from the sun: piled up on its face they only blow it out to white.
+            scene += rayColor * (rays * rays * rays) * exp(-r * 2.2) * smoothstep(0.02, 0.14, r) * openSky * u_Extras.x;
         }
     }
     if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;

@@ -25,6 +25,14 @@ public class AurumSettingsScreen extends Screen {
         int center = this.width / 2;
         int y = 40;
 
+        this.addDrawableChild(CyclingButtonWidget.onOffBuilder(c.enabled)
+                .tooltip(v -> Tooltip.of(Text.translatable("aurum.option.enabled.tooltip")))
+                .build(center - 155, y, 310, 20, Text.translatable("aurum.option.enabled"), (button, v) -> {
+                    c.enabled = v;
+                    AurumConfig.save();
+                }));
+        y += 24;
+
         this.addDrawableChild(CyclingButtonWidget.<Preset>builder(p -> Text.translatable("aurum.preset." + p.name().toLowerCase()))
                 .values(Preset.LOW, Preset.MEDIUM, Preset.HIGH, Preset.CUSTOM)
                 .initially(c.preset)

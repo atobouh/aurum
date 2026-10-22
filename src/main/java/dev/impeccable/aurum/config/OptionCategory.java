@@ -27,6 +27,8 @@ public enum OptionCategory {
         return switch (this) {
             case SKY -> new SimpleOption<?>[]{
                     bool("sky_enabled", c.skyEnabled, v -> c.skyEnabled = v),
+                    choice("sun_shape", List.of(SunShape.values()), c.sunShape,
+                            v -> Text.translatable("aurum.sun_shape." + v.name().toLowerCase()), v -> c.sunShape = v),
                     percent("sunset_intensity", 0, 200, () -> c.sunsetIntensity, v -> c.sunsetIntensity = v),
                     percent("horizon_warmth", 0, 200, () -> c.horizonWarmth, v -> c.horizonWarmth = v),
                     percent("rain_desaturation", 0, 100, () -> c.rainDesaturation, v -> c.rainDesaturation = v),

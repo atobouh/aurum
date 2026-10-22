@@ -87,3 +87,8 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Screen-space reflections of terrain in water on Medium/High (spec had SSR out of scope) | Accepted with the water proposal; Low keeps sky-only reflections |
 | 2026-10-22 | Translucent program detected from Sodium's pass (reverse order) in the shader-interface mixin; water from a material id (9) in the atlas | One program, no new vertex data |
 | 2026-10-22 | Ripple normal map bound on texture unit 12 with raw GL | GlStateManager tracks only 12 units and throws above them |
+| 2026-10-22 | Volumetric light: realistic single-scattering density (1.5%/lit block clear air, x4 haze, x8 caves), small all-round phase, 1/4 resolution, 12 steps | User: blurry radial stripes and a foggy veil over nearby shadows; 0.4.0's density was ~10x too high |
+| 2026-10-22 | Water glitter: separate glint normal from two very fine ripple layers on skewed integer grids | User: Photon's glitter sold the style; a single axis-aligned fine layer showed a dot grid |
+| 2026-10-22 | Sun shape option: round or square (Minecraft-style, crisp core, square halo, reduced tight glow); screen rays start away from the sun's face | User reference: a square sun from a video |
+| 2026-10-22 | Master on/off (F6 and settings) | User request; off = Sodium visuals with no Aurum passes, for A/B looks and FPS |
+| 2026-10-22 | No underwater work | User: not wanted; underwater keeps the vanilla path |

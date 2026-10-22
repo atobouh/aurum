@@ -1,3 +1,19 @@
+# Testing: 0.4.1
+
+Fixes and additions after your 0.4.0 report:
+
+- **Foggy blur and radial stripes near you are gone.** The light-in-the-air effect now uses a realistic air
+  density: faint in clear air, stronger in haze and golden hour, strong only for beams into caves and rooms.
+  It is also cheaper (quarter resolution).
+- **Glitter:** the sun now shatters into many sparkles on the water, as in Photon (best with a high sun,
+  looking down at the water).
+- **Square sun:** F7 > Sky > Sun shape: Round or Square.
+- **Aurum on/off:** F6, or the top button in F7. Off is plain Sodium, handy for comparing looks and FPS.
+
+Please check: the spots from your screenshots (sun behind the house and the hill), water at midday with the sun
+in front of you, and the square sun at sunset. For FPS, compare F6 on and off in the same spot, and send the F8
+numbers from both.
+
 # Testing: water (0.4.0)
 
 New in 0.4.0, Photon-style water:

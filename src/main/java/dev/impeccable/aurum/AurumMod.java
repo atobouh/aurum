@@ -43,6 +43,7 @@ public class AurumMod implements ClientModInitializer {
 
     private static KeyBinding settingsKey;
     private static KeyBinding overlayKey;
+    private static KeyBinding toggleKey;
 
     @Override
     public void onInitializeClient() {
@@ -53,10 +54,20 @@ public class AurumMod implements ClientModInitializer {
                 new KeyBinding("key.aurum.settings", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F7, "key.categories.aurum"));
         overlayKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding("key.aurum.overlay", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.aurum"));
+        toggleKey = KeyBindingHelper.registerKeyBinding(
+                new KeyBinding("key.aurum.toggle", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F6, "key.categories.aurum"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (settingsKey.wasPressed()) {
                 client.setScreen(new AurumSettingsScreen(client.currentScreen));
+            }
+            while (toggleKey.wasPressed()) {
+                AurumConfig c = AurumConfig.get();
+                c.enabled = !c.enabled;
+                AurumConfig.save();
+                if (client.player != null) {
+                    client.player.sendMessage(net.minecraft.text.Text.translatable(c.enabled ? "aurum.toggle.on" : "aurum.toggle.off"), true);
+                }
             }
             while (overlayKey.wasPressed()) {
                 AurumConfig.get().showOverlay = !AurumConfig.get().showOverlay;

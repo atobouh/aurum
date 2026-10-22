@@ -26,9 +26,12 @@ public final class AurumConfig {
 
     public int configVersion = 6;
     public Preset preset = Preset.LOW;
+    /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
+    public boolean enabled = true;
 
     // Sky
     public boolean skyEnabled = true;
+    public SunShape sunShape = SunShape.ROUND;
     public int sunsetIntensity = 100;
     public int horizonWarmth = 100;
     public int rainDesaturation = 70;
@@ -150,6 +153,7 @@ public final class AurumConfig {
         if (preset == null) preset = Preset.LOW;
         if (tonemap == null) tonemap = Tonemap.FILMIC;
         if (cloudStyle == null) cloudStyle = CloudStyle.BLOCKY;
+        if (sunShape == null) sunShape = SunShape.ROUND;
         if (configVersion < 2) {
             // 0.1.0 shipped a grade that crushed blue (AgX + extra saturation). Move everyone to the new look.
             AurumConfig d = new AurumConfig();

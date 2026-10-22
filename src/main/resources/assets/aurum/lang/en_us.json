@@ -151,5 +151,14 @@
   "aurum.option.cloud_speed": "Cloud speed",
   "aurum.option.cloud_speed.tooltip": "How fast the clouds drift. 100% is three times vanilla's speed.",
   "aurum.option.clouds_pack_shapes": "Resource pack cloud shapes",
-  "aurum.option.clouds_pack_shapes.tooltip": "Off: Aurum's own cloud clusters. On: the layout from your resource pack's clouds.png (vanilla's long streaks)."
+  "aurum.option.clouds_pack_shapes.tooltip": "Off: Aurum's own cloud clusters. On: the layout from your resource pack's clouds.png (vanilla's long streaks).",
+  "aurum.option.sun_shape": "Sun shape",
+  "aurum.option.sun_shape.tooltip": "Round: a soft round disc. Square: a crisp Minecraft-style square sun with a soft square glow.",
+  "aurum.sun_shape.round": "Round",
+  "aurum.sun_shape.square": "Square",
+  "key.aurum.toggle": "Turn Aurum on/off",
+  "aurum.option.enabled": "Aurum",
+  "aurum.option.enabled.tooltip": "Turns all of Aurum's visuals on or off (also F6). Off is plain Sodium, for comparing looks and FPS.",
+  "aurum.toggle.on": "Aurum: on",
+  "aurum.toggle.off": "Aurum: off (vanilla visuals)"
 }
