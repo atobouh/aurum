@@ -183,5 +183,7 @@
   "aurum.option.sky_saturation.tooltip": "Pale, near-white sky or deep, rich blue.",
   "aurum.option.sky_lavender": "Sky tint",
   "aurum.option.sky_lavender.tooltip": "Golden (left) or lavender-pink (right) sky, strongest at sunrise and sunset.",
-  "aurum.unit.plain": "%s"
+  "aurum.unit.plain": "%s",
+  "aurum.option.pom_generated": "3D for all textures",
+  "aurum.option.pom_generated.tooltip": "Gives every solid block pixel 3D from its own texture where your resource pack has no height map (wood, modded blocks). Applies after F3+T or a pack reload."
 }

@@ -102,3 +102,4 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Voxel parallax: 2D DDA over the height texels, wall normals, self-shadow toward the light; on all presets (Low 16 blocks, Medium 24, High 32) | Seraphic's trailer look: every pixel a tiny lit cube; smooth POM smeared the steps |
 | 2026-10-22 | Parallax tile wrap via floor division (GLSL % is undefined for negatives) | Relief missing on faces depending on orientation/position (user) |
 | 2026-10-22 | PBR reflections: roughness-aware Fresnel (exponent 4), sky + block-light reflections, x2, scaled by the Gloss (sheen) slider | Gloss invisible in 0.5.x (user) |
+| 2026-10-22 | Generated relief (height from texel brightness, 16 % range) for opaque textures without pack height maps; option "3D for all textures", on | User: wood and many textures had no effect (Seraphic for 1.20.1 covers ~150 textures; modded blocks none) |

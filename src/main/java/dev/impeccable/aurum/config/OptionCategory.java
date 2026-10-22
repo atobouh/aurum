@@ -97,6 +97,7 @@ public enum OptionCategory {
             };
             case POM -> new SimpleOption<?>[]{
                     bool("pom_enabled", c.pomEnabled, v -> c.pomEnabled = v),
+                    bool("pom_generated", c.pomGenerated, v -> c.pomGenerated = v),
                     percent("pom_depth", 0, 200, () -> c.pomDepth, v -> c.pomDepth = v),
                     ranged("pom_distance", 8, 48, "aurum.unit.blocks", () -> c.pomDistance, v -> c.pomDistance = v),
             };

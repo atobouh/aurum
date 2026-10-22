@@ -1,3 +1,10 @@
+# Testing: 0.5.3
+
+- **3D for all textures** (F7 > POM, on): blocks your PBR pack has no height map for (wood, modded blocks) get
+  pixel relief generated from their own texture. The pack's real maps still win where they exist.
+- Note: the 1.20.1 build of Seraphic ("Elys PBR R1") only covers ~150 textures; the newer R4 covers ~1,900 and is
+  much richer (it is marked incompatible on 1.20.1 but loads fine when you confirm).
+
 # Testing: 0.5.2
 
 - Pixel 3D now works on every face, in every direction (walls, floors, ceilings).

@@ -41,6 +41,8 @@ public final class AtlasBaker {
     private static int width, height;
     /** True when the loaded resource packs ship LabPBR data for at least one block texture. */
     public static boolean packHasPbr;
+    /** Generated relief was baked in (any texture can show 3D). */
+    public static boolean generatedRelief;
 
     /** Atlas texels per block-atlas texel: above 1 when the resource pack's PBR maps are more detailed. */
     public static int scale = 1;
@@ -93,6 +95,7 @@ public final class AtlasBaker {
             });
         }
         packHasPbr = !pack.isEmpty();
+        generatedRelief = dev.impeccable.aurum.config.AurumConfig.get().pomGenerated;
 
         // Many PBR packs ship 4x more detailed normal maps than the 16x textures they pair with (Seraphic: 64x
         // normals over vanilla colours). Resampling them down to 16x threw that detail away, so the atlases are
@@ -140,6 +143,9 @@ public final class AtlasBaker {
             if (m != null) flags |= 0x40;
             bakeSprite(src, dst, fw, fk, sprite.getX(), sprite.getY(), sw, sh, flags, m, flipY);
             if (m != null) bakePbr(pbr, fw * fk, sprite.getX() * fk, sprite.getY() * fk, sw * fk, sh * fk, m);
+            if ((m == null || m.normal == null) && material == 0 && generatedRelief) {
+                bakeGeneratedHeight(src, pbr, fw, fk, sprite.getX(), sprite.getY(), sw, sh);
+            }
         });
 
         int levels = Math.max(0, maxLevel) + Integer.numberOfTrailingZeros(k);
@@ -219,6 +225,35 @@ public final class AtlasBaker {
                 dst.put(o + 1, (byte) Math.round((sy * 0.5f + 0.5f) * 255f));
                 dst.put(o + 2, (byte) coat);
                 dst.put(o + 3, (byte) flags);
+            }
+        }
+    }
+
+    /**
+     * Relief for textures the resource pack has no height map for (most modded blocks, and blocks a partial PBR
+     * pack skips): each texel's height from its brightness within the texture, darker = deeper, over a shallow
+     * range like hand-made packs (Seraphic: about 15 %). Fully opaque textures only (no glass, leaves, plants).
+     */
+    private static void bakeGeneratedHeight(ByteBuffer src, ByteBuffer pbr, int atlasWidth, int k, int x0, int y0, int sw, int sh) {
+        float[] lum = new float[sw * sh];
+        float lo = 1f, hi = 0f;
+        for (int y = 0; y < sh; y++) {
+            for (int x = 0; x < sw; x++) {
+                int i = ((y0 + y) * atlasWidth + (x0 + x)) * 4;
+                if ((src.get(i + 3) & 0xFF) < 250) return;
+                float l = (0.2126f * (src.get(i) & 0xFF) + 0.7152f * (src.get(i + 1) & 0xFF) + 0.0722f * (src.get(i + 2) & 0xFF)) / 255f;
+                lum[y * sw + x] = l;
+                lo = Math.min(lo, l);
+                hi = Math.max(hi, l);
+            }
+        }
+        if (hi - lo < 0.04f) return; // flat-coloured texture: nothing to raise
+        int dw = atlasWidth * k;
+        for (int Y = 0; Y < sh * k; Y++) {
+            for (int X = 0; X < sw * k; X++) {
+                float t = (lum[(Y / k) * sw + X / k] - lo) / (hi - lo);
+                int height = Math.round(255f * (1f - 0.16f * (1f - t)));
+                pbr.put(((y0 * k + Y) * dw + (x0 * k + X)) * 4 + 3, (byte) height);
             }
         }
     }

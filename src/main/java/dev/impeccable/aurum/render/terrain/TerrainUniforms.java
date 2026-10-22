@@ -124,8 +124,9 @@ public final class TerrainUniforms {
 
         // LabPBR: specular and emission whenever pack data exists; parallax (3D blocks) only in opaque passes.
         boolean pbr = c.labPbr && dev.impeccable.aurum.bake.AtlasBaker.packHasPbr;
+        boolean relief = pbr || dev.impeccable.aurum.bake.AtlasBaker.generatedRelief;
         GL20C.glUniform1i(loc[35], UNIT_PBR);
-        float pomDepth = pbr && c.pomEnabled && !translucent ? 0.25f * c.pomDepth / 100f : 0f;
+        float pomDepth = relief && c.pomEnabled && !translucent ? 0.22f * c.pomDepth / 100f : 0f;
         float gloss = c.sheenEnabled ? c.sheenStrength / 100f : 0f;
         GL20C.glUniform4f(loc[36], pbr ? Math.max(gloss, 0.001f) : 0f, pomDepth, (float) c.pomDistance, pbr ? 2.5f : 0f);
         GlUtil.bindTextureHigh(UNIT_PBR, AurumTextures.pbrAtlas());

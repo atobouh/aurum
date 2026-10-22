@@ -98,6 +98,8 @@ public final class AurumConfig {
 
     // POM (High tier)
     public boolean pomEnabled = false;
+    /** 3D relief from the texture's own pixels where the resource pack has no height map. */
+    public boolean pomGenerated = true;
     public int pomDepth = 100;
     public int pomDistance = 24;
 

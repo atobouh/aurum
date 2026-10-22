@@ -34,7 +34,8 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
     float dist = length(pos);
     if (dist > u_PbrParams.z) return uv;
     int flags = aurum_atlasFlags(uv);
-    if ((flags & 0xC0) != 0xC0) return uv;
+    // Aligned sprite with a height map (from the pack, or generated from the texture).
+    if ((flags & 0x80) == 0) return uv;
 
     vec3 ng = normalize(cross(dpdx, dpdy));
     if (dot(ng, pos) > 0.0) ng = -ng;
