@@ -101,7 +101,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv), dFdy(uv));
         if (pbr.r > 0.004 || pbr.g > 0.05) {
             float diffuseScale = 1.0;
-            vec3 spec = aurum_pbrSpecular(albedo, pbr, n, pos, ndl > 0.0 ? directVis : 0.0, skyVis, diffuseScale);
+            vec3 spec = aurum_pbrSpecular(albedo, pbr, n, pos, ndl > 0.0 ? directVis : 0.0, skyVis, blockBrightness, diffuseScale);
             color = color * diffuseScale + spec * ao;
         }
         // Emission (glowing ores, lamps): the texture glows in its own colour, picked up by bloom.

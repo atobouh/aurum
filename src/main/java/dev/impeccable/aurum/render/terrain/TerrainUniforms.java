@@ -126,7 +126,8 @@ public final class TerrainUniforms {
         boolean pbr = c.labPbr && dev.impeccable.aurum.bake.AtlasBaker.packHasPbr;
         GL20C.glUniform1i(loc[35], UNIT_PBR);
         float pomDepth = pbr && c.pomEnabled && !translucent ? 0.25f * c.pomDepth / 100f : 0f;
-        GL20C.glUniform4f(loc[36], pbr ? 1f : 0f, pomDepth, (float) c.pomDistance, pbr ? 2.5f : 0f);
+        float gloss = c.sheenEnabled ? c.sheenStrength / 100f : 0f;
+        GL20C.glUniform4f(loc[36], pbr ? Math.max(gloss, 0.001f) : 0f, pomDepth, (float) c.pomDistance, pbr ? 2.5f : 0f);
         GlUtil.bindTextureHigh(UNIT_PBR, AurumTextures.pbrAtlas());
         GL20C.glUniform1f(loc[37], dev.impeccable.aurum.bake.AtlasBaker.scale);
 

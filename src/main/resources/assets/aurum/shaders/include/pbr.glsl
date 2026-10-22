@@ -17,7 +17,10 @@ vec3 g_pomWall = vec3(0.0);
 float g_pomShadow = 1.0;
 
 float aurum_pomDepthAt(ivec2 cell, ivec2 tmin, ivec2 tsize) {
-    ivec2 c = tmin + ((cell - tmin) % tsize + tsize) % tsize;
+    // GLSL's % is undefined for negative operands, which broke the relief on faces whose texture runs the other
+    // way (0.5.1). Wrap with floor division instead.
+    ivec2 r = cell - tmin;
+    ivec2 c = tmin + r - tsize * ivec2(floor(vec2(r) / vec2(tsize)));
     return 1.0 - texelFetch(u_PbrTex, c, 0).a;
 }
 
@@ -110,7 +113,8 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
 
 // Specular light from the sun (GGX) and the sky (reflected sky colour), for the pack's smoothness / F0 / metal.
 // Returns the light to add, and scales the diffuse light for metals and Fresnel.
-vec3 aurum_pbrSpecular(vec3 albedo, vec4 pbr, vec3 n, vec3 pos, float directVis, float skyVis, inout float diffuseScale) {
+vec3 aurum_pbrSpecular(vec3 albedo, vec4 pbr, vec3 n, vec3 pos, float directVis, float skyVis, float blockLight,
+                       inout float diffuseScale) {
     float smoothness = pbr.r;
     bool metal = pbr.g > 229.5 / 255.0;
     vec3 f0 = metal ? albedo : vec3(pbr.g);
@@ -131,13 +135,19 @@ vec3 aurum_pbrSpecular(vec3 albedo, vec4 pbr, vec3 n, vec3 pos, float directVis,
     vec3 F = f0 + (1.0 - f0) * pow(1.0 - max(dot(H, V), 0.0), 5.0);
     vec3 spec = u_LightColor * (D * vis * nl * directVis) * F;
 
-    // Sky reflection: the real sky in the mirrored direction; rough surfaces reflect less and duller.
+    // Reflections: the real sky in the mirrored direction outdoors, and the warm block light indoors (a lantern-lit
+    // room shows the same sheen on polished floors). Fresnel with a roughness-aware ceiling: smooth surfaces turn
+    // mirror-like at grazing angles, rough ones keep a soft sheen. 0.5.0 weighted this by smoothness squared twice
+    // and the gloss was invisible (user).
     vec3 R = reflect(-V, n);
     R.y = max(R.y, 0.02);
-    vec3 Fr = f0 + (max(vec3(1.0 - rough), f0) - f0) * pow(1.0 - nv, 5.0);
-    float sharp = smoothness * smoothness;
-    vec3 env = aurum_skyRadiance(R, u_SunDirW) * Fr * skyVis * mix(0.15, 1.0, sharp) * sharp;
+    vec3 Fr = f0 + (max(vec3(smoothness), f0) - f0) * pow(1.0 - nv, 4.0);
+    vec3 sky = aurum_skyRadiance(R, u_SunDirW) * skyVis;
+    vec3 room = u_BlockLightColor * blockLight * 0.35;
+    float clarity = mix(0.35, 1.0, smoothness);
+    // u_PbrParams.x carries the Gloss setting (Sheen slider): 1 at 100 %.
+    vec3 env = (sky + room) * Fr * clarity * 2.0;
 
-    diffuseScale = metal ? 0.15 : (1.0 - max(Fr.r, max(Fr.g, Fr.b)) * sharp);
+    diffuseScale = metal ? 0.15 : (1.0 - max(Fr.r, max(Fr.g, Fr.b)) * smoothness);
     return (spec + env) * u_PbrParams.x;
 }

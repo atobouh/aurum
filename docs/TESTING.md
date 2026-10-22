@@ -1,3 +1,10 @@
+# Testing: 0.5.2
+
+- Pixel 3D now works on every face, in every direction (walls, floors, ceilings).
+- Gloss: smooth blocks of a PBR pack reflect the sky outdoors and the lamp light indoors. Strength: F7 > Glow &
+  bloom > Gloss strength (up to 200%).
+- Not covered: chests, signs and other block entities (they are not terrain); a later pass.
+
 # Testing: 0.5.1 (PBR, round two)
 
 - Pack detail kept: 64x normal/height maps are no longer shrunk to 16x.
