@@ -88,6 +88,8 @@ public enum OptionCategory {
                             v -> Text.translatable("aurum.cloud_style." + v.name().toLowerCase()), v -> c.cloudStyle = v),
                     bool("clouds_full_res", c.cloudsFullRes, v -> c.cloudsFullRes = v),
                     ranged("cloud_height", 0, 160, "aurum.unit.blocks_above", () -> c.cloudHeight, v -> c.cloudHeight = v),
+                    percent("cloud_speed", 0, 300, () -> c.cloudSpeed, v -> c.cloudSpeed = v),
+                    bool("clouds_pack_shapes", c.cloudsPackShapes, v -> c.cloudsPackShapes = v),
                     percent("cloud_coverage", 0, 100, () -> c.cloudCoverage, v -> c.cloudCoverage = v),
                     percent("cloud_shading", 0, 200, () -> c.cloudShading, v -> c.cloudShading = v),
             };

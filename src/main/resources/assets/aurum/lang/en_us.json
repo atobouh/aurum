@@ -147,5 +147,9 @@
   "aurum.option.clouds_full_res.tooltip": "Draws clouds at full resolution instead of half: sharper up close, about 3-4x the cloud cost. On in High.",
   "aurum.option.cloud_height": "Cloud height",
   "aurum.option.cloud_height.tooltip": "Raises the clouds above vanilla's height (y 192).",
-  "aurum.unit.blocks_above": "+%s blocks"
+  "aurum.unit.blocks_above": "+%s blocks",
+  "aurum.option.cloud_speed": "Cloud speed",
+  "aurum.option.cloud_speed.tooltip": "How fast the clouds drift. 100% is three times vanilla's speed.",
+  "aurum.option.clouds_pack_shapes": "Resource pack cloud shapes",
+  "aurum.option.clouds_pack_shapes.tooltip": "Off: Aurum's own cloud clusters. On: the layout from your resource pack's clouds.png (vanilla's long streaks)."
 }

@@ -246,3 +246,56 @@ What changed in 0.3.2:
 
 - Backlit trees stay green instead of going to dark silhouettes (terrain lighting).
 - Water does not reflect the sunset (Phase 3).
+
+## Round four (0.3.3): your 0.3.2 report
+
+**Feedback:**
+
+- Rays were not sharp: flaky white outlines on trees, the lantern and the fence, and glow painted over a
+  mountain that hides the sun.
+- The blocky clouds look right, but their shapes and their distribution in the sky are ugly.
+- The clouds do not visibly move.
+- The grass moves in step, not randomly.
+- Asked during the work: compare the cloud volume itself, side by side.
+
+**Rays:**
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| Flaky white outlines | Volumetric light at 1/4 resolution, upscaled bilinearly: edge pixels borrowed the open air's brightness; the screen-space rays also lit every occluder's edge | Volumetric light at 1/2 resolution with an edge-aware 3x3 upscale (taps weighted by how close their march length is to the pixel's own) |
+| Glow over a mountain that hides the sun | Screen-space rays are a 2D blur toward the sun and cannot know what stands in front of it | Screen-space rays only over open sky; beams over terrain come only from the shadow map |
+
+Test: a 42-block stone wall in front of a sun 8 degrees up. In 0.3.3 the wall stays dark, light lanes run along
+the ground beside its shadow, and there are no halos at the trees' edges.
+
+**Cloud shapes.** Vanilla's clouds.png is long streaks and snakes. Aurum now bakes its own layout, and the
+resource pack's layout is still an option.
+
+- Each cloud is a cluster of 3-6 small overlapping rectangles, longer along the wind, the way a player builds
+  a cloud.
+- The biggest clusters carry a smaller second-tier box.
+- Lone single puffs sit between clusters, and a slow noise field gathers clusters and leaves sky clear.
+- Two dead ends on the way:
+  - Thresholded fractal noise gave sawtooth outlines.
+  - Features of about 300 blocks merged into one overcast sheet.
+
+**Volume, cloud by cloud vs Nostalgia 0 and 6:**
+
+- The slabs are 14 blocks thick with 4.5-block pillow rounding, and the boxes are smaller and chunkier.
+- Bellies shade gently toward the middle of each cloud.
+- A soft glow follows the silhouette where the view grazes the rounded edge.
+- Edges soften over about 2 pixels.
+- The tint is a light lavender.
+
+| | Cloud share of upper frame | Lightness p50 / p90 | Mean cloud RGB |
+| --- | --- | --- | --- |
+| Nostalgia 0 | 29 % | 0.65 / 0.76 | 158, 155, 177 |
+| Aurum 0.3.3, noon looking up | 41 % (22 % of the layout) | 0.60 / 0.73 | 148, 157, 176 |
+
+**Motion:** the drift is 3x vanilla's speed and accumulated per frame, with a Cloud speed slider.
+
+**Grass:**
+
+- A slow noise bends the wind wavefronts, so they no longer march as straight stripes.
+- Each plant gets its own phase offset (±0.3 cycle) and strength (0.65-1.35x) from a hash of its block.
+- Leaves keep the continuous field, because their shared cube corners must move together.

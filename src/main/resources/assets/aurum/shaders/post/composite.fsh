@@ -16,7 +16,7 @@ uniform sampler2D u_Clouds;   // half resolution, premultiplied
 uniform sampler2D u_Rays;     // quarter resolution, open sky along the line to the sun
 uniform sampler2D u_Bloom;    // quarter resolution
 uniform sampler2D u_Flare;    // 1x1, visible share of the sun disc
-uniform sampler2D u_Volumetric; // quarter resolution: r sunlit share of the air, g distance covered / range
+uniform sampler2D u_Volumetric; // half resolution: r sunlit share of the air, g distance covered / range
 uniform vec4 u_Volumetric2;    // x range (blocks), y enclosed (0 open sky .. 1 cave or room)
 
 uniform mat4 u_InvProj;
@@ -83,13 +83,28 @@ float cloudEntry(vec3 dir) {
     return t;
 }
 
-// Volumetric light texture, smoothed with four extra bilinear taps (hides the march jitter).
-vec2 volumetricLit(vec2 uv) {
-    // Wider than one texel: beams are soft-edged in the references, and the march jitter must not show.
-    vec2 h = 1.5 / vec2(textureSize(u_Volumetric, 0));
-    return texture(u_Volumetric, uv).rg * 0.2
-         + (texture(u_Volumetric, uv + h * vec2(1.0, 0.4)).rg + texture(u_Volumetric, uv + h * vec2(-0.4, 1.0)).rg
-         + texture(u_Volumetric, uv + h * vec2(-1.0, -0.4)).rg + texture(u_Volumetric, uv + h * vec2(0.4, -1.0)).rg) * 0.2;
+// Volumetric light at half resolution, upscaled edge-aware: of the 3x3 nearest texels, each is weighted by how
+// close its march length (g, the distance it covered) is to this pixel's own. A tree's edge then never borrows
+// the bright value of the open air behind it: that borrowing drew the flaky white outlines in 0.3.2. The 3x3
+// footprint also averages out the march jitter.
+vec2 volumetricLit(vec2 uv, float dist) {
+    vec2 size = vec2(textureSize(u_Volumetric, 0));
+    vec2 base = floor(uv * size) + 0.5;
+    float g = min(dist, u_Volumetric2.x) / u_Volumetric2.x;
+    vec2 sum = vec2(0.0);
+    float wsum = 0.0;
+    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            vec2 tc = base + vec2(x, y);
+            vec2 v = texelFetch(u_Volumetric, ivec2(clamp(tc, vec2(0.0), size - 1.0)), 0).rg;
+            vec2 d = abs(tc - uv * size);
+            float spatial = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y);
+            float w = spatial * exp(-abs(v.g - g) * 60.0) + 1e-5;
+            sum += v * w;
+            wsum += w;
+        }
+    }
+    return sum / wsum;
 }
 
 // A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
@@ -125,6 +140,8 @@ void main() {
     vec3 view = vp.xyz / vp.w;
     float dist = depth < 1.0 ? length(view) : 1e9;
     vec3 dir = mat3(u_InvView) * normalize(view);
+    // Sunlit share of the air in front of this pixel (volumetric light), shared by the fog and the beams.
+    vec2 vl = u_Extras.w > 0.0 && depth < 1.0 && !hand ? volumetricLit(v_Uv, dist) : vec2(1.0, 0.0);
 
     if (depth < 1.0 && !hand && (u_Flags.x > 0.5 || u_Flags.y > 0.5)) {
         // One sky lookup serves both the fog colour and the edge fade.
@@ -144,7 +161,7 @@ void main() {
                 float toSun = max(dot(dir, u_SunDir), 0.0);
                 vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 0.45 + pow(toSun, 30.0) * 0.8) * (0.15 + 0.85 * u_SunGlow.a);
                 // Haze in shadow does not glow: with volumetric light on, shadowed lanes of air stay darker.
-                if (u_Extras.w > 0.0) inscatter *= 0.35 + 0.65 * volumetricLit(v_Uv).r;
+                if (u_Extras.w > 0.0) inscatter *= 0.35 + 0.65 * vl.r;
                 vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
@@ -187,7 +204,7 @@ void main() {
             // Volumetric light: glow from the sunlit air in front of terrain. Shadowed air adds nothing, so tree
             // and terrain shadows cut dark lanes into the glow: beams. Not over the sky, whose colour already
             // contains this light (adding it again washed the sky out around the sun).
-            vec2 v = volumetricLit(v_Uv);
+            vec2 v = vl;
             float cave = u_Volumetric2.y;
             float litBlocks = v.r * v.g * u_Volumetric2.x;
             // Enclosed spaces get denser scattering: a beam from an opening into a dark cave.
@@ -204,15 +221,14 @@ void main() {
             scene += rayColor * glow * phase * u_Extras.w;
         }
         if (u_Extras.x > 0.0) {
-            // Screen-space shafts: open sky along the line to the sun (also through cloud gaps), fading with
-            // distance from the sun.
-            // Streaks reach far across the frame like the references (Complementary 0). Cubing the mask keeps the
-            // gaps between shafts dark, and over open sky (already bright around the sun) they are kept weak:
-            // rays show as bright streaks across whatever blocks the sun (trees, terrain, clouds), not as a veil.
+            // Screen-space shafts, over open sky only: streaks through cloud gaps and past the edges of hills and
+            // trees, fanning from the sun. Never over terrain: a 2D blur toward the sun cannot know a mountain
+            // stands in front of the light (0.3.2 painted glow over hills hiding the sun). Beams in front of
+            // terrain come from the shadow-map volumetric light instead. Cubing keeps the gaps between shafts dark.
             float rays = texture(u_Rays, v_Uv).r;
             float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
             float openSky = (depth >= 1.0 ? 1.0 : 0.0) * (1.0 - texture(u_Clouds, v_Uv).a);
-            scene += rayColor * (rays * rays * rays) * exp(-r * 2.2) * (1.0 - 0.75 * openSky) * u_Extras.x;
+            scene += rayColor * (rays * rays * rays) * exp(-r * 2.2) * openSky * u_Extras.x;
         }
     }
     if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;

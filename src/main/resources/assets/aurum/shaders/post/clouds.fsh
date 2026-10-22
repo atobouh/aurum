@@ -4,11 +4,12 @@
 #import <aurum:include/tonemap.glsl>
 #import <aurum:include/sky_lut.glsl>
 
-// Aurum clouds, two styles from one source (docs/research/SKY_EXTRAS.md, "Clouds, round two"):
+// Aurum clouds, two styles from one source (docs/research/SKY_EXTRAS.md, rounds two to four).
+// Layouts are baked by CloudBaker into a distance field: Aurum's own clusters (default) or the resource pack's
+// clouds.png.
 //
-// BLOCKY (default, Nostalgia / Story Mode): Minecraft's own cloud layout as dense rounded boxes, in two real 3D
-//   layers at different heights and sizes for depth. The cloud texture is baked into a distance field
-//   (CloudBaker), extruded into slabs with rounded edges, and sphere-traced. Edges are anti-aliased from the
+// BLOCKY (default, Nostalgia / Story Mode): the layout as dense rounded boxes, extruded into slabs with rounded
+//   edges and sphere-traced, with a stepped second tier on the biggest clouds. Edges are anti-aliased from the
 //   closest approach of the ray, in screen pixels, so they stay crisp close up.
 // SOFT (CLOUD_SOFT, Better Clouds-like): the same layout as soft, fluffy, translucent cumulus. A short
 //   ray-march through a 2.5D density (layout distance field, warped and eroded by baked noise) with cheap
@@ -28,7 +29,7 @@ uniform vec3 u_LightColor;
 uniform vec3 u_SkyAmbient;
 uniform vec4 u_SunGlow;      // rgb warm scattered sunlight, a = golden-hour amount
 uniform vec4 u_Layers;       // x cloud base height relative to camera, y max distance, z time (blocks, wrapped), w unused
-uniform vec4 u_Offset;       // xy layer 1 texel offset at the camera, zw layer 2
+uniform vec4 u_Offset;       // xy layout offset at the camera (cells), zw unused
 uniform vec4 u_Shape;        // x blocks per texel, y coverage (texels), z rain, w unused
 uniform vec4 u_Look;         // x shading amount, y brightness, z unused, w haze density
 uniform vec2 u_NoiseCam;     // camera xz plus wind drift (x), wrapped to 4096 blocks on the CPU for precision
@@ -45,12 +46,18 @@ float noise(vec2 xz, vec2 stretch, float blocksPerTile, vec2 evolve) {
     return texture(u_Noise, ((xz + u_NoiseCam) * stretch + evolve) / blocksPerTile).r;
 }
 
-float cloud2d(vec2 xz, vec2 offset, float scale) {
+uniform float u_ShapeSet;     // 0 Aurum layout (R, tier G), 1 resource pack layout (B)
+
+// Distance to a layout: tier 0 the base layer, tier 1 the second tier stacked on the biggest clouds.
+float cloud2d(vec2 xz, vec2 offset, float scale, int tier) {
     vec2 uv = (offset + xz / scale) / u_TexSize;
+    vec3 t = texture(u_CloudSdf, uv).rgb;
+    // The resource pack layout has no second tier of its own: its big clouds shrunk by one cell stand in.
+    float sdfValue = u_ShapeSet < 0.5 ? (tier == 0 ? t.r : t.g) : (tier == 0 ? t.b : t.b + 1.0);
     // Shapes may only shrink in clear weather: growing a staircase outline rounds it into blobs (seen side by
     // side with Nostalgia's crisp boxes). Rain may thicken them.
     float shrink = max(-u_Shape.y, -0.8 * u_Shape.z);
-    return (texture(u_CloudSdf, uv).r + shrink) * scale;
+    return (sdfValue + shrink) * scale;
 }
 
 float lightUp() {
@@ -71,19 +78,14 @@ vec3 aerial(vec3 c, vec3 sky, float t) {
 
 const int STEPS = 40;
 
-// Layer 1: the main sheet. Layer 2: larger, sparser boxes 20 blocks higher, rotated so its layout differs; seen
-// through the gaps of layer 1, it gives the sky depth without cluttering it.
-const float L1_CENTRE = 6.0, L1_HALF = 6.0, L1_ROUND = 2.5;
-const float L2_CENTRE = 26.0, L2_HALF = 4.5, L2_ROUND = 2.2, L2_SCALE = 1.15, L2_SHRINK = 0.0;
-
-vec2 l2coords(vec2 xz) {
-    return vec2(xz.y, -xz.x);
-}
+// Layer 1: the base layer, 14 blocks thick with pillow-round edges (Nostalgia's clouds are thick, rounded boxes).
+// Layer 2: the second tier, a smaller box standing on the biggest clouds (overlapping layer 1 so they read as
+// one stepped cloud, like blocky cumulus).
+const float L1_CENTRE = 7.0, L1_HALF = 7.0, L1_ROUND = 4.5;
+const float L2_CENTRE = 17.0, L2_HALF = 4.5, L2_ROUND = 3.5;
 
 float layer2d(vec2 xz, int layer) {
-    if (layer == 0) return cloud2d(xz, u_Offset.xy, u_Shape.x);
-    float s = u_Shape.x * L2_SCALE;
-    return cloud2d(l2coords(xz), u_Offset.zw, s) + L2_SHRINK * s;
+    return cloud2d(xz, u_Offset.xy, u_Shape.x, layer);
 }
 
 // Rounded extrusion of a 2D shape (Quilez): a box-like slab with flat faces and rounded edges.
@@ -143,7 +145,7 @@ vec3 normalAt(vec3 p, int layer, float d2) {
 // the brightest, near-white parts (lit, with a slight lift toward the top), bellies are a softer lavender with a
 // slow tonal drift, tops bright; a warm rim on edges facing the sun; the higher layer slightly lighter and
 // cooler, like it is further away.
-vec3 shade(vec3 p, vec3 n, vec3 dir, int layer) {
+vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     float up = lightUp();
     float ndl = saturate(dot(n, u_LightDir) * 0.6 + 0.4);
     float centre = u_Layers.x + (layer == 0 ? L1_CENTRE : L2_CENTRE);
@@ -151,7 +153,7 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer) {
     float h = saturate((p.y - centre) / (2.0 * halfT) + 0.5);
     // Clouds scatter all colours alike: take the sky light's brightness with only part of its blue, or every
     // cloud turns blue-grey (the references are near-white with a lavender tint in shade).
-    vec3 skyL = mix(u_SkyAmbient, vec3(luminance(u_SkyAmbient)), 0.55);
+    vec3 skyL = mix(u_SkyAmbient, vec3(luminance(u_SkyAmbient)), 0.55) * vec3(1.04, 1.0, 1.06);
 
     vec3 top = skyL * 1.30 + u_LightColor * 0.55 * ndl * up;
     float drift = noise(p.xz, vec2(1.0), 256.0, vec2(0.0));
@@ -159,7 +161,12 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer) {
     vec3 side = (skyL * 1.20 + u_LightColor * 0.45 * ndl * up) * mix(0.90, 1.02, h);
     // Blend by facing: flat faces get their own tone, the rounded edges blend smoothly between them.
     float topW = smoothstep(0.35, 0.9, n.y), botW = smoothstep(0.35, 0.9, -n.y);
+    // Bellies darken gently toward the middle of a cloud (light reaches the edges more easily): volume.
+    belly *= mix(1.0, 0.86, smoothstep(0.0, u_Shape.x * 1.5, -d2));
     vec3 c = side * (1.0 - topW - botW) + top * topW + belly * botW;
+    // Soft glow along the silhouette, where the view grazes the rounded edge: the pillowy rims of the references.
+    float graze = 1.0 - saturate(dot(n, -dir));
+    c += skyL * 0.30 * graze * graze * graze;
     c = mix(u_SkyAmbient * 1.1 + u_LightColor * 0.35 * up, c, u_Look.x);
     if (layer == 1) c *= vec3(1.03, 1.05, 1.10);
     float toSun = saturate(dot(dir, u_SunDir));
@@ -198,11 +205,13 @@ vec4 clouds(vec3 dir, vec3 sky) {
         if (t > tf) break;
     }
     // Inside: opaque. A ray that only grazed an edge gets partial coverage (one pixel of soft edge).
-    float alpha = hit ? 1.0 : saturate(1.2 - bestRatio);
+    // Edges soften over about two pixels: the luminous, pillowy rims of the references, still crisp up close.
+    float alpha = hit ? 1.0 : saturate((2.0 - bestRatio) / 1.65);
     if (alpha <= 0.0) return vec4(0.0);
     vec3 p = dir * bestT;
-    vec3 n = normalAt(p, bestLayer, layer2d(p.xz, bestLayer));
-    vec3 c = shade(p, n, dir, bestLayer);
+    float d2hit = layer2d(p.xz, bestLayer);
+    vec3 n = normalAt(p, bestLayer, d2hit);
+    vec3 c = shade(p, n, dir, bestLayer, d2hit);
     alpha *= 1.0 - smoothstep(0.75 * u_Layers.y, u_Layers.y, bestT);
     return vec4(aurum_tonemap(aerial(c, sky, bestT)) * alpha, alpha);
 }
@@ -219,10 +228,10 @@ float density(vec3 p, out float belowTop, out float height) {
     float y = p.y - (u_Layers.x + BOTTOM);
     float s = u_Shape.x;
     // Far from any cloud cell: empty, one fetch.
-    float raw = cloud2d(p.xz, u_Offset.xy, s) / s;
+    float raw = cloud2d(p.xz, u_Offset.xy, s, 0) / s;
     if (raw > 2.2) return 0.0;
     float warp = noise(p.xz, vec2(1.0), 256.0, vec2(0.0)) - 0.5;
-    float d2 = cloud2d(p.xz + vec2(warp, -warp) * 26.0, u_Offset.xy, s) / s;
+    float d2 = cloud2d(p.xz + vec2(warp, -warp) * 26.0, u_Offset.xy, s, 0) / s;
     float cover = smoothstep(1.6, -0.7, d2);
     if (cover <= 0.0) return 0.0;
     float n = noise(p.xz, vec2(1.0, 1.5), 64.0, vec2(y * 2.5, u_Layers.z * 0.25));

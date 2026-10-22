@@ -88,6 +88,8 @@ public final class AurumConfig {
     public CloudStyle cloudStyle = CloudStyle.BLOCKY;
     public boolean cloudsFullRes = false;
     public int cloudHeight = 24;
+    public boolean cloudsPackShapes = false;
+    public int cloudSpeed = 100;
     public int cloudCoverage = 50;
     public int cloudShading = 100;
 
@@ -177,6 +179,7 @@ public final class AurumConfig {
         shadowDistance = clamp(shadowDistance, 2, 8);
         pomDistance = clamp(pomDistance, 4, 16);
         cloudHeight = clamp(cloudHeight, 0, 160);
+        cloudSpeed = clamp(cloudSpeed, 0, 300);
         return this;
     }
 

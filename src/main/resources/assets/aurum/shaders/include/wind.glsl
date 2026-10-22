@@ -27,8 +27,21 @@ vec3 aurum_windOffset(int id, vec3 position, bool topVertex, float dist) {
     gust = smoothstep(0.3, 0.85, gust);
 
     // Per-position phase: neighbours are related but never identical. Coefficients are n/256 so the
-    // pattern repeats exactly every 256 blocks.
+    // pattern repeats exactly every 256 blocks. A slow noise bends the wavefronts so they never march across
+    // the field as straight, even stripes (user: "not random, a bit strange").
     float ph = dot(wp, vec3(37.0, 23.0, 61.0) * (1.0 / 256.0));
+    ph += (textureLod(u_NoiseTex, wp.xz * (1.0 / 64.0), 0.0).r - 0.5) * 1.6;
+    // Each plant also gets its own phase offset and strength from a hash of its block, so neighbours never move
+    // in lockstep. Plant quads sit inside their block, so all their vertices share one hash. Leaves are full cubes
+    // whose shared corners must move together, so they keep the continuous field only.
+    float amp = 1.0;
+    if (id != MAT_LEAVES && id != MAT_VINE) {
+        vec2 cell = mod(floor(wp.xz), 256.0);
+        float h1 = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+        float h2 = fract(sin(dot(cell, vec2(39.3468, 11.135))) * 24634.6345);
+        ph += (h1 - 0.5) * 0.6;
+        amp = 0.65 + 0.7 * h2;
+    }
     vec4 w = aurum_smoothTriangle(u_WindPhase + vec4(ph, ph * 0.75, ph * 2.0, ph * 1.5));
 
     float strength = u_WindParams.z * (1.0 - smoothstep(WIND_MAX_DIST * 0.65, WIND_MAX_DIST, dist));
@@ -61,5 +74,5 @@ vec3 aurum_windOffset(int id, vec3 position, bool topVertex, float dist) {
     offset += vec3(-dir.y, 0.5, dir.x) * flutter * detailAmp * weight * (0.4 + 0.6 * gust);
     // Length preservation: the tip drops as it bends so plants arc instead of stretching.
     offset.y -= dot(lean, lean) * 1.5;
-    return offset * strength;
+    return offset * strength * amp;
 }

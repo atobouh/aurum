@@ -72,3 +72,9 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-21 | Default cloud height +24 blocks (y 216); slider 0-160 | +80 made clouds tiny and sparse vs references; vanilla 192 looked low to the user |
 | 2026-10-21 | Screen-space rays mostly over occluders (trees, terrain, clouds), cubed mask | Over open sky they washed the frame (look lab: darks 11% -> 2%) |
 | 2026-10-21 | Volumetric light: broad phase, 0.16 density, full strength only where lit and shadowed air alternate | User saw no beams through tree gaps or into caves; the forward-only phase vanished from the side |
+| 2026-10-22 | Screen-space god rays only over open sky; beams over terrain only from the shadow map | A 2D radial blur painted glow over hills hiding the sun (user) |
+| 2026-10-22 | Volumetric light at 1/2 resolution with an edge-aware 3x3 upscale keyed on march length | Bilinear upscaling drew flaky white outlines on silhouettes (user) |
+| 2026-10-22 | Aurum bakes its own cloud layout (rectangle clusters + second tier + puffs); resource pack layout optional | User found vanilla's streak layout ugly; rectangle clusters match the Story Mode look side by side |
+| 2026-10-22 | Blocky clouds 14 blocks thick, 4.5-block rounding, rim glow, belly shading | Side-by-side volume comparison with Nostalgia (user) |
+| 2026-10-22 | Cloud drift 3x vanilla, per-frame accumulation, speed slider | Movement was not apparent (user) |
+| 2026-10-22 | Wind: noise-bent wavefronts plus per-plant hashed phase and strength | Grass moved in lockstep stripes (user) |

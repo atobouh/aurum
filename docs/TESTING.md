@@ -1,4 +1,22 @@
-# Testing: Phase 4, round three (0.3.2)
+# Testing: Phase 4, round four (0.3.3)
+
+New in 0.3.3 (after your 0.3.2 report):
+
+- **Rays:**
+  - The flaky outlines are gone: the volumetric light is now half resolution with an edge-aware upscale.
+  - The sun rays stay in the sky and never paint over a mountain or wall that hides the sun.
+- **New cloud shapes:**
+  - Aurum's own clusters of rounded boxes, thicker, with a second tier on the big ones.
+  - Clear sky between groups.
+  - Your resource pack's layout is still available: F7 > Flare, rays & clouds > Resource pack cloud shapes.
+- **Clouds visibly drift:** 3x vanilla speed, with a Cloud speed slider.
+- **Grass waves are irregular**, and every plant has its own rhythm.
+
+Checks: the sun behind a hill at golden hour, trees against a bright sky, both cloud styles at noon and sunset,
+and a grass field in wind.
+
+## Round three notes (0.3.2)
+
 
 New in 0.3.2 (after your 0.3.1 report):
 
