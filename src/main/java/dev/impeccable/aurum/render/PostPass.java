@@ -162,12 +162,14 @@ public final class PostPass {
         comp.set1i("u_HandDepth", UNIT_C);
         comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
-        // GlStateManager tracks only 12 units; 2-5 are free here (vanilla and terrain rebind theirs before drawing).
+        comp.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
+        // GlStateManager tracks only 12 units; 1-5 are free here (vanilla and terrain rebind theirs before drawing).
         comp.set1i("u_Clouds", 11);
         comp.set1i("u_Rays", 3);
         comp.set1i("u_Bloom", 4);
         comp.set1i("u_Flare", 5);
         comp.set1i("u_Volumetric", 2);
+        comp.set1i("u_Ao", 1);
         float[] cs = SkyExtras.cloudSlab;
         comp.set4f("u_CloudSlab", cs[0], cs[1], cs[2], SkyExtras.cloudsDrawn ? cs[3] : 0f);
         float[] ss = SkyExtras.sunScreen;
@@ -185,6 +187,7 @@ public final class PostPass {
         float far = MinecraftClient.getInstance().gameRenderer.getViewDistance();
         float bounceFog = c.bounceEnabled ? 0.25f * c.bounceStrength / 100f : 0f;
         comp.set4f("u_Fog2", FogDirector.cave, far * 0.80f, far * 0.98f, bounceFog);
+        comp.set4f("u_Fog3", FogDirector.clearZone, 0.88f, 0.30f, 0f);
         boolean fog = aurumWorld && c.fogEnabled && SkyState.current() != null;
         boolean edge = aurumWorld && c.edgeFade && SkyState.current() != null;
         comp.set4f("u_Flags", fog ? 1f : 0f, edge ? 1f : 0f, handValid ? 1f : 0f, 1f);
@@ -202,12 +205,14 @@ public final class PostPass {
         GlUtil.bindTexture(4, SkyExtras.bloomDrawn ? SkyExtras.bloomTexture() : clear);
         GlUtil.bindTexture(5, SkyExtras.flareOn ? SkyExtras.flareTexture() : clear);
         GlUtil.bindTexture(2, SkyExtras.volumetricDrawn ? SkyExtras.volumetricTexture() : clear);
+        GlUtil.bindTexture(1, SkyExtras.aoDrawn ? SkyExtras.aoTexture() : clear);
+        comp.set4f("u_AoParams", SkyExtras.aoDrawn ? SkyExtras.aoStrength : 0f, SkyExtras.AO_RANGE, 0f, 0f);
         GlUtil.drawFullscreenTriangle();
         ShaderProgram.unbind();
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, main.getDepthAttachment(), 0);
 
         // Unbind our textures from the high units and restore the state vanilla expects next.
-        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
+        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 1, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         main.beginWrite(true);

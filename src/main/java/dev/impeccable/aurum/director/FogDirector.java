@@ -19,10 +19,12 @@ public final class FogDirector {
     public static float heightDensity;
     /** 0 = open air, 1 = deep in a cave (fog colour goes dark instead of sky-coloured). */
     public static float cave;
+    /** Blocks around the camera kept free of distance fog. */
+    public static float clearZone = 32f;
     /** 0 = open sky above, 1 = closed in (cave, room, under an overhang) at any height. Drives cave light beams. */
     public static float enclosed;
 
-    private static float tDistance, tHeight, tCave, tEnclosed;
+    private static float tDistance, tHeight, tCave, tEnclosed, tClear = 32f;
     private static long lastNanos;
     private static int biomeCheckTicker;
     private static float swamp;
@@ -49,9 +51,12 @@ public final class FogDirector {
         }
 
         float strength = c.fogEnabled ? c.fogStrength / 100f : 0f;
-        tDistance = strength * (0.00025f + 0.0010f * golden + 0.006f * rain + 0.006f * thunder
-                + 0.004f * swamp + 0.012f * underground);
-        tHeight = c.fogEnabled && c.heightFog ? strength * (0.006f * golden + 0.02f * rain + 0.015f * swamp) * (1f - underground) : 0f;
+        // Densities matched to the references (docs/research/LOOK_FOG.md): about half of 0.3.3's at golden hour and
+        // in rain, where the user saw a flat pink or beige soup. Caves keep their dense, dark haze.
+        tDistance = strength * (0.0002f + 0.0008f * golden + 0.0025f * rain + 0.002f * thunder
+                + 0.003f * swamp + 0.012f * underground);
+        tHeight = c.fogEnabled && c.heightFog ? strength * (0.003f * golden + 0.006f * rain + 0.010f * swamp) * (1f - underground) : 0f;
+        tClear = 32f - 12f * Math.max(rain, swamp);
         tCave = underground;
         tEnclosed = clamp01((12f - skyLight) / 8f);
 
@@ -62,6 +67,7 @@ public final class FogDirector {
         distanceDensity += (tDistance - distanceDensity) * k;
         heightDensity += (tHeight - heightDensity) * k;
         cave += (tCave - cave) * k;
+        clearZone += (tClear - clearZone) * k;
         enclosed += (tEnclosed - enclosed) * k;
     }
 

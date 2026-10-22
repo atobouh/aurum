@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 4;
+    public int configVersion = 5;
     public Preset preset = Preset.LOW;
 
     // Sky
@@ -102,7 +102,7 @@ public final class AurumConfig {
     public Tonemap tonemap = Tonemap.FILMIC;
     public int whiteBalance = 100;
     public int exposure = 100;
-    public int saturation = 100;
+    public int saturation = 92;
     public int vibrance = 105;
     public int contrast = 100;
 
@@ -171,6 +171,11 @@ public final class AurumConfig {
             // them small and sparse next to the references).
             if (cloudHeight == 0) cloudHeight = 24;
             configVersion = 4;
+        }
+        if (configVersion < 5) {
+            // 0.3.4: references are less saturated than our daylight (0.19-0.30 vs 0.39-0.46).
+            if (saturation == 100) saturation = 92;
+            configVersion = 5;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

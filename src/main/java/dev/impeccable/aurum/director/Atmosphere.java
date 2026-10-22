@@ -10,7 +10,9 @@ import dev.impeccable.aurum.sky.SkyLut;
 public final class Atmosphere {
     /** Noon reference brightness (sun + sky on an upward surface), used to anchor exposure. */
     private static final float REFERENCE = 6.2f;
-    private static final float BASE_EXPOSURE = 0.19f;
+    // Daylight measured against Bliss / Complementary / Photon: their frames average L 0.55-0.61, ours 0.43
+    // (docs/research/LOOK_FOG_LIGHT.md).
+    private static final float BASE_EXPOSURE = 0.215f;
 
     public static final float[] lightDir = {0, 1, 0};
     /** Direction toward the sun (even at night), world space. */
@@ -60,8 +62,11 @@ public final class Atmosphere {
         // is pushed in from ~25 degrees: amber sunlight, peach light in the shade. Scaled by the Sunset slider.
         float g = golden * (c.sunsetIntensity / 100f);
         // Strong enough that lit foliage turns gold (references: foliage red/green ~1.0 at golden hour).
-        float[] sunTint = {1.0f, 1f - 0.30f * g, 1f - 0.64f * g};
-        float[] ambTint = {1f + 0.10f * g, 1f - 0.08f * g, 1f - 0.30f * g};
+        // A slightly warm sun at every hour: the references' daylight frames are neutral-to-warm (+0.00 to +0.08
+        // red over blue), ours read cold blue (-0.12 to -0.21).
+        float[] sunTint = {1.0f, 0.975f - 0.30f * g, 0.92f - 0.60f * g};
+        // Golden-hour shade stays warm and readable (references: amber shade; ours went navy once the haze cleared).
+        float[] ambTint = {1f + 0.32f * g, 1f + 0.08f * g, 1f - 0.22f * g};
         // The sky table is rebuilt in small sun steps; ease the light colours toward each new table over ~0.4 s
         // so lighting never steps, even by a fraction of a shade.
         long nowC = System.nanoTime();
@@ -71,7 +76,11 @@ public final class Atmosphere {
         lastLut = lut;
         for (int i = 0; i < 3; i++) {
             lightColor[i] += (lut.sunColor[i] * sun * sunTint[i] - lightColor[i]) * kC;
-            skyAmbient[i] += (lut.skyAmbient[i] * amb * ambTint[i] - skyAmbient[i]) * kC;
+            // Shade takes the sky's light but only part of its blue: in the references shade is cool-neutral, ours
+            // turned everything in shadow blue.
+            float skyGrey = luminance(lut.skyAmbient);
+            float skyA = lut.skyAmbient[i] + (skyGrey - lut.skyAmbient[i]) * 0.35f;
+            skyAmbient[i] += (skyA * amb * ambTint[i] - skyAmbient[i]) * kC;
             groundAmbient[i] += (lut.groundAmbient[i] * amb * sunTint[i] - groundAmbient[i]) * kC;
         }
 
@@ -80,7 +89,9 @@ public final class Atmosphere {
         // and only allow a strong boost once the sun is gone. This keeps golden hour saturated, not bleached.
         float illum = luminance(lut.sunColor) * Math.max(sy, 0.42f) + luminance(lut.skyAmbient) * 2.5f + 1e-4f;
         float sunUp = Math.max(0f, Math.min(1f, (sy + 0.05f) / 0.15f));
-        float maxBoost = 7.0f + (1.35f + 0.7f * golden - 7.0f) * sunUp * sunUp * (3f - 2f * sunUp);
+        // Overcast days stay bright like Bliss's (L 0.55); 0.3.3 rain at noon measured L 0.33, dark and blue.
+        float dayBoost = 1.35f + 0.7f * golden + 1.1f * lut.rain;
+        float maxBoost = 7.0f + (dayBoost - 7.0f) * sunUp * sunUp * (3f - 2f * sunUp);
         float target = (float) Math.min(Math.max(Math.pow(REFERENCE / illum, 0.42), 1.0), maxBoost);
         target *= 1f + 0.35f * gamma;
         long now = System.nanoTime();
@@ -107,6 +118,12 @@ public final class Atmosphere {
         blockLight[1] = k * (0.92f - 0.30f * warmth);
         blockLight[2] = k * (0.84f - 0.56f * warmth);
         minLight = (0.0035f + 0.006f * gamma) / (BASE_EXPOSURE * adapt);
+    }
+
+    /** Daytime sky grade amount: full with the sun well up, none at golden hour or night. */
+    public static float skyGrade() {
+        float day = Math.max(0f, Math.min(1f, (sunY - 0.05f) / 0.20f));
+        return day * (1f - golden);
     }
 
     static float luminance(float[] c) {

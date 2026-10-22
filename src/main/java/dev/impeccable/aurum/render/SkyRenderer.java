@@ -41,6 +41,7 @@ public final class SkyRenderer {
         program.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
         program.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
         program.set1i("u_SkyLut", UNIT_LUT);
+        program.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
         GlUtil.bindTexture(UNIT_LUT, SkyState.texture());
         GlUtil.drawFullscreenTriangle();
         ShaderProgram.unbind();

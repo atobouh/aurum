@@ -31,6 +31,7 @@ public final class ShaderManager {
             {"post/rays_mask", "post/fullscreen.vsh", "post/rays_mask.fsh"},
             {"post/rays_blur", "post/fullscreen.vsh", "post/rays_blur.fsh"},
             {"post/volumetric", "post/fullscreen.vsh", "post/volumetric.fsh"},
+            {"post/ssao", "post/fullscreen.vsh", "post/ssao.fsh"},
             {"post/flare_occlusion", "post/fullscreen.vsh", "post/flare_occlusion.fsh"},
             {"post/bloom_prefilter", "post/fullscreen.vsh", "post/bloom_prefilter.fsh"},
             {"post/bloom_down", "post/fullscreen.vsh", "post/bloom_down.fsh"},

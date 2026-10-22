@@ -43,7 +43,7 @@ public final class SkyExtras {
     private static long lastDriftNanos;
     private static double drift;
     private static int cloudTex, cloudFbo, cloudW, cloudH;
-    private static int maskTex, maskFbo, raysTex, raysFbo, vlTex, vlFbo, quarterW, quarterH, halfW, halfH;
+    private static int maskTex, maskFbo, raysTex, raysFbo, vlTex, vlFbo, aoTex, aoFbo, quarterW, quarterH, halfW, halfH;
     private static final int[] flareTex = new int[2], flareFbo = new int[2];
     private static int flareIndex;
     private static final int[] bloomTex = new int[BLOOM_LEVELS], bloomFbo = new int[BLOOM_LEVELS];
@@ -51,7 +51,10 @@ public final class SkyExtras {
     private static final int[] bloomW = new int[BLOOM_LEVELS], bloomH = new int[BLOOM_LEVELS];
 
     // Results for the composite.
-    public static boolean cloudsDrawn, raysDrawn, flareOn, bloomDrawn, volumetricDrawn;
+    public static boolean cloudsDrawn, raysDrawn, flareOn, bloomDrawn, volumetricDrawn, aoDrawn;
+    public static float aoStrength;
+    /** Contact shadow range in blocks (fades out before it). */
+    public static final float AO_RANGE = 64f;
     public static float rayStrength, flareStrength, bloomStrength, volumetricStrength;
     public static final float[] sunScreen = new float[4];
     public static final float[] cloudSlab = new float[4];
@@ -67,6 +70,10 @@ public final class SkyExtras {
 
     public static int raysTexture() {
         return raysTex;
+    }
+
+    public static int aoTexture() {
+        return aoTex;
     }
 
     public static int volumetricTexture() {
@@ -94,7 +101,8 @@ public final class SkyExtras {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientWorld world = client.world;
         SkyLut lut = SkyState.current();
-        cloudsDrawn = raysDrawn = flareOn = bloomDrawn = volumetricDrawn = false;
+        cloudsDrawn = raysDrawn = flareOn = bloomDrawn = volumetricDrawn = aoDrawn = false;
+        aoStrength = 0f;
         rayStrength = flareStrength = bloomStrength = volumetricStrength = 0f;
         cloudSlab[3] = 0f;
         if (world == null || lut == null) return;
@@ -204,6 +212,23 @@ public final class SkyExtras {
         }
         if (!flareOn) flareStrength = 0f;
 
+        // 3b. Contact shadows (ambient occlusion), half resolution.
+        ShaderProgram ao = ShaderManager.get("post/ssao");
+        if (c.aoBoost > 0 && ao != null && FogDirector.cave < 0.99f) {
+            GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, aoFbo);
+            GlStateManager._viewport(0, 0, halfW, halfH);
+            ao.bind();
+            ao.set1i("u_Depth", UNIT_A);
+            ao.setMatrix("u_Proj", projection);
+            ao.setMatrix("u_InvProj", invProj);
+            // About two blocks: reaches under tree crowns and along walls, not only into block corners.
+            ao.set4f("u_Params", 1.8f, AO_RANGE, 0f, 0f);
+            GlUtil.bindTexture(UNIT_A, depthTex);
+            GlUtil.drawFullscreenTriangle();
+            aoDrawn = true;
+            aoStrength = Math.min(1f, c.aoBoost / 50f) * 0.85f;
+        }
+
         // 4. Bloom.
         bloomStrength = c.bloomEnabled ? c.bloomStrength / 100f * 0.25f : 0f;
         if (bloomStrength > 0.002f && drawBloom(sceneTex)) {
@@ -249,6 +274,7 @@ public final class SkyExtras {
         p.set1i("u_CloudSdf", UNIT_A);
         p.set1i("u_Noise", UNIT_B);
         p.set1i("u_SkyLut", 10);
+        p.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
         p.setMatrix("u_InvProj", invProj);
         p.setMatrix("u_InvView", invView);
         float[] sun = Atmosphere.sunDir;
@@ -364,6 +390,8 @@ public final class SkyExtras {
         halfH = Math.max(1, h / 2);
         vlTex = GlUtil.createTexture(GL30C.GL_RG8, halfW, halfH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         vlFbo = fbo(vlTex);
+        aoTex = GlUtil.createTexture(GL30C.GL_RG8, halfW, halfH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
+        aoFbo = fbo(aoTex);
         for (int i = 0; i < 2; i++) {
             flareTex[i] = GlUtil.createTexture(GL30C.GL_R8, 1, 1, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_NEAREST);
             flareFbo[i] = fbo(flareTex[i]);
@@ -391,8 +419,8 @@ public final class SkyExtras {
 
     private static void delete() {
         if (cloudTex == 0) return;
-        int[] textures = {cloudTex, maskTex, raysTex, vlTex, flareTex[0], flareTex[1]};
-        int[] fbos = {cloudFbo, maskFbo, raysFbo, vlFbo, flareFbo[0], flareFbo[1]};
+        int[] textures = {cloudTex, maskTex, raysTex, vlTex, aoTex, flareTex[0], flareTex[1]};
+        int[] fbos = {cloudFbo, maskFbo, raysFbo, vlFbo, aoFbo, flareFbo[0], flareFbo[1]};
         for (int tex : textures) GlStateManager._deleteTexture(tex);
         for (int f : fbos) GlStateManager._glDeleteFramebuffers(f);
         for (int i = 0; i < BLOOM_LEVELS; i++) {

@@ -67,7 +67,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     if (ndl > 0.0) {
         vec2 sh = aurum_shadow(pos, ng);
         // Leaves let light through: a shaded leaf still glows a little (cheap subsurface stand-in).
-        float lit = material == 4 ? max(sh.x, 0.35) : sh.x;
+        float lit = material == 4 ? max(sh.x, 0.22) : sh.x;
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
     vec3 direct = u_LightColor * (ndl * directVis);

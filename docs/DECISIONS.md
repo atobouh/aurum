@@ -78,3 +78,7 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Blocky clouds 14 blocks thick, 4.5-block rounding, rim glow, belly shading | Side-by-side volume comparison with Nostalgia (user) |
 | 2026-10-22 | Cloud drift 3x vanilla, per-frame accumulation, speed slider | Movement was not apparent (user) |
 | 2026-10-22 | Wind: noise-bent wavefronts plus per-plant hashed phase and strength | Grass moved in lockstep stripes (user) |
+| 2026-10-22 | Fog clear zone (32 blocks, 20 in rain), halved golden/rain densities, 88% cap, 30% neutral haze | User: dawn fog was a flat pink soup; measured contrast 0.10-0.13 vs references 0.16-0.30 (docs/research/LOOK_FOG_LIGHT.md) |
+| 2026-10-22 | Daylight: exposure +13%, warm sun at all hours, shade 35% less blue, saturation 92%, day-only sky grade | Measured: ours darker, cold blue and oversaturated vs Bliss/Complementary/Photon |
+| 2026-10-22 | Screen-space ambient occlusion (half res, 8 samples, 1.8 blocks, edge-aware upscale), strength from the AO slider | "The way the shadow embraces the world" (user, Bliss): contact shading under cover |
+| 2026-10-22 | Look lab resets weather and removes test structures before each run | A run was misread because rain and a test wall were left in the world |

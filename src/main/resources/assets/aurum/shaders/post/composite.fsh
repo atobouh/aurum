@@ -17,6 +17,8 @@ uniform sampler2D u_Rays;     // quarter resolution, open sky along the line to 
 uniform sampler2D u_Bloom;    // quarter resolution
 uniform sampler2D u_Flare;    // 1x1, visible share of the sun disc
 uniform sampler2D u_Volumetric; // half resolution: r sunlit share of the air, g distance covered / range
+uniform sampler2D u_Ao;     // half resolution: r ambient occlusion, g distance / range
+uniform vec4 u_AoParams;    // x strength, y range (blocks)
 uniform vec4 u_Volumetric2;    // x range (blocks), y enclosed (0 open sky .. 1 cave or room)
 
 uniform mat4 u_InvProj;
@@ -24,6 +26,7 @@ uniform mat4 u_InvView;     // rotation only, view -> world
 uniform vec3 u_SunDir;
 uniform vec4 u_SunGlow;     // rgb warm scattered sunlight, a = golden-hour amount
 uniform vec4 u_Fog;         // x distance density, y height density, z height falloff, w camera height above sea level
+uniform vec4 u_Fog3;        // x clear zone (blocks), y most the fog may cover, z fog desaturation
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
 uniform vec4 u_Grade;       // x saturation, y vibrance, z contrast
@@ -107,6 +110,25 @@ vec2 volumetricLit(vec2 uv, float dist) {
     return sum / wsum;
 }
 
+// Contact shadows, upscaled edge-aware like the volumetric light (keyed on distance), 3x3 to smooth the noise.
+float contactShadow(vec2 uv, float dist) {
+    vec2 size = vec2(textureSize(u_Ao, 0));
+    vec2 base = floor(uv * size) + 0.5;
+    float g = min(dist / u_AoParams.y, 1.0);
+    float sum = 0.0, wsum = 0.0;
+    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            vec2 tc = base + vec2(x, y);
+            vec2 v = texelFetch(u_Ao, ivec2(clamp(tc, vec2(0.0), size - 1.0)), 0).rg;
+            vec2 d = abs(tc - uv * size);
+            float w = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y) * exp(-abs(v.g - g) * 200.0 * max(1.0 - g, 0.05)) + 1e-5;
+            sum += v.r * w;
+            wsum += w;
+        }
+    }
+    return sum / wsum;
+}
+
 // A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
 vec3 flare(vec2 uv, float vis) {
     vec2 aspect = vec2(u_SunScreen.z, 1.0);
@@ -143,18 +165,28 @@ void main() {
     // Sunlit share of the air in front of this pixel (volumetric light), shared by the fog and the beams.
     vec2 vl = u_Extras.w > 0.0 && depth < 1.0 && !hand ? volumetricLit(v_Uv, dist) : vec2(1.0, 0.0);
 
+    if (depth < 1.0 && !hand && u_AoParams.x > 0.0 && dist < u_AoParams.y) {
+        // Darken where surfaces meet and under cover, before the haze goes over it.
+        scene *= mix(1.0, contactShadow(v_Uv, dist), u_AoParams.x);
+    }
+
     if (depth < 1.0 && !hand && (u_Flags.x > 0.5 || u_Flags.y > 0.5)) {
         // One sky lookup serves both the fog colour and the edge fade.
         vec3 sky = aurum_tonemap(aurum_skyRadiance(dir, u_SunDir));
 
         if (u_Flags.x > 0.5) {
-            // Exponential distance fog (Quilez) plus exact height fog for valleys (analytic integral).
-            float fd = 1.0 - exp(-dist * u_Fog.x);
+            // Exponential distance fog (Quilez) plus exact height fog for valleys (analytic integral). Fog starts
+            // after a clear zone, as in the references (Complementary, Bliss): nearby terrain keeps its full
+            // contrast and colour, the haze lives in the distance (0.3.3 fogged a fence 30 blocks away by ~40%).
+            float fogDist = max(dist - u_Fog3.x, 0.0);
+            float fd = 1.0 - exp(-fogDist * u_Fog.x);
             float b = u_Fog.z;
             float ry = dir.y * dist;
             float hInt = abs(ry) > 1e-3 ? (1.0 - exp(-ry * b)) / (dir.y * b) : dist;
+            hInt *= fogDist / max(dist, 1e-3);
             float fh = 1.0 - exp(-u_Fog.y * exp(-u_Fog.w * b) * max(hInt, 0.0));
-            float f = 1.0 - (1.0 - fd) * (1.0 - fh);
+            // Never a solid wall: distant shapes still read through the haze (caves excepted).
+            float f = (1.0 - (1.0 - fd) * (1.0 - fh)) * mix(u_Fog3.y, 1.0, u_Fog2.x);
             if (f > 0.002) {
                 // Fog takes the sky's colour in that direction, so it is warmer toward the sun at golden hour.
                 // Haze lit by the sun: looking toward a low sun, the air itself glows gold (Mie forward scattering).
@@ -162,7 +194,11 @@ void main() {
                 vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 0.45 + pow(toSun, 30.0) * 0.8) * (0.15 + 0.85 * u_SunGlow.a);
                 // Haze in shadow does not glow: with volumetric light on, shadowed lanes of air stay darker.
                 if (u_Extras.w > 0.0) inscatter *= 0.35 + 0.65 * vl.r;
-                vec3 fogColor = aurum_tonemap(aurum_fogRadiance(dir, u_SunDir) + inscatter);
+                // The haze itself is near-neutral (the sky's pinks would turn it into a flat pink soup); its warmth
+                // comes from the sunlight scattered toward the sun.
+                vec3 fogRad = aurum_fogRadiance(dir, u_SunDir);
+                fogRad = mix(fogRad, vec3(luminance(fogRad)), u_Fog3.z);
+                vec3 fogColor = aurum_tonemap(fogRad + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
                 fogColor *= mix(vec3(1.0), clamp(bounce / bl, 0.0, 2.0), u_Fog2.w);
@@ -218,7 +254,8 @@ void main() {
             // the glow is only a light veil; where shadow fills most of the ray (under trees, in caves) the few
             // lit stretches are the beams and keep full strength.
             glow *= mix(1.0, 0.02, smoothstep(0.3, 0.9, v.r));
-            scene += rayColor * glow * phase * u_Extras.w;
+            // Capped: right next to the sun the lobes made a hazy blob over nearby trees.
+            scene += rayColor * min(glow * phase * u_Extras.w, 0.35);
         }
         if (u_Extras.x > 0.0) {
             // Screen-space shafts, over open sky only: streaks through cloud gaps and past the edges of hills and

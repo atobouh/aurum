@@ -1,3 +1,18 @@
+# Testing: fog, sunrise and daylight (0.3.4)
+
+New in 0.3.4 (fog, sunrise and daylight research, docs/research/LOOK_FOG_LIGHT.md):
+
+- **Fog:** nothing is fogged within 32 blocks; the haze is thinner (much thinner in rain) and never a solid wall.
+  It is more neutral, so no more pink or beige soup; it glows warm only toward the sun.
+- **Daylight:** brighter and warmer, shade less blue, slightly less saturated, a paler noon sky. Rain days are
+  brighter.
+- **Contact shadows:** darker under trees, along walls and in corners (F7 > Lighting > AO boost sets the
+  strength; 0 turns it off).
+- **Golden hour:** shade stays warm.
+
+Check: your 0.3.3 dawn spot and your overcast/rain spot, a forest at midday, and a house wall. Send the F8
+numbers ("Rays, flare, bloom" now includes the contact-shadow pass).
+
 # Testing: Phase 4, round four (0.3.3)
 
 New in 0.3.3 (after your 0.3.2 report):
