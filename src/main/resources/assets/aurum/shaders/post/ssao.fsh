@@ -31,8 +31,12 @@ void main() {
     if (dist > u_Params.y) { fragColor = vec4(1.0, min(dist / u_Params.y, 1.0), 0.0, 1.0); return; }
     vec3 n = normalize(cross(dFdx(p), dFdy(p)));
     if (dot(n, p) > 0.0) n = -n;
-    // Per-pixel rotation of the kernel around the normal (interleaved gradient noise).
-    float a = 6.2831853 * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    // Kernel rotation from a fixed 4x4 pattern (16 angles). The composite averages exactly one 4x4 block, so
+    // the noise cancels out and nothing crawls when the camera moves (0.3.4 used per-pixel random noise, which
+    // the user saw as dark, smearing blotches on grass and mobs).
+    ivec2 cell = ivec2(gl_FragCoord.xy) & 3;
+    const float BAYER[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+    float a = 6.2831853 * (BAYER[cell.y * 4 + cell.x] + 0.5) / 16.0;
     vec3 helper = abs(n.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
     vec3 t = normalize(cross(helper, n));
     vec3 b = cross(n, t);
@@ -48,9 +52,10 @@ void main() {
         if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) continue;
         vec3 q = viewPos(uv);
         // Occluded when the surface seen there is in front of the sample point, and close enough to matter.
+        // Thin, close occluders (grass blades, a mob's edge in front of the ground) count only partly.
         float diff = q.z - s.z;
         float range = smoothstep(0.0, 1.0, radius / max(abs(p.z - q.z), 1e-3));
-        occ += (diff > 0.04 ? 1.0 : 0.0) * range;
+        occ += smoothstep(0.05, 0.3, diff) * range;
     }
     float ao = 1.0 - occ / 8.0;
     ao = mix(ao, 1.0, smoothstep(u_Params.y * 0.6, u_Params.y, dist));

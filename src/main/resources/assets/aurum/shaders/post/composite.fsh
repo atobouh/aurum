@@ -86,7 +86,7 @@ float cloudEntry(vec3 dir) {
     return t;
 }
 
-// Volumetric light at half resolution, upscaled edge-aware: of the 3x3 nearest texels, each is weighted by how
+// Volumetric light (quarter resolution), upscaled edge-aware: of the 3x3 nearest texels, each is weighted by how
 // close its march length (g, the distance it covered) is to this pixel's own. A tree's edge then never borrows
 // the bright value of the open air behind it: that borrowing drew the flaky white outlines in 0.3.2. The 3x3
 // footprint also averages out the march jitter.
@@ -110,18 +110,18 @@ vec2 volumetricLit(vec2 uv, float dist) {
     return sum / wsum;
 }
 
-// Contact shadows, upscaled edge-aware like the volumetric light (keyed on distance), 3x3 to smooth the noise.
+// Contact shadows: one 4x4 block of the half-resolution result (exactly cancels the 4x4 rotation pattern),
+// edge-aware on distance so silhouettes never get dark halos.
 float contactShadow(vec2 uv, float dist) {
     vec2 size = vec2(textureSize(u_Ao, 0));
-    vec2 base = floor(uv * size) + 0.5;
+    vec2 base = floor(uv * size) - 1.5;
     float g = min(dist / u_AoParams.y, 1.0);
     float sum = 0.0, wsum = 0.0;
-    for (int y = -1; y <= 1; y++) {
-        for (int x = -1; x <= 1; x++) {
-            vec2 tc = base + vec2(x, y);
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            vec2 tc = base + vec2(x, y) + 0.5;
             vec2 v = texelFetch(u_Ao, ivec2(clamp(tc, vec2(0.0), size - 1.0)), 0).rg;
-            vec2 d = abs(tc - uv * size);
-            float w = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y) * exp(-abs(v.g - g) * 200.0 * max(1.0 - g, 0.05)) + 1e-5;
+            float w = exp(-abs(v.g - g) * 200.0 * max(1.0 - g, 0.05)) + 1e-4;
             sum += v.r * w;
             wsum += w;
         }

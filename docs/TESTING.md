@@ -1,3 +1,14 @@
+# Testing: 0.4.2
+
+- **Fixed:** the dark, smearing blotches on grass and mobs. That was the contact-shadow effect's noise; it is
+  now stable (no crawling when you move) and gentler.
+- **The dotted white line in the sky:** not reproduced here (Aurum clouds, both styles, facing the horizon).
+  Please check:
+  1. F7 > Flare, rays & clouds > Aurum clouds **off**: is the line still there?
+  2. F6 (Aurum off): is it still there?
+  3. Your previous resource pack: does it go away?
+  Tell me which pack you switched to, and whether you have a cloud or sky mod.
+
 # Testing: 0.4.1
 
 Fixes and additions after your 0.4.0 report:

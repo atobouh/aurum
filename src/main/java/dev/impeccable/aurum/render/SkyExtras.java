@@ -222,11 +222,11 @@ public final class SkyExtras {
             ao.setMatrix("u_Proj", projection);
             ao.setMatrix("u_InvProj", invProj);
             // About two blocks: reaches under tree crowns and along walls, not only into block corners.
-            ao.set4f("u_Params", 1.8f, AO_RANGE, 0f, 0f);
+            ao.set4f("u_Params", 1.4f, AO_RANGE, 0f, 0f);
             GlUtil.bindTexture(UNIT_A, depthTex);
             GlUtil.drawFullscreenTriangle();
             aoDrawn = true;
-            aoStrength = Math.min(1f, c.aoBoost / 50f) * 0.85f;
+            aoStrength = Math.min(1f, c.aoBoost / 50f) * 0.6f;
         }
 
         // 4. Bloom.

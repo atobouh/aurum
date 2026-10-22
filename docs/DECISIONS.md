@@ -92,3 +92,4 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Sun shape option: round or square (Minecraft-style, crisp core, square halo, reduced tight glow); screen rays start away from the sun's face | User reference: a square sun from a video |
 | 2026-10-22 | Master on/off (F6 and settings) | User request; off = Sodium visuals with no Aurum passes, for A/B looks and FPS |
 | 2026-10-22 | No underwater work | User: not wanted; underwater keeps the vanilla path |
+| 2026-10-22 | Contact shadows: fixed 4x4 rotation pattern + matching 4x4 edge-aware average, partial weight for thin occluders, radius 1.4, strength 0.6 | User: dark smearing blotches on grass and mobs when moving (per-pixel random noise crawled) |
