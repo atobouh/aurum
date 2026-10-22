@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  */
 public final class AurumTextures {
     private static int flatNormal, greyBounce, midNoise, clear;
-    private static int normalAtlas, bounce, noise;
+    private static int normalAtlas, bounce, noise, waterNormal;
 
     private AurumTextures() {}
 
@@ -53,6 +53,14 @@ public final class AurumTextures {
 
     public static void setBounce(int id) {
         bounce = id;
+    }
+
+    public static int waterNormal() {
+        return waterNormal != 0 ? waterNormal : flatNormal;
+    }
+
+    public static void setWaterNormal(int id) {
+        waterNormal = id;
     }
 
     public static int noise() {

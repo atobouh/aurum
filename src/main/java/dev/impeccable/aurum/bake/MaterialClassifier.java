@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public final class MaterialClassifier {
     public static final int NONE = 0, PLANT = 1, TALL_LOWER = 2, TALL_UPPER = 3, LEAVES = 4, VINE = 5,
-            WATER_PLANT = 6, CROP = 7, WATER_COLUMN = 8;
+            WATER_PLANT = 6, CROP = 7, WATER_COLUMN = 8, WATER = 9;
 
     private MaterialClassifier() {}
 

@@ -3,6 +3,7 @@ package dev.impeccable.aurum;
 import dev.impeccable.aurum.bake.AtlasBaker;
 import dev.impeccable.aurum.bake.CloudBaker;
 import dev.impeccable.aurum.bake.NoiseBaker;
+import dev.impeccable.aurum.bake.WaterBaker;
 import dev.impeccable.aurum.compat.Compat;
 import dev.impeccable.aurum.render.AurumTextures;
 import dev.impeccable.aurum.render.terrain.TerrainShaders;
@@ -69,6 +70,7 @@ public class AurumMod implements ClientModInitializer {
             GpuTimers.init();
             AurumTextures.init();
             NoiseBaker.bake();
+            WaterBaker.bake();
             if (ShaderManager.compileAll()) {
                 TerrainShaders.decide();
                 Pipeline.markActive();

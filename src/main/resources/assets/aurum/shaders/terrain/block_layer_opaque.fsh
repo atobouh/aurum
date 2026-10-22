@@ -8,6 +8,8 @@
 #import <aurum:include/tonemap.glsl>
 #import <aurum:include/shadow.glsl>
 #import <aurum:include/lighting.glsl>
+#import <aurum:include/sky_lut.glsl>
+#import <aurum:include/water.glsl>
 
 in vec4 v_Color;
 in vec2 v_TexCoord;
@@ -49,6 +51,15 @@ void main() {
         diffuseColor.rgb *= v_Color.a * v_VanillaLight.a;
         fragColor = _linearFog(diffuseColor, v_FragDistance, u_FogColor, u_FogStart, u_FogEnd);
         return;
+    }
+
+    if (u_AurumPass == 1) {
+        // Translucent pass: water sprites get Aurum water; glass, ice and the rest keep the normal lighting.
+        int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5);
+        if (id == 9) {
+            fragColor = vec4(aurum_shadeWater(diffuseColor, v_Color, v_LightCoord, v_Position), 1.0);
+            return;
+        }
     }
 
     vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, v_MaterialMipBias, v_Material);

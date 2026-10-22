@@ -20,18 +20,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ChunkShaderInterfaceMixin {
     @Unique
     private int[] aurum$locations;
+    @Unique
+    private boolean aurum$translucent;
 
     @Inject(method = "<init>", at = @At("RETURN"), require = 1)
     private void aurum$locateUniforms(ShaderBindingContext context, ChunkShaderOptions options, CallbackInfo ci) {
         if (TerrainShaders.installed() && context instanceof GlObject program) {
             this.aurum$locations = TerrainUniforms.locate(program.handle());
+            this.aurum$translucent = options.pass().isReverseOrder();
         }
     }
 
     @Inject(method = "setupState", at = @At("RETURN"), require = 1)
     private void aurum$uploadUniforms(CallbackInfo ci) {
         if (this.aurum$locations != null) {
-            TerrainUniforms.upload(this.aurum$locations);
+            TerrainUniforms.upload(this.aurum$locations, this.aurum$translucent);
         }
     }
 }

@@ -56,6 +56,7 @@ public final class FrameDirector {
         TerrainUniforms.mode = haveSky && TerrainShaders.installed() && c.lightingEnabled && !special ? 1 : 0;
         SkyRenderer.active = haveSky && c.skyEnabled && !special;
         SkyExtras.cloudsActive = SkyExtras.wantsClouds(haveSky, special);
+        dev.impeccable.aurum.render.WaterPass.tick(client.isPaused());
     }
 
     /** Called with the exact camera and matrices this frame's world is drawn with. */

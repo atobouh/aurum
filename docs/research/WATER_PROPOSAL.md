@@ -53,3 +53,40 @@ Every style shares the basics:
 - **C** if you want water that matches the blocky clouds. It's the most "Aurum" option, but the one I'm least
   sure I can get to premium.
 - **Add-ons:** 1, 3 and 4 by default; 2 and 5 as options.
+
+## Decision (2026-10-22)
+
+The user picked **B, Crystal Clear**, with **Photon as the reference** ("make it Photon-ish as much as possible").
+
+## Built in 0.4.0
+
+- **Clear water:**
+  - The opaque scene (colour and depth) is copied before Sodium's translucent pass.
+  - The water shader refracts that copy and tints it by the length of the ray inside the water.
+  - Absorption per block is 0.80 / 0.24 / 0.16 (red, green, blue), so the shallows turn teal and deep water goes
+    dark teal. The biome water colour nudges the tint.
+- **Caustics:** a light network on the bed in the shallows, from two crossing ripple layers.
+- **Ripples:** a tiling 128² slope texture baked at startup from 48 integer-frequency waves. It is sampled at 16,
+  6 and 2 blocks per tile, scrolling in different directions. The finer layers fade with distance, and far water
+  settles.
+- **Reflections:**
+  - The real sky from our sky table.
+  - Fresnel, with a little extra at low angles.
+  - Screen-space reflections of terrain (18 steps plus 4 refinement steps, faded at the screen edges) on Medium
+    and High. Low reflects the sky only.
+- **Sun glint:** a very tight lobe on the fine ripples, which gives the glitter path, plus a soft sheen. Hidden by
+  shadows.
+- **Shore edge:** a thin, broken bright line where the water is shallowest.
+
+Side by side with Photon 3, 6 and 8 and Sildur's 3, the build matches:
+- clear teal shallows with caustics;
+- trees and cliffs mirrored;
+- a sun path.
+
+Remaining differences from the references:
+- Photon's glitter is denser at high sun.
+- Its sunset water is more orange where it reflects low sky. Ours reflects the higher lavender sky at the same
+  angles, which is physically right but less dramatic.
+- Clouds are not reflected yet; the clouds are drawn after the water.
+
+Golden-hour look lab after water: p95 0.95-0.97 (was 0.80), warmth +0.03 to +0.11.

@@ -23,6 +23,8 @@ public enum Preset {
         c.entityShadows = medium;
 
         c.vertexWaves = medium;
+        // Terrain reflections in water (screen-space) on Medium and High; Low reflects the sky only.
+        c.waterReflections = medium;
 
         c.pomEnabled = high;
 

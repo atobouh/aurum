@@ -82,3 +82,8 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Daylight: exposure +13%, warm sun at all hours, shade 35% less blue, saturation 92%, day-only sky grade | Measured: ours darker, cold blue and oversaturated vs Bliss/Complementary/Photon |
 | 2026-10-22 | Screen-space ambient occlusion (half res, 8 samples, 1.8 blocks, edge-aware upscale), strength from the AO slider | "The way the shadow embraces the world" (user, Bliss): contact shading under cover |
 | 2026-10-22 | Look lab resets weather and removes test structures before each run | A run was misread because rain and a test wall were left in the world |
+| 2026-10-22 | Water style B (Crystal Clear), Photon as the reference | User choice from docs/research/WATER_PROPOSAL.md |
+| 2026-10-22 | Opaque colour + depth copied before the translucent pass; water written opaque (alpha 1) over it | Clear water, refraction, absorption and shore edge need what lies under the surface |
+| 2026-10-22 | Screen-space reflections of terrain in water on Medium/High (spec had SSR out of scope) | Accepted with the water proposal; Low keeps sky-only reflections |
+| 2026-10-22 | Translucent program detected from Sodium's pass (reverse order) in the shader-interface mixin; water from a material id (9) in the atlas | One program, no new vertex data |
+| 2026-10-22 | Ripple normal map bound on texture unit 12 with raw GL | GlStateManager tracks only 12 units and throws above them |

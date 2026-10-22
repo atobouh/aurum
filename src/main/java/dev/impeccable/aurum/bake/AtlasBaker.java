@@ -58,6 +58,9 @@ public final class AtlasBaker {
 
         Map<Identifier, Sprite> sprites = ((SpriteAtlasTextureAccessor) atlas).aurum$getSprites();
         Map<Identifier, Integer> materials = MaterialClassifier.classify();
+        // Water surfaces get Aurum's water shading (translucent pass).
+        materials.put(new Identifier("minecraft", "block/water_still"), MaterialClassifier.WATER);
+        materials.put(new Identifier("minecraft", "block/water_flow"), MaterialClassifier.WATER);
         ByteBuffer dst = MemoryUtil.memCalloc(w * h * 4);
         // Untouched texels (gaps between sprites): flat normal, no material.
         for (int i = 0; i < w * h; i++) {

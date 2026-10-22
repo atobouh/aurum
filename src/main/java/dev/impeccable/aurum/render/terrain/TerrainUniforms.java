@@ -5,6 +5,7 @@ import dev.impeccable.aurum.director.Atmosphere;
 import dev.impeccable.aurum.director.WindState;
 import dev.impeccable.aurum.render.AurumTextures;
 import dev.impeccable.aurum.render.GlUtil;
+import dev.impeccable.aurum.render.WaterPass;
 import dev.impeccable.aurum.render.shadow.EntityShadows;
 import dev.impeccable.aurum.render.shadow.ShadowRenderer;
 import org.lwjgl.opengl.GL20C;
@@ -20,7 +21,9 @@ public final class TerrainUniforms {
             "u_CameraMod", "u_NoiseTex", "u_ToneParams", "u_WhiteBalance",
             "u_ShadowMap", "u_ShadowMatrix", "u_ShadowParams", "u_ShadowParams2",
             "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams",
-            "u_ShadowMapPrev", "u_ShadowMatrixPrev"
+            "u_ShadowMapPrev", "u_ShadowMatrixPrev",
+            "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
+            "u_WaterParams", "u_WaterScroll", "u_SunDirW"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -29,6 +32,11 @@ public final class TerrainUniforms {
     public static final int UNIT_SHADOW = 6;
     public static final int UNIT_ENTITY_SHADOW = 7;
     public static final int UNIT_SHADOW_PREV = 8;
+    public static final int UNIT_OPAQUE_DEPTH = 9;
+    public static final int UNIT_SKY_LUT = 10;
+    public static final int UNIT_OPAQUE_COLOR = 11;
+    /** Above GlStateManager's 12 tracked units: bound with raw GL. */
+    public static final int UNIT_WATER_NORMAL = 12;
 
     private static final float[] matrix = new float[16];
 
@@ -44,7 +52,7 @@ public final class TerrainUniforms {
         return loc;
     }
 
-    public static void upload(int[] loc) {
+    public static void upload(int[] loc, boolean translucent) {
         AurumConfig c = AurumConfig.get();
         GL20C.glUniform1i(loc[0], mode);
         if (mode == 0) return;
@@ -105,6 +113,28 @@ public final class TerrainUniforms {
         }
         GL20C.glUniform4f(loc[22], entities ? 1f : 0f, EntityShadows.inverseResolution(), 0f, 0f);
         GlUtil.bindTexture(UNIT_ENTITY_SHADOW, entities ? EntityShadows.texture() : ShadowRenderer.frontTexture());
+
+        boolean water = translucent && WaterPass.captured && dev.impeccable.aurum.sky.SkyState.current() != null;
+        GL20C.glUniform1i(loc[25], water ? 1 : 0);
+        if (water) {
+            GL20C.glUniform1i(loc[26], UNIT_SKY_LUT);
+            GL20C.glUniform1f(loc[27], Atmosphere.skyGrade());
+            GL20C.glUniform1i(loc[28], UNIT_OPAQUE_DEPTH);
+            GL20C.glUniform1i(loc[29], UNIT_OPAQUE_COLOR);
+            GL20C.glUniform1i(loc[30], UNIT_WATER_NORMAL);
+            net.minecraft.client.gl.Framebuffer fb = net.minecraft.client.MinecraftClient.getInstance().getFramebuffer();
+            float waves = c.waveStrength / 100f;
+            GL20C.glUniform4f(loc[31], 1f / fb.textureWidth, 1f / fb.textureHeight, c.waterReflections ? 1f : 0f, waves);
+            // Ripple layers scroll in different directions at different speeds; offsets wrapped to one tile.
+            double t = WaterPass.time();
+            GL20C.glUniform4f(loc[32], (float) ((t * 0.045) % 1.0), (float) ((t * 0.018) % 1.0),
+                    (float) ((t * -0.040) % 1.0), (float) ((t * 0.055) % 1.0));
+            GL20C.glUniform3f(loc[33], Atmosphere.sunDir[0], Atmosphere.sunDir[1], Atmosphere.sunDir[2]);
+            GlUtil.bindTexture(UNIT_OPAQUE_DEPTH, WaterPass.depthTexture());
+            GlUtil.bindTexture(UNIT_SKY_LUT, dev.impeccable.aurum.sky.SkyState.texture());
+            GlUtil.bindTexture(UNIT_OPAQUE_COLOR, WaterPass.colorTexture());
+            GlUtil.bindTextureHigh(UNIT_WATER_NORMAL, AurumTextures.waterNormal());
+        }
     }
 
     private static float smooth(float e0, float e1, float x) {

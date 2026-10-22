@@ -39,6 +39,10 @@ public abstract class WorldRendererMixin {
         // Sodium draws its SOLID and CUTOUT passes both inside the solid call; the cutout calls draw nothing.
         TimerSection section = layer == RenderLayer.getTranslucent() || layer == RenderLayer.getTripwire()
                 ? TimerSection.TERRAIN_TRANSLUCENT : TimerSection.TERRAIN_SOLID;
+        if (layer == RenderLayer.getTranslucent()) {
+            // The water shader needs the opaque scene under the surface.
+            dev.impeccable.aurum.render.WaterPass.capture(net.minecraft.client.MinecraftClient.getInstance().getFramebuffer());
+        }
         if (layer == RenderLayer.getSolid()) {
             // The shadow map must be ready before Sodium draws the terrain that samples it.
             ShadowRenderer.update();

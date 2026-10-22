@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 5;
+    public int configVersion = 6;
     public Preset preset = Preset.LOW;
 
     // Sky
@@ -176,6 +176,11 @@ public final class AurumConfig {
             // 0.3.4: references are less saturated than our daylight (0.19-0.30 vs 0.39-0.46).
             if (saturation == 100) saturation = 92;
             configVersion = 5;
+        }
+        if (configVersion < 6) {
+            // 0.4.0: water. Terrain reflections follow the preset (sky-only on Low).
+            if (preset == Preset.LOW) waterReflections = false;
+            configVersion = 6;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

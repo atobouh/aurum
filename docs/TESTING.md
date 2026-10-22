@@ -1,3 +1,29 @@
+# Testing: water (0.4.0)
+
+New in 0.4.0, Photon-style water:
+
+- **Clear water:** you see the bed in the shallows (teal) and it fades to deep teal. There are light patterns
+  (caustics) on shallow beds.
+- **Reflections:** the real sky everywhere; trees, hills and builds on Medium and High (F7 > Water > Water
+  reflections). Low reflects the sky only.
+- **Surface:** calm ripples, a sun glitter path, and a soft bright line along shores.
+
+Note: after updating, Low has terrain reflections off. Switch them on to try them.
+
+## Checks
+
+1. A lake or river at noon: shallows, deep water, sun path.
+2. Lying low by the water with trees on the far shore: reflections. Do they flicker or break at the screen edges?
+3. Sunset over water, facing the sun and facing away.
+4. A swamp and an ocean (biome tint).
+5. Water at night, and under a roof or in a cave (it should not reflect the bright sky there).
+6. Flowing water and waterfalls.
+
+## Numbers
+
+From the F8 overlay: **Translucent** and **Frame (GPU)**, with terrain reflections on and off, looking across a
+big lake. Plus the FPS.
+
 # Testing: fog, sunrise and daylight (0.3.4)
 
 New in 0.3.4 (fog, sunrise and daylight research, docs/research/LOOK_FOG_LIGHT.md):

@@ -40,6 +40,16 @@ public final class GlUtil {
 
     private static final int GL13C_TEXTURE0 = 0x84C0;
 
+    /**
+     * Binds a texture to a unit above the 12 that Minecraft's GlStateManager tracks (it throws on those). Vanilla
+     * never uses these units, so its cache stays correct. Leaves unit 0 active.
+     */
+    public static void bindTextureHigh(int unit, int texture) {
+        org.lwjgl.opengl.GL13C.glActiveTexture(GL13C_TEXTURE0 + unit);
+        GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, texture);
+        org.lwjgl.opengl.GL13C.glActiveTexture(GL13C_TEXTURE0);
+    }
+
     /** Draws a full-screen triangle generated from gl_VertexID. A VAO must be bound in core profile. */
     public static void drawFullscreenTriangle() {
         if (emptyVao == 0) emptyVao = GL30C.glGenVertexArrays();
