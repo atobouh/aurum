@@ -102,7 +102,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     if (material == 4) {
         // Vanilla leaf AO distinguishes the interior of a crown. Keep that local occlusion in the sky fill
         // instead of letting the broad ambient term turn every cube the same shade of green.
-        ambient *= mix(0.68, 0.94, ao);
+        ambient *= mix(0.60, 0.94, ao);
     }
     ambient *= 1.0 - 0.18 * g_pomCavity;
     // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.

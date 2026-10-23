@@ -103,7 +103,8 @@ vec2 volumetricLit(vec2 uv, float dist) {
             float broad = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y);
             float close = exp(-dot(d, d) * 3.5);
             float spatial = mix(close, broad, smoothstep(8.0, 28.0, dist));
-            float w = spatial * exp(-abs(v.g - g) * 60.0) + 1e-5;
+            float depthGate = mix(220.0, 60.0, smoothstep(8.0, 28.0, dist));
+            float w = spatial * exp(-abs(v.g - g) * depthGate) + 1e-5;
             sum += v * w;
             wsum += w;
         }

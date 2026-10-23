@@ -20,7 +20,7 @@ vec3 aurum_skyLut(float y, float cosA) {
     // Leave the open sky bright, but give the sun-facing sunset more headroom for the disc and cloud light.
     // Compress the broad sun-facing sky, not just the disc's immediate pixels. The low sun should keep
     // its amber gradient while the open sky away from it retains the full daytime gain.
-    float gain = mix(SKY_GAIN, 1.10, u_SkyTone.z * pow(max(cosA, 0.0), 1.5));
+    float gain = mix(SKY_GAIN, 0.78, u_SkyTone.z * pow(max(cosA, 0.0), 1.5));
     vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * gain;
     c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.12) * 1.035, u_SkyGrade);
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));

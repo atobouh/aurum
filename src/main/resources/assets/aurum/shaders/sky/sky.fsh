@@ -23,10 +23,10 @@ void main() {
 
     float c = dot(dir, u_SunDir);
     if (u_SunShape < 0.5) {
-        // Disc of about 1.5 degrees with a soft limb, plus a tight bright halo.
-        float disc = smoothstep(0.99962, 0.99972, c);
-        float limb = 0.6 + 0.4 * smoothstep(0.99962, 0.99990, c);
-        float halo = pow(max(c, 0.0), 2200.0) * 0.06 + pow(max(c, 0.0), 300.0) * 0.012;
+        // A larger, legible disc with a narrow anti-aliased limb. The atmosphere supplies the broad halo.
+        float disc = smoothstep(0.99895, 0.99912, c);
+        float limb = 0.6 + 0.4 * smoothstep(0.99912, 0.99970, c);
+        float halo = pow(max(c, 0.0), 1500.0) * 0.045 + pow(max(c, 0.0), 240.0) * 0.010;
         color += u_SunDisc * (disc * limb + halo);
     } else if (c > 0.95) {
         // Square sun, aligned like vanilla's: one edge along the sun's path, the other along world Z. Gnomonic
@@ -50,7 +50,7 @@ void main() {
     float cg = max(c, 0.0);
     // The square sun keeps only the wide glow: a tight round glow as bright as the square would swallow its edges.
     float tight = u_SunShape < 0.5 ? 1.0 : 0.12;
-    color += u_SunGlow.rgb * (pow(cg, 6.0) * 0.24 + (pow(cg, 40.0) * 0.90 + pow(cg, 400.0) * 2.50) * tight) * (0.15 + 0.85 * u_SunGlow.a);
+    color += u_SunGlow.rgb * (pow(cg, 10.0) * 0.20 + (pow(cg, 40.0) * 0.80 + pow(cg, 400.0) * 2.20) * tight) * (0.15 + 0.85 * u_SunGlow.a);
 
     fragColor = vec4(aurum_tonemap(color), 1.0);
 }

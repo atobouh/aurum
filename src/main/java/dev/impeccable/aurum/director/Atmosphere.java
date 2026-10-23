@@ -65,6 +65,9 @@ public final class Atmosphere {
         // warm, shade included). Physics alone gives near-neutral light until the sun is almost down, so the warmth
         // is pushed in from ~25 degrees: amber sunlight, peach light in the shade. Scaled by the Sunset slider.
         float g = golden * (c.sunsetIntensity / 100f);
+        // At a low sun the sky fills the shadow side, but it must not lift every leaf and wall to the same
+        // brightness as the lit side. Preserve the sun term and ease only the diffuse sky fill downward.
+        amb *= 1f - 0.16f * g;
         // Strong enough that lit foliage turns gold (references: foliage red/green ~1.0 at golden hour).
         // A slightly warm sun at every hour: the references' daylight frames are neutral-to-warm (+0.00 to +0.08
         // red over blue), ours read cold blue (-0.12 to -0.21).
@@ -106,7 +109,7 @@ public final class Atmosphere {
         // Overcast days stay bright like Bliss's (L 0.55); 0.3.3 rain at noon measured L 0.33, dark and blue.
         // The former golden-hour boost raised the already luminous sun/sky into a broad near-white patch.
         // Hold the camera exposure closer to daylight so the horizon keeps colour and the land can silhouette.
-        float dayBoost = 1.35f + 0.35f * golden + 1.1f * lut.rain;
+        float dayBoost = 1.35f - 0.10f * golden + 1.1f * lut.rain;
         float maxBoost = 7.0f + (dayBoost - 7.0f) * sunUp * sunUp * (3f - 2f * sunUp);
         float target = (float) Math.min(Math.max(Math.pow(REFERENCE / illum, 0.42), 1.0), maxBoost);
         target *= 1f + 0.35f * gamma;
@@ -114,7 +117,9 @@ public final class Atmosphere {
         float dt = lastNanos == 0 ? 1f : Math.min((now - lastNanos) / 1e9f, 0.25f);
         lastNanos = now;
         adapt += (target - adapt) * (1f - (float) Math.exp(-dt * 0.5f));
-        exposure = BASE_EXPOSURE * adapt * (c.exposure / 100f);
+        // Hold a little more highlight headroom at golden hour. This applies to the entire lit scene, so sky,
+        // terrain and water retain their relative brightness while the amber horizon keeps its chroma.
+        exposure = BASE_EXPOSURE * adapt * (c.exposure / 100f) * (1f - 0.22f * golden);
 
         // White balance: measured once from a clear midday sky (sun ~58 degrees up), then blended by the slider.
         // Golden hour stays warm because the balance is fixed to daylight, as a camera on "daylight" would be.

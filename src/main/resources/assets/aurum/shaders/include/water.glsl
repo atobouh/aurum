@@ -28,17 +28,17 @@ float aurum_viewDepth(float d) {
 vec3 aurum_toLinear(vec3 c) { return pow(max(c, vec3(0.0)), vec3(2.2)); }
 vec3 aurum_toDisplay(vec3 c) { return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2)); }
 
-// Ripple slope at a world position: three layers (16, 6 and 2 blocks per tile; all divide 256 so the camera
-// modulo never shows). Fine layers fade with distance so far water stays calm instead of shimmering.
+// Ripple slope at a world position: three layers (8, 4 and 2 blocks per tile), all periodic across the
+// 256-block camera modulo. Fine layers fade with distance so far water stays calm instead of shimmering.
 vec2 aurum_waterSlope(vec2 xz, float dist) {
-    vec2 a = texture(u_WaterNormalTex, xz / 16.0 + u_WaterScroll.xy).rg * 2.0 - 1.0;
-    vec2 b = texture(u_WaterNormalTex, vec2(xz.y, -xz.x) / 6.0 + u_WaterScroll.zw).rg * 2.0 - 1.0;
+    vec2 a = texture(u_WaterNormalTex, xz / 8.0 + u_WaterScroll.xy).rg * 2.0 - 1.0;
+    vec2 b = texture(u_WaterNormalTex, vec2(xz.y, -xz.x) / 4.0 + u_WaterScroll.zw).rg * 2.0 - 1.0;
     vec2 c = texture(u_WaterNormalTex, xz / 2.0 + u_WaterScroll.yx * 1.7).rg * 2.0 - 1.0;
     float fine = 1.0 / (1.0 + dist * 0.05);
     b = vec2(-b.y, b.x); // undo the layer's rotation
     // Far water settles (Photon: calm, clean reflections toward the horizon).
-    float calm = 1.0 / (1.0 + dist * 0.012);
-    return (a * 0.09 + b * 0.06 * fine + c * 0.05 * fine * fine) * calm * u_WaterParams.w;
+    float calm = 1.0 / (1.0 + dist * 0.022);
+    return (a * 0.065 + b * 0.045 * fine + c * 0.040 * fine * fine) * calm * u_WaterParams.w;
 }
 
 // Screen-space reflection of the opaque scene. Returns rgb (display) and a = hit confidence.
@@ -126,8 +126,8 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     // ripple layers crossing; lines where their heights match. Strongest in the shallows, gone with depth.
     if (!(texture(u_OpaqueDepth, refrUv).r >= 1.0) && column < 8.0) {
         vec3 bed = wp + V * column;
-        float h1 = texture(u_WaterNormalTex, bed.xz / 3.0 + u_WaterScroll.xy * 1.3).b;
-        float h2 = texture(u_WaterNormalTex, vec2(bed.z, -bed.x) / 2.5 + u_WaterScroll.zw * 1.6).b;
+        float h1 = texture(u_WaterNormalTex, bed.xz / 4.0 + u_WaterScroll.xy * 1.3).b;
+        float h2 = texture(u_WaterNormalTex, vec2(bed.z, -bed.x) / 2.0 + u_WaterScroll.zw * 1.6).b;
         float caust = pow(1.0 - abs(h1 - h2), 10.0);
         behind *= 1.0 + caust * 1.4 * sunUp * sunVisible * exp(-column * 0.35) * smoothstep(0.0, 0.3, column);
     }
@@ -184,7 +184,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
         // line up into a visible grid of dots.
         float sparkleFade = 1.0 / (1.0 + dist * 0.03);
         vec2 s1 = vec2(3.0 * wp.x + wp.z, 3.0 * wp.z - wp.x) / 4.0;
-        vec2 s2 = vec2(2.0 * wp.x - 3.0 * wp.z, 3.0 * wp.x + 2.0 * wp.z) / 3.0;
+        vec2 s2 = vec2(2.0 * wp.x - 3.0 * wp.z, 3.0 * wp.x + 2.0 * wp.z) / 4.0;
         vec2 g1 = texture(u_WaterNormalTex, s1 + u_WaterScroll.wz * 2.3).rg * 2.0 - 1.0;
         vec2 g2 = texture(u_WaterNormalTex, s2 + u_WaterScroll.xy * 3.1).rg * 2.0 - 1.0;
         // Facets steep enough to catch the sun across a wide field around its reflection, as in Photon.
