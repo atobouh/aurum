@@ -104,7 +104,9 @@ public final class Atmosphere {
         float illum = luminance(lut.sunColor) * Math.max(sy, 0.42f) + luminance(lut.skyAmbient) * 2.5f + 1e-4f;
         float sunUp = Math.max(0f, Math.min(1f, (sy + 0.05f) / 0.15f));
         // Overcast days stay bright like Bliss's (L 0.55); 0.3.3 rain at noon measured L 0.33, dark and blue.
-        float dayBoost = 1.35f + 0.7f * golden + 1.1f * lut.rain;
+        // The former golden-hour boost raised the already luminous sun/sky into a broad near-white patch.
+        // Hold the camera exposure closer to daylight so the horizon keeps colour and the land can silhouette.
+        float dayBoost = 1.35f + 0.35f * golden + 1.1f * lut.rain;
         float maxBoost = 7.0f + (dayBoost - 7.0f) * sunUp * sunUp * (3f - 2f * sunUp);
         float target = (float) Math.min(Math.max(Math.pow(REFERENCE / illum, 0.42), 1.0), maxBoost);
         target *= 1f + 0.35f * gamma;

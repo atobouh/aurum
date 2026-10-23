@@ -15,6 +15,9 @@ uniform vec4 u_WaterParams;        // xy 1 / framebuffer size, z screen-space re
 uniform vec4 u_WaterScroll;        // ripple layer offsets (tile units, wrapped)
 uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_ModelViewMatrix;
+uniform sampler2D u_CloudReflection;
+uniform mat4 u_PrevCloudViewProj;
+uniform float u_CloudReflectionOn;
 
 // View-space depth (positive, blocks) from a depth-buffer value.
 float aurum_viewDepth(float d) {
@@ -140,6 +143,23 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     vec3 R = reflect(V, n);
     R.y = abs(R.y);
     vec3 skyRefl = aurum_toLinear(aurum_tonemap(aurum_skyRadiance(R, u_SunDirW))) * mix(0.25, 1.0, skyVis);
+    // Clouds are rendered after translucent terrain. Reproject last frame's premultiplied cloud colour into
+    // this reflected direction; a feathered screen edge falls back to the sky LUT when the ray was off screen.
+    // Distant cloud parallax is small, and this costs one filtered sample rather than a second cloud march.
+    if (u_CloudReflectionOn > 0.5 && ng.y > 0.3 && R.y > 0.02) {
+        vec4 clip = u_PrevCloudViewProj * vec4(R, 0.0);
+        if (clip.w > 0.001) {
+            vec2 cuv = clip.xy / clip.w * 0.5 + 0.5;
+            if (all(greaterThan(cuv, vec2(0.0))) && all(lessThan(cuv, vec2(1.0)))) {
+                vec2 edge = smoothstep(vec2(0.02), vec2(0.12), cuv)
+                          * (1.0 - smoothstep(vec2(0.88), vec2(0.98), cuv));
+                vec4 cl = texture(u_CloudReflection, cuv);
+                float coverage = cl.a * edge.x * edge.y;
+                vec3 cloud = aurum_toLinear(cl.rgb / max(cl.a, 0.001));
+                skyRefl = mix(skyRefl, cloud * mix(0.25, 1.0, skyVis), coverage);
+            }
+        }
+    }
     vec3 refl = skyRefl;
     if (u_WaterParams.z > 0.5 && ng.y > 0.3) {
         vec4 ssr = aurum_waterSSR(pos, R, dist);

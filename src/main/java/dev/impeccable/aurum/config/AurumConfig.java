@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 7;
+    public int configVersion = 8;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -75,7 +75,7 @@ public final class AurumConfig {
 
     // Water and wet ground
     public boolean waterEnabled = true;
-    public boolean waterReflections = true;
+    public boolean waterReflections = false;
     public int waveStrength = 100;
     public boolean vertexWaves = false;
     public boolean foam = true;
@@ -97,11 +97,11 @@ public final class AurumConfig {
     public int cloudShading = 100;
 
     // POM (High tier)
-    public boolean pomEnabled = false;
+    public boolean pomEnabled = true;
     /** 3D relief from the texture's own pixels where the resource pack has no height map. */
     public boolean pomGenerated = true;
     public int pomDepth = 100;
-    public int pomDistance = 24;
+    public int pomDistance = 16;
 
     // Colour grade
     public Tonemap tonemap = Tonemap.FILMIC;
@@ -203,6 +203,16 @@ public final class AurumConfig {
             pomEnabled = true;
             pomDistance = preset == Preset.LOW ? 16 : 24;
             configVersion = 7;
+        }
+        if (configVersion < 8) {
+            // Earlier fresh LOW configs retained the field initialiser (POM off, 24-block distance) even though
+            // applying the LOW preset enables nearby relief. Upgrade only that old default signature; edited
+            // distances and other presets keep their chosen state.
+            if (preset == Preset.LOW && !pomEnabled && pomGenerated && pomDepth == 100 && pomDistance == 24) {
+                pomEnabled = true;
+                pomDistance = 16;
+            }
+            configVersion = 8;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

@@ -84,7 +84,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         // Thin leaves pass a little backlight, while front-facing leaves in shadow stay dark.
         // The former fixed 22% sunlight floor made whole crowns glow evenly.
         float leafBack = 1.0 - max(dot(ng, u_LightDir), 0.0);
-        float leafTransmit = 0.06 + 0.12 * leafBack * leafBack;
+        float leafTransmit = 0.04 + 0.10 * leafBack * leafBack;
         float lit = material == 4 ? max(sh.x, leafTransmit) : sh.x;
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
@@ -99,7 +99,11 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     vec3 ambient = (u_SkyAmbient * max(n.y, 0.0)
                   + (sideSky + u_GroundAmbient * 0.5) * (1.0 - abs(n.y))
                   + u_GroundAmbient * max(-n.y, 0.0)) * skyVis;
-    if (material == 4) ambient *= 0.92;
+    if (material == 4) {
+        // Vanilla leaf AO distinguishes the interior of a crown. Keep that local occlusion in the sky fill
+        // instead of letting the broad ambient term turn every cube the same shade of green.
+        ambient *= mix(0.68, 0.94, ao);
+    }
     ambient *= 1.0 - 0.18 * g_pomCavity;
     // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.
     vec3 bounce = texelFetch(u_BounceTex, ivec2(0), 0).rgb;

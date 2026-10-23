@@ -5,6 +5,8 @@ import dev.impeccable.aurum.director.Atmosphere;
 import dev.impeccable.aurum.director.WindState;
 import dev.impeccable.aurum.render.AurumTextures;
 import dev.impeccable.aurum.render.GlUtil;
+import dev.impeccable.aurum.render.PostPass;
+import dev.impeccable.aurum.render.SkyExtras;
 import dev.impeccable.aurum.render.WaterPass;
 import dev.impeccable.aurum.render.shadow.EntityShadows;
 import dev.impeccable.aurum.render.shadow.ShadowRenderer;
@@ -24,7 +26,7 @@ public final class TerrainUniforms {
             "u_ShadowMapPrev", "u_ShadowMatrixPrev",
             "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
             "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale",
-            "u_SkySideToward", "u_SkySideAway"
+            "u_SkySideToward", "u_SkySideAway", "u_CloudReflection", "u_PrevCloudViewProj", "u_CloudReflectionOn"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -39,6 +41,7 @@ public final class TerrainUniforms {
     /** Above GlStateManager's 12 tracked units: bound with raw GL. */
     public static final int UNIT_WATER_NORMAL = 12;
     public static final int UNIT_PBR = 13;
+    public static final int UNIT_CLOUD_REFLECTION = 14;
 
     private static final float[] matrix = new float[16];
 
@@ -151,6 +154,16 @@ public final class TerrainUniforms {
             GlUtil.bindTexture(UNIT_OPAQUE_DEPTH, WaterPass.depthTexture());
             GlUtil.bindTexture(UNIT_OPAQUE_COLOR, WaterPass.colorTexture());
             GlUtil.bindTextureHigh(UNIT_WATER_NORMAL, AurumTextures.waterNormal());
+            boolean clouds = PostPass.hasCloudReflection();
+            GL20C.glUniform1i(loc[40], UNIT_CLOUD_REFLECTION);
+            GL20C.glUniform1f(loc[42], clouds ? 1f : 0f);
+            if (clouds) {
+                PostPass.cloudViewProjection().get(matrix);
+                GL20C.glUniformMatrix4fv(loc[41], false, matrix);
+                GlUtil.bindTextureHigh(UNIT_CLOUD_REFLECTION, SkyExtras.cloudTexture());
+            } else {
+                GlUtil.bindTextureHigh(UNIT_CLOUD_REFLECTION, 0);
+            }
         }
     }
 

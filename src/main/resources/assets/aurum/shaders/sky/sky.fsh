@@ -50,7 +50,7 @@ void main() {
     float cg = max(c, 0.0);
     // The square sun keeps only the wide glow: a tight round glow as bright as the square would swallow its edges.
     float tight = u_SunShape < 0.5 ? 1.0 : 0.12;
-    color += u_SunGlow.rgb * (pow(cg, 6.0) * 0.7 + (pow(cg, 40.0) * 2.0 + pow(cg, 400.0) * 5.0) * tight) * (0.15 + 0.85 * u_SunGlow.a);
+    color += u_SunGlow.rgb * (pow(cg, 6.0) * 0.50 + (pow(cg, 40.0) * 1.10 + pow(cg, 400.0) * 2.50) * tight) * (0.15 + 0.85 * u_SunGlow.a);
 
     fragColor = vec4(aurum_tonemap(color), 1.0);
 }

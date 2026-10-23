@@ -48,6 +48,12 @@ public final class PostPass {
     private static final Matrix4f worldView = new Matrix4f();
     private static final Matrix4f invProj = new Matrix4f();
     private static final Matrix4f invView = new Matrix4f();
+    // Water is drawn before this frame's cloud pass. Reproject the previous frame's cloud image into the
+    // reflected direction; this reuses the existing cloud march instead of drawing a second sky map.
+    private static final Matrix4f previousCloudViewProjection = new Matrix4f();
+    private static boolean previousCloudReady;
+    private static net.minecraft.client.world.ClientWorld previousCloudWorld;
+    private static net.minecraft.util.math.Vec3d previousCloudCamera;
 
     private PostPass() {}
 
@@ -55,6 +61,17 @@ public final class PostPass {
         worldView.set(view);
         worldProjection.set(projection);
         handValid = false;
+    }
+
+    public static boolean hasCloudReflection() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return previousCloudReady && SkyExtras.cloudsActive && SkyExtras.cloudTexture() != 0
+                && previousCloudWorld == client.world && previousCloudCamera != null
+                && previousCloudCamera.squaredDistanceTo(client.gameRenderer.getCamera().getPos()) < 24.0 * 24.0;
+    }
+
+    public static Matrix4f cloudViewProjection() {
+        return previousCloudViewProjection;
     }
 
     private static boolean enabled() {
@@ -218,6 +235,10 @@ public final class PostPass {
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         main.beginWrite(true);
+        previousCloudViewProjection.set(worldProjection).mul(worldView);
+        previousCloudReady = SkyExtras.cloudsDrawn;
+        previousCloudWorld = MinecraftClient.getInstance().world;
+        previousCloudCamera = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
         GpuTimers.end(t);
     }
 

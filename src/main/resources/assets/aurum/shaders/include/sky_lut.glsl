@@ -17,7 +17,9 @@ vec3 aurum_skyLut(float y, float cosA) {
     float u = sqrt(clamp(0.5 - 0.5 * cosA, 0.0, 1.0));
     // A small daylight lift leaves room for the blue-to-white gradient from the atmosphere model. The former
     // 32% desaturation and 12% lift made the open sky almost the same pale colour in every direction.
-    vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * SKY_GAIN;
+    // Leave the open sky bright, but give the sun-facing sunset more headroom for the disc and cloud light.
+    float gain = mix(SKY_GAIN, 1.90, u_SkyTone.z * pow(max(cosA, 0.0), 4.0));
+    vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * gain;
     c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.12) * 1.035, u_SkyGrade);
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
     c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x), vec3(0.0));

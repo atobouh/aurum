@@ -1,3 +1,23 @@
+# Testing: 0.5.6 — shared sky colour, cloud reflections and generated relief
+
+Use the same world, camera, FOV, weather and resource pack for 0.5.5 and 0.5.6. On a fresh LOW
+configuration, check that generated Pixel 3D relief is enabled at a 16-block distance. Existing custom
+configurations should keep the user's POM preference; only the known unmodified old LOW default is migrated.
+
+- At clear noon and sunset, compare the sky near and away from the sun and the colour of the same cloud shapes
+  on open water. Water should show sky/cloud colour even with terrain reflections off; its offscreen cloud
+  reflection will fall back to the sky colour. Rotate and move slowly to check for edge artefacts or lag.
+- Look into a leaf crown at noon and sunset. Outer leaves should be brighter than the interior while individual
+  texture pixels stay legible. Check rain and night for excessive darkening.
+- Inspect gravel, stone bricks, logs and dirt from 1–16 blocks with generated relief, then with an authored
+  LabPBR height map. Generated relief should add modest raised pixels without black/white striping or crawling.
+  Authored maps should retain their stronger walls and self-shadow.
+- Use F8 to record Terrain, Translucent, Aurum post and Frame (GPU), plus FPS, on an Intel UHD 620 at 1080p.
+  Compare LOW with relief on/off and water reflections on/off. Report moving-camera shimmer as well as stills.
+
+The cloud test machine runs Mesa llvmpipe at 854 × 480 and cannot validate UHD 620 frame time or 1080p
+sharpness. It has no authored PBR pack, so the authored-height-map check remains for target hardware.
+
 # Testing: 0.5.5 — sky, foliage, water and detail
 
 Compare with 0.5.4 in the same world, camera, FOV, time, weather, resource pack and preset. Capture clear
