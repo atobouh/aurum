@@ -79,14 +79,24 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     float directVis = smoothstep(0.55, 0.95, sky);
     if (ndl > 0.0) {
         vec2 sh = aurum_shadow(pos, ng);
-        // Leaves let light through: a shaded leaf still glows a little (cheap subsurface stand-in).
-        float lit = material == 4 ? max(sh.x, 0.22) : sh.x;
+        // Thin leaves pass a little backlight, while front-facing leaves in shadow stay dark.
+        // The former fixed 22% sunlight floor made whole crowns glow evenly.
+        float leafBack = 1.0 - max(dot(ng, u_LightDir), 0.0);
+        float leafTransmit = 0.06 + 0.12 * leafBack * leafBack;
+        float lit = material == 4 ? max(sh.x, leafTransmit) : sh.x;
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
     directVis *= g_pomShadow;
     vec3 direct = u_LightColor * (ndl * directVis);
 
-    vec3 ambient = mix(u_GroundAmbient, u_SkyAmbient, n.y * 0.5 + 0.5) * skyVis;
+    // Vertical faces sample the sky in their own direction. The sky table is integrated on the CPU,
+    // so terrain pays only a few multiplies, without tracing or another texture lookup.
+    // At noon the sun is vertical and its horizontal direction is zero.
+    float sunSide = dot(n.xz, u_SunDirW.xz) * inversesqrt(max(dot(u_SunDirW.xz, u_SunDirW.xz), 1e-4));
+    vec3 sideSky = mix(u_SkySideAway, u_SkySideToward, sunSide * 0.5 + 0.5);
+    vec3 ambient = (u_SkyAmbient * max(n.y, 0.0)
+                  + (sideSky + u_GroundAmbient * 0.5) * (1.0 - abs(n.y))
+                  + u_GroundAmbient * max(-n.y, 0.0)) * skyVis;
     // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.
     vec3 bounce = texelFetch(u_BounceTex, ivec2(0), 0).rgb;
     float bl = max(dot(bounce, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
@@ -94,7 +104,9 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     ambient *= mix(vec3(1.0), bounceTint, u_TerrainParams.w * (1.0 - clamp(ndl * directVis, 0.0, 1.0)));
 
     float blockBrightness = blk / (4.0 - 3.0 * blk); // vanilla's light curve
-    vec3 light = (direct + ambient) * ao + u_BlockLightColor * (blockBrightness * ao) + vec3(u_TerrainParams.z);
+    // Ambient receives the full local AO. Sun and nearby blocklight keep their lit face/detail visible.
+    vec3 light = direct * mix(1.0, ao, 0.35) + ambient * ao
+               + u_BlockLightColor * (blockBrightness * mix(1.0, ao, 0.6)) + vec3(u_TerrainParams.z);
 
     vec3 color = albedo * light * (1.0 + coating * 0.08);
     if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {

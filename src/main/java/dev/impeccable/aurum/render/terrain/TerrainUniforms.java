@@ -23,7 +23,8 @@ public final class TerrainUniforms {
             "u_EntityShadowMap", "u_EntityShadowMatrix", "u_EntityShadowParams",
             "u_ShadowMapPrev", "u_ShadowMatrixPrev",
             "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
-            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale"
+            "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale",
+            "u_SkySideToward", "u_SkySideAway"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -69,6 +70,8 @@ public final class TerrainUniforms {
         GL20C.glUniform3fv(loc[2], Atmosphere.lightColor);
         GL20C.glUniform3fv(loc[3], Atmosphere.skyAmbient);
         GL20C.glUniform3fv(loc[4], Atmosphere.groundAmbient);
+        GL20C.glUniform3fv(loc[38], Atmosphere.skySideToward);
+        GL20C.glUniform3fv(loc[39], Atmosphere.skySideAway);
         GL20C.glUniform3fv(loc[5], Atmosphere.blockLight);
         float normals = c.normalsEnabled ? c.normalStrength / 100f * 0.9f : 0f;
         float bounce = c.bounceEnabled ? c.bounceStrength / 100f * 0.35f : 0f;

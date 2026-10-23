@@ -1,3 +1,23 @@
+# Testing: 0.5.4 — world lighting
+
+This build changes terrain lighting. Test in the same world, camera position, FOV, weather, resource pack,
+Minecraft brightness and power mode as 0.5.3. Use F6 to compare Aurum on/off; use Photon and Complementary
+screenshots as style references, not as matched performance runs.
+
+1. **Noon, mixed faces:** look at a village or cliff with sun-facing and away-facing walls. Sides should read
+   differently, while stone and wood texture remains visible. Check straight-down noon sun for artifacts.
+2. **Forest shade:** leaf crowns and the ground under them should retain detail without green neon, black
+   patches or light leaking through a roof.
+3. **Sunset, toward and away from the sun:** sunlit faces should be amber and shaded faces cooler but readable.
+   Rotate the camera slowly; look for sky-light colour stepping or flicker on vertical walls.
+4. **Rain and night:** make sure the directional shade does not create bright walls, clipped highlights or
+   unwanted colour casts. Check a torchlit interior for dirty corners.
+
+Please send paired screenshots from those scenes and the F8 **Terrain**, **Aurum post**, **Frame (GPU)** and FPS
+readings for Low and High, compared with 0.5.3 in the same power mode. The development machine confirmed shader
+compilation and visually checked one forest scene at noon and sunset using software OpenGL. It cannot establish
+the look against Photon/Complementary or benchmark an Intel UHD 620.
+
 # Testing: 0.5.3
 
 - **3D for all textures** (F7 > POM, on): blocks your PBR pack has no height map for (wood, modded blocks) get

@@ -6,6 +6,8 @@ uniform int u_AurumMode;          // 0 = vanilla path (other dimensions, underwa
 uniform vec3 u_LightDir;          // direction towards the sun (day) or moon (night), world space
 uniform vec3 u_LightColor;        // direct light colour, linear HDR
 uniform vec3 u_SkyAmbient;        // light from the sky dome, linear HDR
+uniform vec3 u_SkySideToward;     // vertical sky irradiance toward the sun's azimuth
+uniform vec3 u_SkySideAway;       // vertical sky irradiance opposite the sun
 uniform vec3 u_GroundAmbient;     // light bounced up from the ground, linear HDR
 uniform vec3 u_BlockLightColor;   // torch colour at full block light, linear HDR
 uniform vec4 u_TerrainParams;     // x normal strength, y AO boost, z minimum light, w bounce strength

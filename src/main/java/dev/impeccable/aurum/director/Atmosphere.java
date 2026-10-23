@@ -19,6 +19,8 @@ public final class Atmosphere {
     public static final float[] sunDir = {0, 1, 0};
     public static final float[] lightColor = new float[3];
     public static final float[] skyAmbient = new float[3];
+    public static final float[] skySideToward = new float[3];
+    public static final float[] skySideAway = new float[3];
     public static final float[] groundAmbient = new float[3];
     public static final float[] blockLight = new float[3];
     /** Per-channel gains that make midday sun + sky read as neutral white (camera white balance). */
@@ -66,9 +68,9 @@ public final class Atmosphere {
         // Strong enough that lit foliage turns gold (references: foliage red/green ~1.0 at golden hour).
         // A slightly warm sun at every hour: the references' daylight frames are neutral-to-warm (+0.00 to +0.08
         // red over blue), ours read cold blue (-0.12 to -0.21).
-        float[] sunTint = {1.0f, 0.975f - 0.30f * g, 0.92f - 0.60f * g};
-        // Golden-hour shade stays warm and readable (references: amber shade; ours went navy once the haze cleared).
-        float[] ambTint = {1f + 0.32f * g, 1f + 0.08f * g, 1f - 0.22f * g};
+        float[] sunTint = {1.08f, 1.02f - 0.30f * g, 0.98f - 0.60f * g};
+        // Keep the shade readable but cooler than the low sun. Warming both equally flattens the scene.
+        float[] ambTint = {1f + 0.12f * g, 1f + 0.04f * g, 1f - 0.08f * g};
         // Look presets: warmer or cooler shade.
         float sw = c.shadeWarmth / 50f;
         ambTint[0] *= 1f + 0.10f * sw;
@@ -80,13 +82,19 @@ public final class Atmosphere {
         lastColorNanos = nowC;
         float kC = lastLut == null || Math.abs(lastLut.sunY - lut.sunY) > 0.05f ? 1f : 1f - (float) Math.exp(-dtC / 0.4f);
         lastLut = lut;
+        float skyGrey = luminance(lut.skyAmbient);
+        float towardGrey = luminance(lut.skySideToward);
+        float awayGrey = luminance(lut.skySideAway);
         for (int i = 0; i < 3; i++) {
             lightColor[i] += (lut.sunColor[i] * sun * sunTint[i] - lightColor[i]) * kC;
             // Shade takes the sky's light but only part of its blue: in the references shade is cool-neutral, ours
             // turned everything in shadow blue.
-            float skyGrey = luminance(lut.skyAmbient);
             float skyA = lut.skyAmbient[i] + (skyGrey - lut.skyAmbient[i]) * 0.35f;
             skyAmbient[i] += (skyA * amb * ambTint[i] - skyAmbient[i]) * kC;
+            float toward = lut.skySideToward[i] + (towardGrey - lut.skySideToward[i]) * 0.35f;
+            float away = lut.skySideAway[i] + (awayGrey - lut.skySideAway[i]) * 0.35f;
+            skySideToward[i] += (toward * amb * ambTint[i] - skySideToward[i]) * kC;
+            skySideAway[i] += (away * amb * ambTint[i] - skySideAway[i]) * kC;
             groundAmbient[i] += (lut.groundAmbient[i] * amb * sunTint[i] - groundAmbient[i]) * kC;
         }
 

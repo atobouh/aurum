@@ -31,6 +31,9 @@ public final class SkyLut {
     public final float[] sunGlow = new float[3];
     /** Light from the sky dome on an upward surface, as irradiance / PI. */
     public final float[] skyAmbient = new float[3];
+    /** Sky irradiance on vertical faces looking toward and away from the sun's azimuth. */
+    public final float[] skySideToward = new float[3];
+    public final float[] skySideAway = new float[3];
     /** Light bounced up from the ground onto a downward surface. */
     public final float[] groundAmbient = new float[3];
 
@@ -65,6 +68,7 @@ public final class SkyLut {
         double night = smooth(0.02, -0.25, sy);
 
         double irrR = 0, irrG = 0, irrB = 0;
+        double[] sideToward = new double[3], sideAway = new double[3];
         for (int row = 0; row < HEIGHT; row++) {
             double se = sinElevationForRow(row);
             double e = Math.asin(se);
@@ -146,6 +150,14 @@ public final class SkyLut {
                     irrR += r * w;
                     irrG += g * w;
                     irrB += b * w;
+                    // Integrate the same sky for vertical faces. The table stores half the azimuths;
+                    // the other half is its mirror about the sun, hence the factor of two below.
+                    double sideCos = ce * Math.cos(a);
+                    double sideW = Math.abs(sideCos) * dy * da;
+                    double[] side = sideCos >= 0.0 ? sideToward : sideAway;
+                    side[0] += r * sideW;
+                    side[1] += g * sideW;
+                    side[2] += b * sideW;
                 }
             }
         }
@@ -156,6 +168,10 @@ public final class SkyLut {
         lut.skyAmbient[0] = (float) (irrR * 2.0 / Math.PI * multi);
         lut.skyAmbient[1] = (float) (irrG * 2.0 / Math.PI * multi);
         lut.skyAmbient[2] = (float) (irrB * 2.0 / Math.PI * multi);
+        for (int c = 0; c < 3; c++) {
+            lut.skySideToward[c] = (float) (sideToward[c] * 2.0 / Math.PI * multi);
+            lut.skySideAway[c] = (float) (sideAway[c] * 2.0 / Math.PI * multi);
+        }
 
         SkyModel.sunTransmittance(sy, out);
         double sunUp = smooth(-0.03, 0.04, sy);
