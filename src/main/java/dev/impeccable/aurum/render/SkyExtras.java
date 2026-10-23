@@ -43,7 +43,7 @@ public final class SkyExtras {
     private static long lastDriftNanos;
     private static double drift;
     private static int cloudTex, cloudFbo, cloudW, cloudH;
-    private static int maskTex, maskFbo, raysTex, raysFbo, vlTex, vlFbo, aoTex, aoFbo, quarterW, quarterH, halfW, halfH;
+    private static int maskTex, maskFbo, raysTex, raysFbo, vlTex, vlFbo, aoTex, aoFbo, quarterW, quarterH, thirdW, thirdH, halfW, halfH;
     private static final int[] flareTex = new int[2], flareFbo = new int[2];
     private static int flareIndex;
     private static final int[] bloomTex = new int[BLOOM_LEVELS], bloomFbo = new int[BLOOM_LEVELS];
@@ -144,7 +144,8 @@ public final class SkyExtras {
             ShaderProgram blur = ShaderManager.get("post/rays_blur");
             if (mask != null && blur != null) {
                 GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, maskFbo);
-                GlStateManager._viewport(0, 0, quarterW, quarterH);
+                // Keep close leaves and thin gaps in the mask before the radial blur downsamples the rays.
+                GlStateManager._viewport(0, 0, halfW, halfH);
                 mask.bind();
                 mask.set1i("u_Depth", UNIT_A);
                 mask.set1i("u_Clouds", UNIT_B);
@@ -153,6 +154,7 @@ public final class SkyExtras {
                 GlUtil.drawFullscreenTriangle();
 
                 GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, raysFbo);
+                GlStateManager._viewport(0, 0, quarterW, quarterH);
                 blur.bind();
                 blur.set1i("u_Mask", UNIT_A);
                 GL20C.glUniform2f(blur.uniform("u_SunUv"), sx, sy);
@@ -170,7 +172,7 @@ public final class SkyExtras {
         ShaderProgram vl = ShaderManager.get("post/volumetric");
         if (volumetricStrength > 0.002f && vl != null) {
             GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, vlFbo);
-            GlStateManager._viewport(0, 0, quarterW, quarterH);
+            GlStateManager._viewport(0, 0, thirdW, thirdH);
             vl.bind();
             vl.set1i("u_Depth", UNIT_A);
             vl.set1i("u_ShadowMap", UNIT_B);
@@ -384,15 +386,17 @@ public final class SkyExtras {
         cloudFbo = fbo(cloudTex);
         quarterW = Math.max(1, w / 4);
         quarterH = Math.max(1, h / 4);
-        maskTex = GlUtil.createTexture(GL30C.GL_R8, quarterW, quarterH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
+        halfW = Math.max(1, w / 2);
+        halfH = Math.max(1, h / 2);
+        thirdW = Math.max(1, w / 3);
+        thirdH = Math.max(1, h / 3);
+        maskTex = GlUtil.createTexture(GL30C.GL_R8, halfW, halfH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         maskFbo = fbo(maskTex);
         raysTex = GlUtil.createTexture(GL30C.GL_R8, quarterW, quarterH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         raysFbo = fbo(raysTex);
-        halfW = Math.max(1, w / 2);
-        halfH = Math.max(1, h / 2);
-        // Quarter resolution: with realistic density the beams are soft, and the edge-aware upscale keeps
-        // silhouettes clean; a quarter of the cost of 0.3.3-0.4.0's half resolution.
-        vlTex = GlUtil.createTexture(GL30C.GL_RG8, quarterW, quarterH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
+        // One-third resolution resolves nearby beams better than quarter resolution. Ten march steps below
+        // keep the total shadow taps about 1.5x the old pass, far below a full-resolution volumetric march.
+        vlTex = GlUtil.createTexture(GL30C.GL_RG8, thirdW, thirdH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         vlFbo = fbo(vlTex);
         aoTex = GlUtil.createTexture(GL30C.GL_RG8, halfW, halfH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         aoFbo = fbo(aoTex);

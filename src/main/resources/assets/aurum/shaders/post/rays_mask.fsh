@@ -1,6 +1,6 @@
 #version 150
 
-// God rays, step 1 (1/4 resolution): where is open sky? Terrain blocks the sun fully, clouds mostly, so rays
+// God rays, step 1 (1/2 resolution): where is open sky? Terrain blocks the sun fully, clouds mostly, so rays
 // also fall through gaps between clouds.
 
 uniform sampler2D u_Depth;

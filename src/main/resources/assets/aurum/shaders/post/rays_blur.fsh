@@ -1,6 +1,6 @@
 #version 150
 
-// God rays, step 2 (1/4 resolution): radial blur of the sky mask toward the sun (GPU Gems 3, chapter 13).
+// God rays, step 2 (1/4 resolution): radial integration of the sky mask toward the sun (GPU Gems 3, chapter 13).
 // Sixteen samples with a per-pixel jitter; the result is the share of open sky along the line to the sun.
 
 uniform sampler2D u_Mask;

@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 8;
+    public int configVersion = 9;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -107,9 +107,9 @@ public final class AurumConfig {
     public Tonemap tonemap = Tonemap.FILMIC;
     public int whiteBalance = 100;
     public int exposure = 100;
-    public int saturation = 92;
-    public int vibrance = 105;
-    public int contrast = 100;
+    public int saturation = 100;
+    public int vibrance = 108;
+    public int contrast = 105;
     public LookPreset look = LookPreset.AURUM;
     /** -50 cool .. +50 warm. */
     public int temperature = 0;
@@ -213,6 +213,15 @@ public final class AurumConfig {
                 pomDistance = 16;
             }
             configVersion = 8;
+        }
+        if (configVersion < 9) {
+            // Upgrade only the untouched Aurum grade. Keep custom and style-preset colours exactly as chosen.
+            if (look == LookPreset.AURUM && saturation == 92 && vibrance == 105 && contrast == 100) {
+                saturation = 100;
+                vibrance = 108;
+                contrast = 105;
+            }
+            configVersion = 9;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

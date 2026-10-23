@@ -1,3 +1,22 @@
+# Testing: 0.5.7 — colour, nearby shafts and close detail
+
+Use the same world, camera, FOV, time, weather, resource pack, resolution and preset for 0.5.6 and 0.5.7.
+At sunset, compare a clear patch of sky beside the sun and an actual cloud gap. The sky should keep an amber
+gradient without a broad painted shaft in a clear patch; light shafts should follow cloud and terrain gaps.
+Check the same view with God Rays off in F7 to separate sky radiance from shafts. With God Rays on, inspect a
+nearby tree or wall edge at 2–8 blocks: the shadow-map beam should stay locally defined rather than spreading
+across the adjacent surface. Move the camera slowly to check for stair stepping and shimmer.
+
+At clear noon and sunset, compare grass, leaves, stone and water in the same viewpoint. Texture pixels and
+silhouettes should remain legible; foliage should have bright exposed areas and darker interiors without a
+uniform neon-green tint. On water, check the cloud reflection, horizon colour and sun glitter without losing
+the shallow bed. Test rain and night for unwanted bright sky light. If an authored LabPBR pack is available,
+repeat the close-texture check on its height maps and with generated relief off.
+
+Record F8 **Terrain**, **Aurum post**, **Frame (GPU)** and FPS at 1080p on an Intel UHD 620 for LOW and the
+current preset, including moving-camera checks. This development environment uses Mesa llvmpipe software GL
+at 1280 × 720, so it verifies shader compilation and visual examples but cannot establish UHD performance.
+
 # Testing: 0.5.6 — shared sky colour, cloud reflections and generated relief
 
 Use the same world, camera, FOV, weather and resource pack for 0.5.5 and 0.5.6. On a fresh LOW

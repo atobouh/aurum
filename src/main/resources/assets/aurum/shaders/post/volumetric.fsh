@@ -1,9 +1,8 @@
 #version 150
 
-// Volumetric light (1/4 resolution): how much of the air along each view ray is in sunlight, from the shadow
-// map. Shadowed air (behind trees, under islands, inside caves) stays dark, sunlit air glows in the composite:
-// that contrast is what draws light beams, even with the sun off-screen. Twelve jittered steps, one shadow
-// lookup each; the composite smooths the jitter with an edge-aware upscale.
+// Volumetric light (1/3 resolution): how much of the air along each view ray is in sunlight, from the shadow
+// map. Shadowed air (behind trees, under islands, inside caves) stays dark, sunlit air glows in the composite.
+// Ten jittered steps balance the finer pixel grid against the Intel UHD shadow-sampling budget.
 
 uniform sampler2D u_Depth;
 uniform sampler2DShadow u_ShadowMap;
@@ -15,7 +14,7 @@ uniform vec4 u_Params;        // x distortion, y range (blocks), z depth bias
 in vec2 v_Uv;
 out vec4 fragColor;
 
-const int STEPS = 12;
+const int STEPS = 10;
 
 float lit(vec3 pos) {
     vec4 c = u_ShadowMatrix * vec4(pos, 1.0);

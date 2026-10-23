@@ -16,7 +16,7 @@ uniform sampler2D u_Clouds;   // half resolution, premultiplied
 uniform sampler2D u_Rays;     // quarter resolution, open sky along the line to the sun
 uniform sampler2D u_Bloom;    // quarter resolution
 uniform sampler2D u_Flare;    // 1x1, visible share of the sun disc
-uniform sampler2D u_Volumetric; // half resolution: r sunlit share of the air, g distance covered / range
+uniform sampler2D u_Volumetric; // one-third resolution: r sunlit share of the air, g distance covered / range
 uniform sampler2D u_Ao;     // half resolution: r ambient occlusion, g distance / range
 uniform vec4 u_AoParams;    // x strength, y range (blocks)
 uniform vec4 u_Volumetric2;    // x range (blocks), y enclosed (0 open sky .. 1 cave or room), z haze (0..1)
@@ -86,10 +86,9 @@ float cloudEntry(vec3 dir) {
     return t;
 }
 
-// Volumetric light (quarter resolution), upscaled edge-aware: of the 3x3 nearest texels, each is weighted by how
-// close its march length (g, the distance it covered) is to this pixel's own. A tree's edge then never borrows
-// the bright value of the open air behind it: that borrowing drew the flaky white outlines in 0.3.2. The 3x3
-// footprint also averages out the march jitter.
+// Volumetric light, upscaled edge-aware. Nearby beams get a compact spatial kernel; distant haze still uses
+// the broad 3x3 kernel to hide march jitter. Depth agreement keeps tree silhouettes from borrowing bright
+// open-air values behind them.
 vec2 volumetricLit(vec2 uv, float dist) {
     vec2 size = vec2(textureSize(u_Volumetric, 0));
     vec2 base = floor(uv * size) + 0.5;
@@ -101,7 +100,9 @@ vec2 volumetricLit(vec2 uv, float dist) {
             vec2 tc = base + vec2(x, y);
             vec2 v = texelFetch(u_Volumetric, ivec2(clamp(tc, vec2(0.0), size - 1.0)), 0).rg;
             vec2 d = abs(tc - uv * size);
-            float spatial = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y);
+            float broad = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y);
+            float close = exp(-dot(d, d) * 3.5);
+            float spatial = mix(close, broad, smoothstep(8.0, 28.0, dist));
             float w = spatial * exp(-abs(v.g - g) * 60.0) + 1e-5;
             sum += v * w;
             wsum += w;
@@ -255,15 +256,22 @@ void main() {
             scene += rayColor * min(glow * phase * u_Extras.w, 0.25);
         }
         if (u_Extras.x > 0.0) {
-            // Screen-space shafts, over open sky only: streaks through cloud gaps and past the edges of hills and
-            // trees, fanning from the sun. Never over terrain: a 2D blur toward the sun cannot know a mountain
-            // stands in front of the light (0.3.2 painted glow over hills hiding the sun). Beams in front of
-            // terrain come from the shadow-map volumetric light instead. Cubing keeps the gaps between shafts dark.
+            // Screen-space shafts over open sky. A radial average of an unobstructed sky is 1 everywhere;
+            // adding that directly drew a wide, blurry wedge instead of beams. Compare neighbouring angular
+            // paths so only actual cloud/terrain gaps produce a shaft. The shadow-map pass handles beams in
+            // front of nearby terrain.
             float rays = texture(u_Rays, v_Uv).r;
             float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
+            vec2 tangent = normalize(vec2(-(v_Uv.y - u_SunScreen.y),
+                                          (v_Uv.x - u_SunScreen.x) * u_SunScreen.z) + vec2(1e-5));
+            vec2 offset = tangent * (0.018 + 0.045 * r) / vec2(u_SunScreen.z, 1.0);
+            float surround = 0.5 * (texture(u_Rays, clamp(v_Uv + offset, 0.0, 1.0)).r
+                                  + texture(u_Rays, clamp(v_Uv - offset, 0.0, 1.0)).r);
+            float shaft = max(rays - surround - 0.015, 0.0);
             float openSky = (depth >= 1.0 ? 1.0 : 0.0) * (1.0 - texture(u_Clouds, v_Uv).a);
             // Rays start a little away from the sun: piled up on its face they only blow it out to white.
-            scene += rayColor * (rays * rays * rays) * exp(-r * 2.2) * smoothstep(0.02, 0.14, r) * openSky * u_Extras.x;
+            scene += rayColor * pow(shaft, 1.35) * 0.85 * exp(-r * 2.2)
+                   * smoothstep(0.02, 0.14, r) * openSky * u_Extras.x;
         }
     }
     if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;

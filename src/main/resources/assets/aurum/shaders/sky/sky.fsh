@@ -46,11 +46,11 @@ void main() {
         float rim = (1.0 - smoothstep(1.3 * S - px, 1.45 * S, m)) * 0.14 + exp(-max(m - S, 0.0) * 22.0) * 0.06;
         color += u_SunDisc * (core * centre + rim * (1.0 - core));
     }
-    // The wide, warm glow every good golden-hour shot has around the sun (stronger when the sun is low).
+    // Keep the aureole around the disc; the LUT already supplies the broad atmospheric sunset gradient.
     float cg = max(c, 0.0);
     // The square sun keeps only the wide glow: a tight round glow as bright as the square would swallow its edges.
     float tight = u_SunShape < 0.5 ? 1.0 : 0.12;
-    color += u_SunGlow.rgb * (pow(cg, 6.0) * 0.50 + (pow(cg, 40.0) * 1.10 + pow(cg, 400.0) * 2.50) * tight) * (0.15 + 0.85 * u_SunGlow.a);
+    color += u_SunGlow.rgb * (pow(cg, 6.0) * 0.24 + (pow(cg, 40.0) * 0.90 + pow(cg, 400.0) * 2.50) * tight) * (0.15 + 0.85 * u_SunGlow.a);
 
     fragColor = vec4(aurum_tonemap(color), 1.0);
 }
