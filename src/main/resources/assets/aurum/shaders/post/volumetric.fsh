@@ -2,7 +2,7 @@
 
 // Volumetric light (1/3 resolution): how much of the air along each view ray is in sunlight, from the shadow
 // map. Shadowed air (behind trees, under islands, inside caves) stays dark, sunlit air glows in the composite.
-// Ten jittered steps balance the finer pixel grid against the Intel UHD shadow-sampling budget.
+// Ten jittered steps on Low, twelve on Medium and sixteen on High resolve narrower lanes of light.
 
 uniform sampler2D u_Depth;
 uniform sampler2DShadow u_ShadowMap;
@@ -10,11 +10,10 @@ uniform mat4 u_ShadowMatrix;  // camera-relative world position -> light clip sp
 uniform mat4 u_InvProj;
 uniform mat4 u_InvView;
 uniform vec4 u_Params;        // x distortion, y range (blocks), z depth bias, w air extinction per block
+uniform int u_SampleCount;
 
 in vec2 v_Uv;
 out vec4 fragColor;
-
-const int STEPS = 10;
 
 float lit(vec3 pos) {
     vec4 c = u_ShadowMatrix * vec4(pos, 1.0);
@@ -34,9 +33,11 @@ void main() {
     float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
     // Steps packed closer near the camera, where beams are largest on screen.
     float sum = 0.0, weightSum = 0.0;
-    for (int i = 0; i < STEPS; i++) {
-        float a = float(i) / float(STEPS);
-        float b = float(i + 1) / float(STEPS);
+    int steps = clamp(u_SampleCount, 10, 16);
+    for (int i = 0; i < 16; i++) {
+        if (i >= steps) break;
+        float a = float(i) / float(steps);
+        float b = float(i + 1) / float(steps);
         float start = range * a * a;
         float end = range * b * b;
         float sampleDistance = mix(start, end, jitter);

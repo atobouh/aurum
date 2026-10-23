@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-23",
+  "sources": [
+    {
+      "name": "rethinking-voxels",
+      "url": "https://github.com/gri573/rethinking-voxels",
+      "commit": "d76c831da62b695d1b30d30bb218aba2116fd55e",
+      "local_checkout": "/workspace/shader-references/rethinking-voxels",
+      "role": "Official repository; singlesample-softshadows-v2 branch, r0.1-beta9"
+    },
+    {
+      "name": "DerivativeMain-VoxyEdit",
+      "url": "https://github.com/fuzhulike/DerivativeMain-VoxyEdit-fuzhu",
+      "commit": "6546738ef49c03610526ca53751780978c073331",
+      "local_checkout": "/workspace/shader-references/DerivativeMain-VoxyEdit",
+      "role": "Community Derivative Main fork with Voxy support; not verified as the original pack"
+    },
+    {
+      "name": "DERCODE",
+      "url": "https://github.com/SyrexSkyLine/DERCODE",
+      "commit": "ce2b347365060e887cf0b917498544be7ea2dcfe",
+      "local_checkout": "/workspace/shader-references/DERCODE",
+      "role": "Additional Derivative rework; repository labels this a development/beta build"
+    }
+  ],
+  "original_derivative_project": "https://www.curseforge.com/minecraft/shaders/derivative-main",
+  "original_derivative_status": "Official repository not verified; project download page unavailable through environment network."
+}

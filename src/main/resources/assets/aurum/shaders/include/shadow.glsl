@@ -19,7 +19,7 @@ float aurum_entityShadow(vec3 pos, vec3 normal) {
     if (abs(c.x) > 0.98 || abs(c.y) > 0.98) return 1.0;
     vec3 sc = c.xyz * 0.5 + 0.5;
     sc.z -= 0.0002;
-    float r = u_EntityShadowParams.y * 1.5;
+    float r = u_EntityShadowParams.y;
     float s = texture(u_EntityShadowMap, sc + vec3(-r, -r, 0.0))
             + texture(u_EntityShadowMap, sc + vec3( r, -r, 0.0))
             + texture(u_EntityShadowMap, sc + vec3(-r,  r, 0.0))
@@ -42,11 +42,14 @@ float aurum_shadowFilter(sampler2DShadow map, mat4 m, vec3 pos, vec3 normal, out
     // away from the centre with the distortion). Prevents acne without the floating look of a big depth bias.
     float df = r * u_ShadowParams.x + (1.0 - u_ShadowParams.x);
     float texelWorld = u_ShadowParams.z * df * df / (1.0 - u_ShadowParams.x);
-    c = m * vec4(pos + normal * texelWorld * 1.6, 1.0);
+    // Keep nearby block/plant contacts tight. Distant map texels still need more bias and filtering to
+    // remain stable; a fixed wide kernel made every contact look detached and soft at arm's length.
+    float detail = 1.0 - smoothstep(12.0, 48.0, length(pos));
+    c = m * vec4(pos + normal * texelWorld * mix(1.6, 1.1, detail), 1.0);
     vec3 sc = vec3(aurum_shadowDistort(c.xy), c.z) * 0.5 + 0.5;
     sc.z -= u_ShadowParams2.z;
 
-    float rad = u_ShadowParams.w * u_ShadowParams2.x;
+    float rad = u_ShadowParams.w * u_ShadowParams2.x * mix(1.0, 0.5, detail);
     float s;
     if (u_ShadowParams2.y < 6.0) {
         s  = texture(map, sc + vec3(-0.5, -0.5, 0.0) * rad);

@@ -57,6 +57,7 @@ public final class SkyLut {
         double sy = Math.max(-1.0, Math.min(1.0, sunY));
         double sx = Math.sqrt(Math.max(0.0, 1.0 - sy * sy));
         double[] out = new double[3];
+        double[] moonSky = new double[3];
 
         // How "golden hour" it is: 1 with the sun near the horizon, 0 at noon and deep night.
         double low = smooth(0.45, 0.05, sy) * smooth(-0.22, -0.02, sy);
@@ -66,6 +67,8 @@ public final class SkyLut {
         double grey = rain * (rainDesaturation / 100.0);
         double dim = 1.0 - 0.55 * rain - 0.25 * thunder;
         double night = smooth(0.02, -0.25, sy);
+        SkyModel.DiffuseSky sunDiffuse = SkyModel.DiffuseSky.build(sx, sy);
+        SkyModel.DiffuseSky moonDiffuse = night > 0 ? SkyModel.DiffuseSky.build(-sx, -sy) : null;
 
         double irrR = 0, irrG = 0, irrB = 0;
         double[] sideToward = new double[3], sideAway = new double[3];
@@ -80,7 +83,7 @@ public final class SkyLut {
                 double a = 2.0 * Math.asin(sHalf);
                 double da = 2.0 / Math.sqrt(1.0 - sHalf * sHalf) / WIDTH;
                 double vx = ce * Math.cos(a), vz = ce * Math.sin(a);
-                SkyModel.radiance(vx, se, vz, sx, sy, 0.0, out);
+                SkyModel.radiance(vx, se, vz, sx, sy, 0.0, sunDiffuse, out);
                 double r = out[0], g = out[1], b = out[2];
 
                 // Artistic: saturation at golden hour, extra warmth toward the sun near the horizon.
@@ -96,16 +99,15 @@ public final class SkyLut {
                 g *= 1.0 - 0.09 * wk;
                 b *= 1.0 - 0.55 * wk;
 
-                // With the sun high, single scattering leaves the horizon slightly yellow (no multiple
-                // scattering). Real skies are white-blue there; whiten it. Also lift daytime saturation a little,
-                // since the AgX display transform greys blues.
+                // A restrained daylight grade on top of the diffuse re-scattering model. The former 70%
+                // horizon replacement hid the atmospheric gradient under an almost uniform white band.
                 double high = smooth(0.08, 0.35, sy);
                 double nearHorizon = Math.exp(-Math.max(e, 0.0) * 9.0) * high;
                 lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                r = r + (lum * 0.86 - r) * 0.7 * nearHorizon;
-                g = g + (lum * 0.98 - g) * 0.7 * nearHorizon;
-                b = b + (lum * 1.22 - b) * 0.7 * nearHorizon;
-                double daySat = 1.0 + 0.45 * high;
+                r = r + (lum * 0.86 - r) * 0.25 * nearHorizon;
+                g = g + (lum * 0.98 - g) * 0.25 * nearHorizon;
+                b = b + (lum * 1.22 - b) * 0.25 * nearHorizon;
+                double daySat = 1.0 + 0.25 * high;
                 lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
                 r = lum + (r - lum) * daySat;
                 g = lum + (g - lum) * daySat;
@@ -127,11 +129,16 @@ public final class SkyLut {
                     b = b + (l2 * pb - b) * k;
                 }
 
-                // Night: a simple dark blue gradient under the vanilla stars and moon.
-                double up = Math.sqrt(Math.max(0.0, se));
-                r += night * (0.0045 + 0.0010 * (1 - up));
-                g += night * (0.0065 + 0.0012 * (1 - up));
-                b += night * (0.0140 - 0.0030 * up);
+                // The moon lights the same atmosphere from the opposite direction. A small airglow floor
+                // keeps the horizon readable, but no longer replaces the entire night dome with flat blue.
+                // This remains an artistic fixed moon intensity; moon phase is not part of this LUT's inputs.
+                if (night > 0.0) {
+                    SkyModel.radiance(vx, se, vz, -sx, -sy, 0.0, moonDiffuse, moonSky);
+                    double horizon = Math.exp(-Math.max(se, 0.0) * 5.0);
+                    r += night * (moonSky[0] * 0.0032 + 0.0006 + 0.0008 * horizon);
+                    g += night * (moonSky[1] * 0.0036 + 0.00088 + 0.0012 * horizon);
+                    b += night * (moonSky[2] * 0.0044 + 0.0020 + 0.0020 * horizon);
+                }
 
                 // Weather: pull toward grey and darken.
                 lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -162,9 +169,9 @@ public final class SkyLut {
             }
         }
         // The table covers azimuth 0..PI; the sky is symmetric about the sun, so double it. Store E / PI.
-        // Single scattering underestimates skylight (no multiple scattering); compensate, but keep the sun
-        // clearly stronger than the sky so lit and shaded sides read as 3D.
-        double multi = 1.75;
+        // The table now includes diffuse second scattering. Keep a smaller compensation for omitted higher
+        // orders rather than lifting the entire sky fill with the former 1.75 single-scattering multiplier.
+        double multi = 1.35;
         lut.skyAmbient[0] = (float) (irrR * 2.0 / Math.PI * multi);
         lut.skyAmbient[1] = (float) (irrG * 2.0 / Math.PI * multi);
         lut.skyAmbient[2] = (float) (irrB * 2.0 / Math.PI * multi);

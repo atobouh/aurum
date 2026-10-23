@@ -1,7 +1,7 @@
 package dev.impeccable.aurum.sky;
 
 /**
- * Single-scattering atmosphere (Rayleigh, Mie, ozone absorption), evaluated on the CPU into a small lookup
+ * Scattering atmosphere (Rayleigh, Mie, ozone absorption), evaluated on the CPU into a small lookup
  * table. Physically based scattering is what gives golden hour its real gradient: red-orange toward the sun,
  * blue-violet overhead, a bright aerosol glow around the disc. Artistic controls are applied on top.
  *
@@ -24,8 +24,10 @@ public final class SkyModel {
     /** Sun irradiance at the top of the atmosphere. */
     public static final double SUN = 20.0;
 
-    private static final int VIEW_STEPS = 16;
-    private static final int LIGHT_STEPS = 6;
+    // Quadratic segment spacing resolves the dense air near the observer without spending most samples
+    // in the almost-empty upper atmosphere. This work runs in the background LUT builder, not per pixel.
+    private static final int VIEW_STEPS = 24;
+    private static final int LIGHT_STEPS = 12;
 
     private SkyModel() {}
 
@@ -56,10 +58,12 @@ public final class SkyModel {
             if (b * b - (r * r - R_GROUND * R_GROUND) > 0) return false;
         }
         double len = sphereExit(r, mu, R_TOP);
-        double ds = len / LIGHT_STEPS;
         double dR = 0, dM = 0, dO = 0;
         for (int i = 0; i < LIGHT_STEPS; i++) {
-            double t = (i + 0.5) * ds;
+            double start = len * i * i / (LIGHT_STEPS * LIGHT_STEPS);
+            double end = len * (i + 1) * (i + 1) / (LIGHT_STEPS * LIGHT_STEPS);
+            double ds = end - start;
+            double t = (start + end) * 0.5;
             double x = px + sx * t, y = py + sy * t, z = pz + sz * t;
             double h = Math.sqrt(x * x + y * y + z * z) - R_GROUND;
             dR += Math.exp(-h / H_R) * ds;
@@ -77,7 +81,17 @@ public final class SkyModel {
      * Writes RGB into out.
      */
     public static void radiance(double vx, double vy, double vz, double sx, double sy, double sz, double[] out) {
-        double ex = 0, ey = R_GROUND + EYE, ez = 0;
+        radianceAtHeight(vx, vy, vz, sx, sy, sz, EYE, null, out);
+    }
+
+    static void radiance(double vx, double vy, double vz, double sx, double sy, double sz,
+                         DiffuseSky diffuse, double[] out) {
+        radianceAtHeight(vx, vy, vz, sx, sy, sz, EYE, diffuse, out);
+    }
+
+    private static void radianceAtHeight(double vx, double vy, double vz, double sx, double sy, double sz,
+                                        double eyeHeight, DiffuseSky diffuse, double[] out) {
+        double ex = 0, ey = R_GROUND + eyeHeight, ez = 0;
         double r = ey;
         double mu = vy;
         double len;
@@ -87,8 +101,6 @@ public final class SkyModel {
         } else {
             len = sphereExit(r, mu, R_TOP);
         }
-        double ds = len / VIEW_STEPS;
-
         double cosTheta = vx * sx + vy * sy + vz * sz;
         double phaseR = 3.0 / (16.0 * Math.PI) * (1.0 + cosTheta * cosTheta);
         double g2 = MIE_G * MIE_G;
@@ -96,28 +108,89 @@ public final class SkyModel {
                 / ((2.0 + g2) * Math.pow(1.0 + g2 - 2.0 * MIE_G * cosTheta, 1.5));
 
         double sumRr = 0, sumRg = 0, sumRb = 0, sumMr = 0, sumMg = 0, sumMb = 0;
+        double multiR = 0, multiG = 0, multiB = 0;
         double odR = 0, odM = 0, odO = 0;
         double[] light = new double[3];
+        double[] incident = diffuse == null ? null : new double[3];
         for (int i = 0; i < VIEW_STEPS; i++) {
-            double t = (i + 0.5) * ds;
+            double start = len * i * i / (VIEW_STEPS * VIEW_STEPS);
+            double end = len * (i + 1) * (i + 1) / (VIEW_STEPS * VIEW_STEPS);
+            double ds = end - start;
+            double t = (start + end) * 0.5;
             double px = ex + vx * t, py = ey + vy * t, pz = ez + vz * t;
             double h = Math.sqrt(px * px + py * py + pz * pz) - R_GROUND;
             double hr = Math.exp(-h / H_R) * ds;
             double hm = Math.exp(-h / H_M) * ds;
+            double ho = ozone(h) * ds;
+            // Integrate attenuation through the segment rather than putting all its scattering at the far
+            // end. The same view transmittance carries direct and diffuse scattering.
+            double ar = segmentTransmission(0, odR, odM, odO, hr, hm, ho);
+            double ag = segmentTransmission(1, odR, odM, odO, hr, hm, ho);
+            double ab = segmentTransmission(2, odR, odM, odO, hr, hm, ho);
+            if (opticalDepthToSun(px, py, pz, sx, sy, sz, light)) {
+                double lr = ar * Math.exp(-BETA_R[0] * light[0] - BETA_M_EXT * light[1] - BETA_OZONE[0] * light[2]);
+                double lg = ag * Math.exp(-BETA_R[1] * light[0] - BETA_M_EXT * light[1] - BETA_OZONE[1] * light[2]);
+                double lb = ab * Math.exp(-BETA_R[2] * light[0] - BETA_M_EXT * light[1] - BETA_OZONE[2] * light[2]);
+                sumRr += lr * hr; sumRg += lg * hr; sumRb += lb * hr;
+                sumMr += lr * hm; sumMg += lg * hm; sumMb += lb * hm;
+            }
+            if (diffuse != null) {
+                diffuse.sample(h, incident);
+                multiR += ar * (BETA_R[0] * hr + BETA_M_SCATTER * hm) * incident[0];
+                multiG += ag * (BETA_R[1] * hr + BETA_M_SCATTER * hm) * incident[1];
+                multiB += ab * (BETA_R[2] * hr + BETA_M_SCATTER * hm) * incident[2];
+            }
             odR += hr;
             odM += hm;
-            odO += ozone(h) * ds;
-            if (!opticalDepthToSun(px, py, pz, sx, sy, sz, light)) continue;
-            double tr = BETA_R[0] * (odR + light[0]) + BETA_M_EXT * (odM + light[1]) + BETA_OZONE[0] * (odO + light[2]);
-            double tg = BETA_R[1] * (odR + light[0]) + BETA_M_EXT * (odM + light[1]) + BETA_OZONE[1] * (odO + light[2]);
-            double tb = BETA_R[2] * (odR + light[0]) + BETA_M_EXT * (odM + light[1]) + BETA_OZONE[2] * (odO + light[2]);
-            double ar = Math.exp(-tr), ag = Math.exp(-tg), ab = Math.exp(-tb);
-            sumRr += ar * hr; sumRg += ag * hr; sumRb += ab * hr;
-            sumMr += ar * hm; sumMg += ag * hm; sumMb += ab * hm;
+            odO += ho;
         }
-        out[0] = SUN * (sumRr * BETA_R[0] * phaseR + sumMr * BETA_M_SCATTER * phaseM);
-        out[1] = SUN * (sumRg * BETA_R[1] * phaseR + sumMg * BETA_M_SCATTER * phaseM);
-        out[2] = SUN * (sumRb * BETA_R[2] * phaseR + sumMb * BETA_M_SCATTER * phaseM);
+        out[0] = SUN * (sumRr * BETA_R[0] * phaseR + sumMr * BETA_M_SCATTER * phaseM) + multiR;
+        out[1] = SUN * (sumRg * BETA_R[1] * phaseR + sumMg * BETA_M_SCATTER * phaseM) + multiG;
+        out[2] = SUN * (sumRb * BETA_R[2] * phaseR + sumMb * BETA_M_SCATTER * phaseM) + multiB;
+    }
+
+    /**
+     * Approximate second scattering: integrate first-order incident light over a sphere at seven heights,
+     * then redistribute it isotropically along the view ray. This adds diffuse blue/violet light to long
+     * amber paths instead of painting a white horizon. It is a height-only approximation at the observer's
+     * solar elevation, not a full position-dependent multiple-scattering solution or ground-bounce model.
+     */
+    static final class DiffuseSky {
+        private static final double[] HEIGHTS = {EYE, 1200, 4000, 8000, 16000, 32000, 55000};
+        private static final int DIRECTIONS = 32;
+        private final double[][] mean = new double[HEIGHTS.length][3];
+
+        static DiffuseSky build(double sx, double sy) {
+            DiffuseSky sky = new DiffuseSky();
+            double[] radiance = new double[3];
+            for (int h = 0; h < HEIGHTS.length; h++) {
+                for (int i = 0; i < DIRECTIONS; i++) {
+                    // Equal-area Fibonacci sphere. Mean radiance already includes the 1/(4 PI) phase term.
+                    double y = 1.0 - 2.0 * (i + 0.5) / DIRECTIONS;
+                    double horizontal = Math.sqrt(1.0 - y * y);
+                    double a = i * Math.PI * (3.0 - Math.sqrt(5.0));
+                    radianceAtHeight(horizontal * Math.cos(a), y, horizontal * Math.sin(a),
+                            sx, sy, 0.0, HEIGHTS[h], null, radiance);
+                    for (int c = 0; c < 3; c++) sky.mean[h][c] += radiance[c] / DIRECTIONS;
+                }
+            }
+            return sky;
+        }
+
+        private void sample(double height, double[] out) {
+            int h = 0;
+            while (h < HEIGHTS.length - 2 && height > HEIGHTS[h + 1]) h++;
+            double t = Math.max(0, Math.min(1, (height - HEIGHTS[h]) / (HEIGHTS[h + 1] - HEIGHTS[h])));
+            for (int c = 0; c < 3; c++) out[c] = mean[h][c] + (mean[h + 1][c] - mean[h][c]) * t;
+        }
+    }
+
+    private static double segmentTransmission(int c, double odR, double odM, double odO,
+                                             double hr, double hm, double ho) {
+        double opticalDepth = BETA_R[c] * odR + BETA_M_EXT * odM + BETA_OZONE[c] * odO;
+        double segmentDepth = BETA_R[c] * hr + BETA_M_EXT * hm + BETA_OZONE[c] * ho;
+        double integral = segmentDepth > 1e-8 ? -Math.expm1(-segmentDepth) / segmentDepth : 1.0;
+        return Math.exp(-opticalDepth) * integral;
     }
 
     /** Sunlight transmittance at the eye for a sun at the given elevation sine. Writes RGB into out. */

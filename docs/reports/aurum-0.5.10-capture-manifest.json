@@ -1,0 +1,316 @@
+{
+  "version": "0.5.10",
+  "world_seed": -5138383364446607098,
+  "minecraft": "1.20.1",
+  "sodium": "0.5.13",
+  "reference_iris": "1.7.6",
+  "resolution": [
+    1280,
+    720
+  ],
+  "fov_degrees": 70,
+  "gamma": 0.5,
+  "render_distance_chunks": 12,
+  "textures": "vanilla",
+  "weather": "clear; weather cycle disabled",
+  "daylight_cycle": false,
+  "scenes": {
+    "village_sunset": {
+      "position": [
+        -219.5,
+        70,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 12000
+    },
+    "village_noon": {
+      "position": [
+        -219.5,
+        70,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 6000
+    },
+    "village_night": {
+      "position": [
+        -219.5,
+        70,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 18000
+    },
+    "lake_sunset": {
+      "position": [
+        -191.5,
+        64,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 12000
+    },
+    "ocean_sunset": {
+      "position": [
+        -1056.5,
+        67,
+        899.5
+      ],
+      "yaw": 90,
+      "pitch": 10,
+      "time": 12000
+    }
+  },
+  "reference_packs": {
+    "photon": {
+      "profile": "high",
+      "changes": [
+        "SH_SKYLIGHT disabled due llvmpipe shared-memory limit"
+      ],
+      "pack_sha256": "30df7e0b1c3ae6d5498ba128f1db12ab9b00e8ae27b52bfa420a715332e1a162"
+    },
+    "complementary_reimagined": {
+      "profile": "HIGH",
+      "changes": [],
+      "pack_sha256": "53729e87442ecabea3acf16d418014f11beda86c71cc8edd21d16551a5db68f6"
+    }
+  },
+  "limits": [
+    "Source snapshots, not claimed versioned releases",
+    "Pack-specific sun paths and clouds differ",
+    "No new-candidate Intel UHD hardware measurement in this environment; user-reported baseline recorded separately.",
+    "No full motion, cave or rain acceptance run"
+  ],
+  "aurum_config_comparison": {
+    "configVersion": 9,
+    "preset": "CUSTOM",
+    "enabled": true,
+    "skyEnabled": true,
+    "sunShape": "ROUND",
+    "sunsetIntensity": 100,
+    "horizonWarmth": 100,
+    "rainDesaturation": 70,
+    "lightingEnabled": true,
+    "sunStrength": 100,
+    "ambientStrength": 100,
+    "blockLightWarmth": 40,
+    "aoBoost": 50,
+    "normalsEnabled": true,
+    "normalStrength": 50,
+    "labPbr": true,
+    "wavingEnabled": true,
+    "wavingStrength": 100,
+    "wavingSpeed": 100,
+    "bounceEnabled": true,
+    "bounceStrength": 100,
+    "bloomEnabled": true,
+    "bloomStrength": 100,
+    "sheenEnabled": true,
+    "sheenStrength": 100,
+    "shadowsEnabled": true,
+    "shadowResolution": 1024,
+    "shadowDistance": 4,
+    "shadowSoftness": 100,
+    "entityShadows": false,
+    "blobShadows": true,
+    "fogEnabled": true,
+    "fogStrength": 100,
+    "heightFog": true,
+    "edgeFade": true,
+    "waterEnabled": true,
+    "waterReflections": true,
+    "waveStrength": 100,
+    "vertexWaves": false,
+    "foam": true,
+    "puddles": true,
+    "groundReflections": 50,
+    "flareEnabled": true,
+    "flareStrength": 100,
+    "godRaysEnabled": true,
+    "godRayStrength": 100,
+    "cloudsEnabled": true,
+    "cloudStyle": "BLOCKY",
+    "cloudsFullRes": false,
+    "cloudHeight": 24,
+    "cloudsPackShapes": false,
+    "cloudSpeed": 100,
+    "cloudCoverage": 50,
+    "cloudShading": 100,
+    "pomEnabled": true,
+    "pomGenerated": true,
+    "pomDepth": 100,
+    "pomDistance": 16,
+    "tonemap": "FILMIC",
+    "whiteBalance": 100,
+    "exposure": 100,
+    "saturation": 100,
+    "vibrance": 108,
+    "contrast": 105,
+    "look": "CUSTOM",
+    "temperature": 0,
+    "shadeWarmth": 0,
+    "skySaturation": 100,
+    "skyLavender": 0,
+    "showOverlay": false
+  },
+  "aurum_config_high": {
+    "configVersion": 9,
+    "preset": "HIGH",
+    "enabled": true,
+    "skyEnabled": true,
+    "sunShape": "ROUND",
+    "sunsetIntensity": 100,
+    "horizonWarmth": 100,
+    "rainDesaturation": 70,
+    "lightingEnabled": true,
+    "sunStrength": 100,
+    "ambientStrength": 100,
+    "blockLightWarmth": 40,
+    "aoBoost": 50,
+    "normalsEnabled": true,
+    "normalStrength": 100,
+    "labPbr": true,
+    "wavingEnabled": true,
+    "wavingStrength": 100,
+    "wavingSpeed": 100,
+    "bounceEnabled": true,
+    "bounceStrength": 100,
+    "bloomEnabled": true,
+    "bloomStrength": 100,
+    "sheenEnabled": true,
+    "sheenStrength": 100,
+    "shadowsEnabled": true,
+    "shadowResolution": 2048,
+    "shadowDistance": 6,
+    "shadowSoftness": 100,
+    "entityShadows": true,
+    "blobShadows": true,
+    "fogEnabled": true,
+    "fogStrength": 100,
+    "heightFog": true,
+    "edgeFade": true,
+    "waterEnabled": true,
+    "waterReflections": true,
+    "waveStrength": 100,
+    "vertexWaves": true,
+    "foam": true,
+    "puddles": true,
+    "groundReflections": 50,
+    "flareEnabled": true,
+    "flareStrength": 100,
+    "godRaysEnabled": true,
+    "godRayStrength": 100,
+    "cloudsEnabled": true,
+    "cloudStyle": "BLOCKY",
+    "cloudsFullRes": true,
+    "cloudHeight": 24,
+    "cloudsPackShapes": false,
+    "cloudSpeed": 100,
+    "cloudCoverage": 50,
+    "cloudShading": 100,
+    "pomEnabled": true,
+    "pomGenerated": true,
+    "pomDepth": 100,
+    "pomDistance": 32,
+    "tonemap": "FILMIC",
+    "whiteBalance": 100,
+    "exposure": 100,
+    "saturation": 100,
+    "vibrance": 108,
+    "contrast": 105,
+    "look": "CUSTOM",
+    "temperature": 0,
+    "shadeWarmth": 0,
+    "skySaturation": 100,
+    "skyLavender": 0,
+    "showOverlay": false
+  },
+  "new_reference_sources": [
+    {
+      "name": "rethinking-voxels",
+      "url": "https://github.com/gri573/rethinking-voxels",
+      "commit": "d76c831da62b695d1b30d30bb218aba2116fd55e",
+      "local_checkout": "/workspace/shader-references/rethinking-voxels",
+      "role": "Official repository; singlesample-softshadows-v2 branch, r0.1-beta9"
+    },
+    {
+      "name": "DerivativeMain-VoxyEdit",
+      "url": "https://github.com/fuzhulike/DerivativeMain-VoxyEdit-fuzhu",
+      "commit": "6546738ef49c03610526ca53751780978c073331",
+      "local_checkout": "/workspace/shader-references/DerivativeMain-VoxyEdit",
+      "role": "Community Derivative Main fork with Voxy support; not verified as the original pack"
+    },
+    {
+      "name": "DERCODE",
+      "url": "https://github.com/SyrexSkyLine/DERCODE",
+      "commit": "ce2b347365060e887cf0b917498544be7ea2dcfe",
+      "local_checkout": "/workspace/shader-references/DERCODE",
+      "role": "Additional Derivative rework; repository labels this a development/beta build"
+    }
+  ],
+  "new_reference_packs": {
+    "rethinking_voxels": {
+      "archive": "RethinkingVoxels-source.zip",
+      "sha256": "dce9d0dfa405ec69e82a5861b534c19cc9d103356eb3465d1b84dff14ee10ced",
+      "settings": "HIGH",
+      "source_modified": false
+    },
+    "derivative_main_community_fork": {
+      "archive": "DerivativeMain-VoxyEdit-source.zip",
+      "sha256": "942df575edb2010deb2971d27b89fa1c5b17eae234d9c7d5f9e160927cce5e74",
+      "settings": "source defaults",
+      "source_modified": false
+    }
+  },
+  "reported_performance_baseline": {
+    "source": "user report",
+    "gpu": "Intel UHD (exact model not supplied)",
+    "preset": "HIGH",
+    "render_distance_chunks": 12,
+    "mod_count": "roughly 200",
+    "fps": "stable 60",
+    "resolution": "not supplied",
+    "candidate_measured_on_device": false
+  },
+  "checks": {
+    "build": "passed",
+    "runtime_programs_compiled": 14,
+    "runtime_shadow_resolutions": [
+      1024,
+      2048
+    ],
+    "sky_single_scattering_mean_relative_error": 0.00523,
+    "sky_reference_segments": [
+      256,
+      256
+    ],
+    "sky_luts_checked": 14,
+    "finite_nonnegative_channels": 344358,
+    "hardware": "Mesa llvmpipe",
+    "motion_rain_cave_gameplay_acceptance": "open"
+  },
+  "notes_0510": [
+    "Derivative Main capture is a community fork, not a verified original release.",
+    "Clouds, mobs, animation and pack-specific sun paths differ.",
+    "High settings differ from the 1024 custom comparison settings.",
+    "Rethinking Voxels retains visible far terrain/foliage gaps in this software/Iris reference client after chunk reload. Use foreground lighting/gallery as style evidence, not an artifact-free full-frame benchmark."
+  ],
+  "jar_sha256": "9e7bd6ac8ecdedc617d5cf196621795ef34d397759e980e7a1e0f52f62470e87",
+  "official_gallery_images": [
+    {
+      "title": "Modern Room",
+      "url": "https://cdn.modrinth.com/data/kmwfVOoi/images/4b26f29d09d14d59301421843b6d2438b2c2fb0b.png",
+      "matched_scene": false
+    },
+    {
+      "title": "Shadow Demo",
+      "url": "https://cdn.modrinth.com/data/kmwfVOoi/images/c2de214a7981a9b0235b46209507eb9c0b225ddc.png",
+      "matched_scene": false
+    }
+  ]
+}

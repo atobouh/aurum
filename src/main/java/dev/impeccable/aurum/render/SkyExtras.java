@@ -176,6 +176,7 @@ public final class SkyExtras {
             vl.bind();
             vl.set1i("u_Depth", UNIT_A);
             vl.set1i("u_ShadowMap", UNIT_B);
+            vl.set1i("u_SampleCount", c.shadowResolution >= 2048 ? 16 : c.shadowResolution >= 1536 ? 12 : 10);
             vl.setMatrix("u_ShadowMatrix", ShadowRenderer.samplingMatrix());
             vl.setMatrix("u_InvProj", invProj);
             vl.setMatrix("u_InvView", invView);

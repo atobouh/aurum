@@ -37,8 +37,10 @@ vec2 aurum_waterSlope(vec2 xz, float dist) {
     float fine = 1.0 / (1.0 + dist * 0.05);
     b = vec2(-b.y, b.x); // undo the layer's rotation
     // Far water settles (Photon: calm, clean reflections toward the horizon).
-    float calm = 1.0 / (1.0 + dist * 0.028);
-    return (a * 0.052 + b * 0.040 * fine + c * 0.038 * fine * fine) * calm * u_WaterParams.w;
+    float calm = 1.0 / (1.0 + dist * 0.020);
+    // Put the movement into broad swells, with less short-scale chop. Shoreline reflections keep their
+    // silhouette while the surface still reads as moving water rather than a flat mirror.
+    return (a * 0.064 + b * 0.030 * fine + c * 0.020 * fine * fine) * calm * u_WaterParams.w;
 }
 
 // Screen-space reflection of the opaque scene. Returns rgb (display) and a = hit confidence.
@@ -188,7 +190,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
         vec2 g1 = texture(u_WaterNormalTex, s1 + u_WaterScroll.wz * 2.3).rg * 2.0 - 1.0;
         vec2 g2 = texture(u_WaterNormalTex, s2 + u_WaterScroll.xy * 3.1).rg * 2.0 - 1.0;
         // Facets steep enough to catch the sun across a wide field around its reflection, as in Photon.
-        vec2 gs = (g1 * 0.32 + vec2(g2.y, -g2.x) * 0.26) * sparkleFade * u_WaterParams.w;
+        vec2 gs = (g1 * 0.25 + vec2(g2.y, -g2.x) * 0.20) * sparkleFade * u_WaterParams.w;
         vec3 ns = normalize(n + vec3(-gs.x, 0.0, -gs.y));
         float nh = max(dot(n, H), 0.0);
         float nhs = max(dot(ns, H), 0.0);

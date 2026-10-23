@@ -1,3 +1,24 @@
+# Testing: 0.5.10 — atmosphere and expanded shader references
+
+Run `JAVA_HOME=/path/to/jdk21 python3 tools/check_sky_model.py` for numerical convergence and finite
+sky output across day, twilight, night, clear weather and rain. See
+[ATMOSPHERE_REFERENCE_REVIEW_0510.md](research/ATMOSPHERE_REFERENCE_REVIEW_0510.md) for source identity,
+local checkouts and limitations. Use the saved camera inputs in the new capture manifest.
+
+- Compare noon, sunset and midnight in the village. Keep look settings fixed. The upper/lower sky should
+  retain a gradient, night should stay dark, and warm block lights should remain legible.
+- Walk past foliage and block corners within 12 blocks, then out to 48 blocks. Check tighter shadow
+  filtering for acne, detached contacts, jaggies and movement shimmer on both 1024 and 2048 maps.
+- Check thin shafts under trees on Low/Medium/High (10/12/16 volumetric taps); look for banding and leakage.
+- At the lake and ocean, inspect broad waves, fine glitter, bank reflections and distant calming.
+  Water normals/caustics must remain periodic at camera X/Z multiples of 256.
+- Repeat in rain, a cave opening and the user's full modpack while moving. Dedicated rain/cave/motion
+  visual acceptance remains open; numerical weather coverage is not a substitute for those gameplay checks.
+
+The user-reported baseline is stable 60 FPS on Intel UHD, High, 12 chunks, roughly 200 mods. Measure this
+candidate on the same machine/world/options. Increased CPU sky work and High's extra volumetric taps
+must be included in that comparison; llvmpipe is not an Intel UHD performance benchmark.
+
 # Testing: 0.5.9 — source-based lighting and integrated air
 
 Use the saved coordinates and reference-client settings in
