@@ -72,7 +72,11 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         n = normalize(n + vec3(0.0, 0.45, 0.0));
         ndl = clamp(dot(n, u_LightDir) * 0.82 + 0.18, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
     } else {
-        ndl = max(dot(n, u_LightDir), 0.0);
+        // A restrained low-sun diffuse wrap keeps rough horizontal blocks lit while the shadow map still
+        // cuts dark paths through them. Pure Lambert at grazing incidence made both sides read as ambient
+        // fill, unlike the gold-lit ground and distinct silhouettes in the matched reference captures.
+        float wrap = 0.14 * u_SkyTone.z;
+        ndl = max((dot(n, u_LightDir) + wrap) / (1.0 + wrap), 0.0);
     }
 
     float skyVis = sky * sky;

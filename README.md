@@ -1,11 +1,16 @@
 # Aurum
 
 A Fabric 1.20.1 client mod with its own rendering pipeline on top of Sodium 0.5.13: golden-hour sky, warm
-light, long shadows, soft haze and a sun flare, built to hold 60 FPS at 1080p on an Intel UHD 620.
+light, shadows, atmospheric haze, clouds and reflective water. Its performance target is 60 FPS at 1080p on an
+Intel UHD 620; the current cloud environment cannot verify that target.
 
-Status: **Phase 4 (Sky extras)**: stylised layered clouds, god rays, bloom and lens flare, on top of Phase 2 shadows and
-Phase 1 (Aurum sky, sun and sky lighting, generated normals, fog, bounce glow, filmic colour grade, waving plants and
-leaves). Water (Phase 3) comes next. The full plan is `docs/AURUM_SPEC.md`.
+Current build: **0.5.9**. It includes sky and terrain lighting, generated relief, shadows, fog and shafts,
+reflective/refractive water, clouds, bloom and lens flare. Photon and Complementary remain the visual references;
+the matched captures still show a quality gap.
+
+- [Download Aurum 0.5.9](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.5.9.jar)
+- [Visual report with matched reference captures](docs/reports/aurum-0.5.9-matched-reference-review.html)
+- [Direct source review and testing procedure](docs/research/LIGHTING_SOURCE_REVIEW_059.md)
 
 ## Build
 

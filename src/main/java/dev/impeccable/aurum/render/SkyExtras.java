@@ -179,7 +179,8 @@ public final class SkyExtras {
             vl.setMatrix("u_ShadowMatrix", ShadowRenderer.samplingMatrix());
             vl.setMatrix("u_InvProj", invProj);
             vl.setMatrix("u_InvView", invView);
-            vl.set4f("u_Params", ShadowRenderer.DISTORTION, ShadowRenderer.range() * 0.95f, 0.0004f, 0f);
+            float airExtinction = 0.0025f * (1f + 2f * haze) * (1f + 5f * FogDirector.enclosed);
+            vl.set4f("u_Params", ShadowRenderer.DISTORTION, ShadowRenderer.range() * 0.95f, 0.0004f, airExtinction);
             GlUtil.bindTexture(UNIT_A, depthTex);
             GlUtil.bindTexture(UNIT_B, ShadowRenderer.frontTexture());
             GlUtil.drawFullscreenTriangle();

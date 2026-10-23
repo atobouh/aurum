@@ -67,7 +67,10 @@ public final class Atmosphere {
         float g = golden * (c.sunsetIntensity / 100f);
         // At a low sun the sky fills the shadow side, but it must not lift every leaf and wall to the same
         // brightness as the lit side. Preserve the sun term and ease only the diffuse sky fill downward.
-        amb *= 1f - 0.16f * g;
+        amb *= 1f - 0.30f * g;
+        // The reference sunset scenes keep a bright gold strip on sun-facing grass while deep silhouettes
+        // stay dark. A little more low-angle direct light raises that contrast without adding shader work.
+        sun *= 1f + 0.30f * g;
         // Strong enough that lit foliage turns gold (references: foliage red/green ~1.0 at golden hour).
         // A slightly warm sun at every hour: the references' daylight frames are neutral-to-warm (+0.00 to +0.08
         // red over blue), ours read cold blue (-0.12 to -0.21).

@@ -11,6 +11,7 @@ uniform vec3 u_SkySideAway;       // vertical sky irradiance opposite the sun
 uniform vec3 u_GroundAmbient;     // light bounced up from the ground, linear HDR
 uniform vec3 u_BlockLightColor;   // torch colour at full block light, linear HDR
 uniform vec4 u_TerrainParams;     // x normal strength, y AO boost, z minimum light, w bounce strength
+                                // depth-only shadow mode: xyz map centre relative to light camera, w plant radius
 
 uniform sampler2D u_NormalTex;    // baked normal atlas: rg normal, b coating noise, a material id
 uniform sampler2D u_BounceTex;    // 1x1 average colour around the player (previous frame), linear

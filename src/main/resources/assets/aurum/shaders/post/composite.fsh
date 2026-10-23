@@ -131,6 +131,14 @@ float contactShadow(vec2 uv, float dist) {
     return sum / wsum;
 }
 
+// Forward scattering, normalized around a broad aerosol lobe. This is shared by fog and shadow-map shafts
+// so they describe one volume of air rather than independent overlays with different colour and falloff.
+float airPhase(float cosTheta) {
+    const float g = 0.65;
+    float d = max(1.0 + g * g - 2.0 * g * cosTheta, 0.02);
+    return 0.08 + 0.22 * (1.0 - g * g) / (d * sqrt(d));
+}
+
 // A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
 vec3 flare(vec2 uv, float vis) {
     vec2 aspect = vec2(u_SunScreen.z, 1.0);
@@ -172,11 +180,11 @@ void main() {
         scene *= mix(1.0, contactShadow(v_Uv, dist), u_AoParams.x);
     }
 
-    if (depth < 1.0 && !hand && (u_Flags.x > 0.5 || u_Flags.y > 0.5)) {
+    if (depth < 1.0 && !hand && (u_Flags.x > 0.5 || u_Flags.y > 0.5 || u_Extras.w > 0.0)) {
         // One sky lookup serves both the fog colour and the edge fade.
         vec3 sky = aurum_tonemap(aurum_skyRadiance(dir, u_SunDir));
 
-        if (u_Flags.x > 0.5) {
+        if (u_Flags.x > 0.5 || u_Extras.w > 0.0) {
             // Exponential distance fog (Quilez) plus exact height fog for valleys (analytic integral). Fog starts
             // after a clear zone, as in the references (Complementary, Bliss): nearby terrain keeps its full
             // contrast and colour, the haze lives in the distance (0.3.3 fogged a fence 30 blocks away by ~40%).
@@ -189,24 +197,35 @@ void main() {
             float fh = 1.0 - exp(-u_Fog.y * exp(-u_Fog.w * b) * max(hInt, 0.0));
             // Never a solid wall: distant shapes still read through the haze (caves excepted).
             float f = (1.0 - (1.0 - fd) * (1.0 - fh)) * mix(u_Fog3.y, 1.0, u_Fog2.x);
+            if (u_Flags.x < 0.5) f = 0.0;
+            // The same air supplies fog and shafts. A clear foreground stays transparent; under cover the
+            // shorter path can still reveal a beam from an opening. Taking the larger opacity avoids counting
+            // the same scattering medium twice.
+            float airDensity = 0.0025 * (1.0 + 2.0 * u_Volumetric2.z) * (1.0 + 5.0 * u_Volumetric2.y);
+            float beamOpacity = 1.0 - exp(-vl.g * u_Volumetric2.x * airDensity * u_Extras.w);
+            f = max(f, beamOpacity);
             if (f > 0.002) {
                 // Fog takes the sky's colour in that direction, so it is warmer toward the sun at golden hour.
                 // Haze lit by the sun: looking toward a low sun, the air itself glows gold (Mie forward scattering).
-                float toSun = max(dot(dir, u_SunDir), 0.0);
-                vec3 inscatter = u_SunGlow.rgb * (pow(toSun, 4.0) * 0.45 + pow(toSun, 30.0) * 0.8) * (0.15 + 0.85 * u_SunGlow.a);
+                float toSun = dot(dir, u_SunDir);
+                vec3 inscatter = u_SunGlow.rgb * airPhase(toSun) * (0.15 + 0.85 * u_SunGlow.a);
                 // Haze in shadow does not glow: with volumetric light on, shadowed lanes of air stay darker.
-                if (u_Extras.w > 0.0) inscatter *= 0.35 + 0.65 * vl.r;
+                if (u_Extras.w > 0.0) inscatter *= vl.r;
                 // The haze itself is near-neutral (the sky's pinks would turn it into a flat pink soup); its warmth
                 // comes from the sunlight scattered toward the sun.
                 vec3 fogRad = aurum_fogRadiance(dir, u_SunDir);
                 fogRad = mix(fogRad, vec3(luminance(fogRad)), u_Fog3.z);
+                // Cover removes ambient skylight, while a sunlit opening can still illuminate the air.
+                // Darkening the entire fog source here would also erase the beam inside a cave or room.
+                fogRad *= mix(1.0, 0.08, u_Fog2.x);
                 vec3 fogColor = aurum_tonemap(fogRad + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
                 fogColor *= mix(vec3(1.0), clamp(bounce / bl, 0.0, 2.0), u_Fog2.w);
-                // In caves the haze is dark, not sky-coloured.
-                fogColor = mix(fogColor, fogColor * 0.08 + vec3(0.012, 0.013, 0.016), u_Fog2.x);
-                scene = mix(scene, fogColor, saturate(f));
+                // The scene is already display-mapped for vanilla compatibility. Compose air in display-linear
+                // light; blending gamma values raised shadows and erased colour before the final grade.
+                scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
+                                pow(max(fogColor, vec3(0.0)), vec3(2.2)), saturate(f)), vec3(1.0 / 2.2));
             }
         }
 
@@ -238,24 +257,6 @@ void main() {
         vec3 hue = u_SunGlow.rgb / max(max(u_SunGlow.r, max(u_SunGlow.g, u_SunGlow.b)), 1e-4);
         vec3 rayColor = mix(vec3(1.0), hue, 0.65);
         float toSun = max(dot(dir, u_SunDir), 0.0);
-        if (u_Extras.w > 0.0 && depth < 1.0) {
-            // Volumetric light: glow from the sunlit air in front of terrain. Shadowed air adds nothing, so tree
-            // and terrain shadows cut dark lanes into the glow: beams. Not over the sky, whose colour already
-            // contains this light (adding it again washed the sky out around the sun).
-            // Single scattering with a realistic air density (0.4.1): clear air scatters ~1.5% per lit block,
-            // hazier air (golden hour, rain, fog) more, caves and rooms much more. 0.4.0 used ~10x too much, so the
-            // shadow lanes of hills and houses turned into heavy, blurry stripes over everything near the player
-            // (user screenshots). Now open land gets a faint glow and the beams only stand out where they should:
-            // toward a low sun, in haze, and from openings into dark spaces.
-            vec2 v = vl;
-            float cave = u_Volumetric2.y;
-            float density = 0.015 * (1.0 + 3.0 * u_Volumetric2.z) * (1.0 + 7.0 * cave);
-            float litBlocks = v.r * v.g * u_Volumetric2.x;
-            float glow = 1.0 - exp(-litBlocks * density);
-            // Mie-like phase: mostly toward the sun; a small all-round part, larger in caves (beam seen from the side).
-            float phase = 0.25 + 1.1 * pow(toSun, 8.0) + 0.5 * pow(toSun, 40.0) + 1.5 * cave;
-            scene += rayColor * min(glow * phase * u_Extras.w, 0.25);
-        }
         if (u_Extras.x > 0.0) {
             // Screen-space shafts over open sky. A radial average of an unobstructed sky is 1 everywhere;
             // adding that directly drew a wide, blurry wedge instead of beams. Compare neighbouring angular

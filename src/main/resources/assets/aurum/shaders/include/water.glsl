@@ -37,8 +37,8 @@ vec2 aurum_waterSlope(vec2 xz, float dist) {
     float fine = 1.0 / (1.0 + dist * 0.05);
     b = vec2(-b.y, b.x); // undo the layer's rotation
     // Far water settles (Photon: calm, clean reflections toward the horizon).
-    float calm = 1.0 / (1.0 + dist * 0.022);
-    return (a * 0.065 + b * 0.045 * fine + c * 0.040 * fine * fine) * calm * u_WaterParams.w;
+    float calm = 1.0 / (1.0 + dist * 0.028);
+    return (a * 0.052 + b * 0.040 * fine + c * 0.038 * fine * fine) * calm * u_WaterParams.w;
 }
 
 // Screen-space reflection of the opaque scene. Returns rgb (display) and a = hit confidence.

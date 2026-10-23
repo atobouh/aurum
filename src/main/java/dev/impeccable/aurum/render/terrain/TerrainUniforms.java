@@ -48,6 +48,8 @@ public final class TerrainUniforms {
     /** Set by the frame director: 1 when Aurum lighting applies this frame. */
     public static int mode;
     public static final float[] cameraMod = new float[3];
+    /** Shadow-map centre relative to its virtual light camera; used to bound small plant casters. */
+    public static final float[] shadowCentre = new float[3];
 
     private TerrainUniforms() {}
 
@@ -62,7 +64,9 @@ public final class TerrainUniforms {
         GL20C.glUniform1i(loc[0], mode);
         if (mode == 0) return;
         if (mode == 2) {
-            // Shadow-casting pass: only the distortion is needed (and the material atlas for plants).
+            // Reuse terrain parameters in depth-only mode to bound small plant casters near the map centre.
+            float plantRadius = c.shadowResolution <= 1024 ? 8f : 16f;
+            GL20C.glUniform4f(loc[6], shadowCentre[0], shadowCentre[1], shadowCentre[2], plantRadius);
             GL20C.glUniform4f(loc[18], ShadowRenderer.DISTORTION, 0f, 0f, 0f);
             GL20C.glUniform1i(loc[7], UNIT_NORMAL);
             GlUtil.bindTexture(UNIT_NORMAL, AurumTextures.normalAtlas());
@@ -95,7 +99,9 @@ public final class TerrainUniforms {
             ShadowRenderer.samplingMatrix().get(matrix);
             GL20C.glUniformMatrix4fv(loc[17], false, matrix);
         }
-        float strength = shadows ? smooth(0.08f, 0.20f, Atmosphere.lightDir[1]) : 0f;
+        // Preserve the map through golden hour. The previous fade began at ~5 degrees and did not reach full
+        // strength until ~12 degrees, erasing the long low-sun shadows seen in the matched reference scenes.
+        float strength = shadows ? smooth(0.0f, 0.08f, Atmosphere.lightDir[1]) : 0f;
         float radius = 1.0f + 1.5f * (c.shadowSoftness / 100f);
         GL20C.glUniform4f(loc[18], ShadowRenderer.DISTORTION, strength, ShadowRenderer.centreTexelWorld(), radius);
         float blend = ShadowRenderer.blend();

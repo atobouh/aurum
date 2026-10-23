@@ -1,0 +1,161 @@
+{
+  "version": "0.5.9",
+  "world_seed": -5138383364446607098,
+  "minecraft": "1.20.1",
+  "sodium": "0.5.13",
+  "reference_iris": "1.7.6",
+  "resolution": [
+    1280,
+    720
+  ],
+  "fov_degrees": 70,
+  "gamma": 0.5,
+  "render_distance_chunks": 12,
+  "textures": "vanilla",
+  "weather": "clear; weather cycle disabled",
+  "daylight_cycle": false,
+  "scenes": {
+    "village_sunset": {
+      "position": [
+        -219.5,
+        70,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 12000
+    },
+    "village_noon": {
+      "position": [
+        -219.5,
+        70,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 6000
+    },
+    "village_night": {
+      "position": [
+        -219.5,
+        70,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 18000
+    },
+    "lake_sunset": {
+      "position": [
+        -191.5,
+        64,
+        35.5
+      ],
+      "yaw": 90,
+      "pitch": 8,
+      "time": 12000
+    },
+    "ocean_sunset": {
+      "position": [
+        -1056.5,
+        67,
+        899.5
+      ],
+      "yaw": 90,
+      "pitch": 10,
+      "time": 12000
+    }
+  },
+  "aurum_config": {
+    "configVersion": 9,
+    "preset": "CUSTOM",
+    "enabled": true,
+    "skyEnabled": true,
+    "sunShape": "ROUND",
+    "sunsetIntensity": 100,
+    "horizonWarmth": 100,
+    "rainDesaturation": 70,
+    "lightingEnabled": true,
+    "sunStrength": 100,
+    "ambientStrength": 100,
+    "blockLightWarmth": 40,
+    "aoBoost": 50,
+    "normalsEnabled": true,
+    "normalStrength": 50,
+    "labPbr": true,
+    "wavingEnabled": true,
+    "wavingStrength": 100,
+    "wavingSpeed": 100,
+    "bounceEnabled": true,
+    "bounceStrength": 100,
+    "bloomEnabled": true,
+    "bloomStrength": 100,
+    "sheenEnabled": true,
+    "sheenStrength": 100,
+    "shadowsEnabled": true,
+    "shadowResolution": 1024,
+    "shadowDistance": 4,
+    "shadowSoftness": 100,
+    "entityShadows": false,
+    "blobShadows": true,
+    "fogEnabled": true,
+    "fogStrength": 100,
+    "heightFog": true,
+    "edgeFade": true,
+    "waterEnabled": true,
+    "waterReflections": true,
+    "waveStrength": 100,
+    "vertexWaves": false,
+    "foam": true,
+    "puddles": true,
+    "groundReflections": 50,
+    "flareEnabled": true,
+    "flareStrength": 100,
+    "godRaysEnabled": true,
+    "godRayStrength": 100,
+    "cloudsEnabled": true,
+    "cloudStyle": "BLOCKY",
+    "cloudsFullRes": false,
+    "cloudHeight": 24,
+    "cloudsPackShapes": false,
+    "cloudSpeed": 100,
+    "cloudCoverage": 50,
+    "cloudShading": 100,
+    "pomEnabled": true,
+    "pomGenerated": true,
+    "pomDepth": 100,
+    "pomDistance": 16,
+    "tonemap": "FILMIC",
+    "whiteBalance": 100,
+    "exposure": 100,
+    "saturation": 100,
+    "vibrance": 108,
+    "contrast": 105,
+    "look": "CUSTOM",
+    "temperature": 0,
+    "shadeWarmth": 0,
+    "skySaturation": 100,
+    "skyLavender": 0,
+    "showOverlay": false
+  },
+  "reference_packs": {
+    "photon": {
+      "profile": "high",
+      "changes": [
+        "SH_SKYLIGHT disabled due llvmpipe shared-memory limit"
+      ],
+      "pack_sha256": "30df7e0b1c3ae6d5498ba128f1db12ab9b00e8ae27b52bfa420a715332e1a162"
+    },
+    "complementary_reimagined": {
+      "profile": "HIGH",
+      "changes": [],
+      "pack_sha256": "53729e87442ecabea3acf16d418014f11beda86c71cc8edd21d16551a5db68f6"
+    }
+  },
+  "limits": [
+    "Source snapshots, not claimed versioned releases",
+    "Pack-specific sun paths and clouds differ",
+    "No Intel UHD hardware performance measurement",
+    "No full motion, cave or rain acceptance run"
+  ]
+}

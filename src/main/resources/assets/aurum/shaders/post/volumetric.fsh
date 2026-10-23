@@ -9,7 +9,7 @@ uniform sampler2DShadow u_ShadowMap;
 uniform mat4 u_ShadowMatrix;  // camera-relative world position -> light clip space
 uniform mat4 u_InvProj;
 uniform mat4 u_InvView;
-uniform vec4 u_Params;        // x distortion, y range (blocks), z depth bias
+uniform vec4 u_Params;        // x distortion, y range (blocks), z depth bias, w air extinction per block
 
 in vec2 v_Uv;
 out vec4 fragColor;
@@ -33,11 +33,19 @@ void main() {
     float range = min(dist, u_Params.y);
     float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
     // Steps packed closer near the camera, where beams are largest on screen.
-    float sum = 0.0;
+    float sum = 0.0, weightSum = 0.0;
     for (int i = 0; i < STEPS; i++) {
-        float f = (float(i) + jitter) / float(STEPS);
-        sum += lit(dir * (range * f * f));
+        float a = float(i) / float(STEPS);
+        float b = float(i + 1) / float(STEPS);
+        float start = range * a * a;
+        float end = range * b * b;
+        float sampleDistance = mix(start, end, jitter);
+        // Quadratic sampling concentrates taps near the camera, but each tap still represents its actual
+        // segment of air. Front-to-back attenuation prevents distant light from overwhelming a nearby beam.
+        float weight = (end - start) * exp(-sampleDistance * u_Params.w);
+        sum += lit(dir * sampleDistance) * weight;
+        weightSum += weight;
     }
     // r: share of the ray (inside the shadow range) that is sunlit; g: that range as a fraction of the maximum.
-    fragColor = vec4(sum / float(STEPS), range / u_Params.y, 0.0, 1.0);
+    fragColor = vec4(sum / max(weightSum, 1e-5), range / u_Params.y, 0.0, 1.0);
 }

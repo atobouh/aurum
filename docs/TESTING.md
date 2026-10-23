@@ -1,3 +1,26 @@
+# Testing: 0.5.9 — source-based lighting and integrated air
+
+Use the saved coordinates and reference-client settings in
+[LIGHTING_SOURCE_REVIEW_059.md](research/LIGHTING_SOURCE_REVIEW_059.md). Keep world, camera, FOV, time,
+weather, resource pack and resolution fixed. Reference packs have their own cloud and sun-path defaults;
+Photon's test disables SH skylight because its compute program exceeds the software GPU's shared-memory limit.
+
+- At sunset, inspect the gold-lit ground, tree interiors, cast-shadow length and fog through gaps. Switch
+  God Rays off/on: there should be no separate broad additive glow masking nearby texture and silhouettes.
+- Nearby grass, flowers and crops now cast within 8 blocks with 1024-pixel shadow maps, or 16 blocks with
+  larger maps. Inspect their cutoff while walking. Their cached shadows do not follow every wind movement.
+- Walk toward and past a tree at 2–8 blocks. Check depth edges for haze bleeding, march banding and flicker.
+- At the lake and open ocean, inspect reflected banks, fine glitter, distant calming and the chunk horizon.
+  Cross X/Z multiples of 256 while watching the same water surface for normal or caustic phase jumps.
+- At noon and midnight, check foliage colour, minimum light, warm block lights and unwanted sun scattering.
+  Repeat in rain and in a cave with a sunlit opening; cave cover should darken ambient air without erasing
+  directly lit shafts. Rain, cave and full motion acceptance still require dedicated verification.
+
+Completed here: Gradle build, terrain/composite/volumetric GLSL validation, 14 runtime shader programs,
+analytical integration checks, and stationary sunset, noon, lake, open-ocean and night images at 1280×720.
+The development GPU is Mesa llvmpipe. Measure LOW and the current preset at native 1080p on Intel UHD,
+including F8 GPU timings and moving-camera quality, before making performance or parity claims.
+
 # Testing: 0.5.7 — colour, nearby shafts and close detail
 
 Use the same world, camera, FOV, time, weather, resource pack, resolution and preset for 0.5.6 and 0.5.7.
