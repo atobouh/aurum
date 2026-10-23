@@ -1,3 +1,20 @@
+# Testing: 0.5.5 — sky, foliage, water and detail
+
+Compare with 0.5.4 in the same world, camera, FOV, time, weather, resource pack and preset. Capture clear
+noon, low-sun sky (toward and away from the sun), a forest canopy, a shallow riverbed, open-water sun glitter,
+water under a bridge or cliff, and a close stone or log face with Pixel 3D enabled.
+
+- The daylight sky should keep a blue-to-white gradient; golden hour should have warm light near the sun with a
+  cooler upper sky, without a pink wash or a hard horizon stripe.
+- Leaf crowns should show brighter exposed faces and darker interiors without neon greens or black patches.
+- Sand and stone should stay legible through shallow water. Glitter should form a path instead of clipped white
+  dots; caustics should disappear in a cast shadow and at night.
+- Solid block texture pixels and the sidewalls of Pixel 3D relief should remain clear without crawling or
+  ringing as the camera moves. Check rain and night for unwanted light.
+
+Record F8 **Terrain**, **Aurum post**, **Frame (GPU)** and FPS on Low and High using the same UHD 620 power mode
+as 0.5.4. The cloud build and software OpenGL smoke test cannot measure the target GPU cost.
+
 # Testing: 0.5.4 — world lighting
 
 This build changes terrain lighting. Test in the same world, camera position, FOV, weather, resource pack,

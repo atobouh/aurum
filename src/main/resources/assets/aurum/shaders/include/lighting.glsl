@@ -33,7 +33,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         // A wall of a parallax pixel-cube: shade it as its own block face.
         n = g_pomWall;
     } else if ((u_TerrainParams.x > 0.0 || packData) && !foliage) {
-        vec4 nt = suv == uv ? texture(u_NormalTex, uv, mipBias) : textureGrad(u_NormalTex, suv, dFdx(uv), dFdy(uv));
+        vec4 nt = suv == uv ? texture(u_NormalTex, uv, mipBias) : textureGrad(u_NormalTex, suv, dFdx(uv) * 0.84, dFdy(uv) * 0.84);
         // Resource-pack normals are authored detail: full strength (stored at half slope). Generated ones follow
         // the Normal strength setting.
         float strength = packData ? 2.0 : u_TerrainParams.x;
@@ -67,8 +67,10 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         n = vec3(0.0, 1.0, 0.0);
         ndl = (clamp(u_LightDir.y, 0.0, 1.0) * 0.45 + 0.35) * smoothstep(-0.05, 0.25, u_LightDir.y);
     } else if (material == 4) {
-        n = normalize(n + vec3(0.0, 0.6, 0.0));
-        ndl = clamp(dot(n, u_LightDir) * 0.6 + 0.4, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
+        // Leaf cubes retain their face direction. A smaller light floor gives the canopy distinct sunlit
+        // tops, side faces and shaded interiors instead of nearly uniform lime-green lighting.
+        n = normalize(n + vec3(0.0, 0.45, 0.0));
+        ndl = clamp(dot(n, u_LightDir) * 0.82 + 0.18, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
     } else {
         ndl = max(dot(n, u_LightDir), 0.0);
     }
@@ -97,6 +99,8 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     vec3 ambient = (u_SkyAmbient * max(n.y, 0.0)
                   + (sideSky + u_GroundAmbient * 0.5) * (1.0 - abs(n.y))
                   + u_GroundAmbient * max(-n.y, 0.0)) * skyVis;
+    if (material == 4) ambient *= 0.92;
+    ambient *= 1.0 - 0.18 * g_pomCavity;
     // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.
     vec3 bounce = texelFetch(u_BounceTex, ivec2(0), 0).rgb;
     float bl = max(dot(bounce, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
@@ -110,7 +114,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
 
     vec3 color = albedo * light * (1.0 + coating * 0.08);
     if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {
-        vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv), dFdy(uv));
+        vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv) * 0.84, dFdy(uv) * 0.84);
         if (pbr.r > 0.004 || pbr.g > 0.05) {
             float diffuseScale = 1.0;
             vec3 spec = aurum_pbrSpecular(albedo, pbr, n, pos, ndl > 0.0 ? directVis : 0.0, skyVis, blockBrightness, diffuseScale);

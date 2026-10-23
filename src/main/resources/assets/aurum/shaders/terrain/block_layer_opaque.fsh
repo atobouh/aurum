@@ -36,8 +36,11 @@ void main() {
     // 3D blocks: move the texture lookup along the pack's height map (Aurum lighting only, opaque passes).
     vec2 uv = v_TexCoord;
     if (u_AurumMode == 1 && u_AurumPass == 0) uv = aurum_parallax(v_TexCoord, v_Position);
-    vec4 diffuseColor = uv == v_TexCoord ? texture(u_BlockTex, v_TexCoord, v_MaterialMipBias)
-                                         : textureGrad(u_BlockTex, uv, dFdx(v_TexCoord), dFdy(v_TexCoord));
+    // A modest close-range mip bias restores texel definition on solid blocks. Cutout foliage keeps Sodium's
+    // filtering to avoid shimmer while it moves; parallax uses the original UV derivatives to stay stable.
+    float detailBias = u_AurumMode == 1 && v_Material == 0 && dot(v_Position, v_Position) < 2304.0 ? -0.25 : 0.0;
+    vec4 diffuseColor = uv == v_TexCoord ? texture(u_BlockTex, v_TexCoord, v_MaterialMipBias + detailBias)
+                                         : textureGrad(u_BlockTex, uv, dFdx(v_TexCoord) * 0.84, dFdy(v_TexCoord) * 0.84);
 
 #ifdef USE_FRAGMENT_DISCARD
     if (diffuseColor.a < v_MaterialAlphaCutoff) {
@@ -67,6 +70,6 @@ void main() {
         }
     }
 
-    vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, uv, v_MaterialMipBias, v_Material);
+    vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, uv, v_MaterialMipBias + detailBias, v_Material);
     fragColor = vec4(lit, diffuseColor.a);
 }

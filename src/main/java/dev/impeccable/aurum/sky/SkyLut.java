@@ -111,17 +111,17 @@ public final class SkyLut {
                 g = lum + (g - lum) * daySat;
                 b = lum + (b - lum) * daySat;
 
-                // Golden-hour palette (from the reference study, docs/research/LOOK_PHASE1_2.md): the good packs
-                // turn the whole upper sky peach-pink-lavender at low sun, not just the horizon strip. Blend the
-                // sky's chroma toward that palette, strongest away from the horizon glow.
+                // Keep the physical sky gradient visible at golden hour. The old 80% blend toward one
+                // peach/lavender palette made every direction look painted. A small, sun-facing bias retains
+                // Aurum's warmth without replacing the blue-to-amber scattering gradient.
                 double gh = low * (sunsetIntensity / 100.0);
                 if (gh > 0.0 && e > 0.0) {
                     double l2 = 0.2126 * r + 0.7152 * g + 0.0722 * b;
                     double upper = Math.min(1.0, e * 3.0);
-                    double tr = 1.30, tg = 0.86, tb = 0.80; // warm peach near the horizon side
-                    double ur = 1.16, ug = 0.80, ub = 1.22; // clear pink-lavender higher up
+                    double tr = 1.22, tg = 0.91, tb = 0.86;
+                    double ur = 1.09, ug = 0.90, ub = 1.12;
                     double pr = tr + (ur - tr) * upper, pg = tg + (ug - tg) * upper, pb = tb + (ub - tb) * upper;
-                    double k = 0.8 * gh;
+                    double k = gh * (0.10 + 0.20 * Math.max(0.0, Math.cos(a)));
                     r = r + (l2 * pr - r) * k;
                     g = g + (l2 * pg - g) * k;
                     b = b + (l2 * pb - b) * k;

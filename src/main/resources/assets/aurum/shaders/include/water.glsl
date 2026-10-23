@@ -106,13 +106,19 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     bool openBottom = texture(u_OpaqueDepth, refrUv).r >= 1.0;
     if (openBottom) column = 1e4;
 
-    // Absorption per block: red goes first, then green -> turquoise shallows, deep teal. The biome water colour
-    // nudges it (swamps murkier, warm oceans bluer) without painting the water.
+    // Absorption per block: keep the bed visible farther into clear shallows, while red still falls off first.
+    // The biome water colour nudges it (swamps murkier, warm oceans bluer) without painting the water.
     vec3 tint = aurum_toLinear(vertexColor.rgb);
     vec3 tintN = tint / max(max(tint.r, max(tint.g, tint.b)), 1e-3);
-    vec3 sigma = vec3(0.80, 0.24, 0.16) * mix(vec3(1.0), 1.6 - tintN * 0.8, 0.5);
+    vec3 sigma = vec3(0.60, 0.20, 0.13) * mix(vec3(1.0), 1.6 - tintN * 0.8, 0.5);
     vec3 trans = exp(-sigma * column);
-    float sunUp0 = smoothstep(-0.05, 0.2, u_LightDir.y);
+    // u_LightDir follows the moon at night; sunny caustics and glitter must use the actual sun direction.
+    float sunUp = smoothstep(-0.05, 0.2, u_SunDirW.y);
+    float sunVisible = 0.0;
+    if (ng.y > 0.3 && sunUp > 0.0) {
+        vec2 sh = aurum_shadow(pos, ng);
+        sunVisible = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
+    }
     // Caustics: the bright, wobbling light network sunlight draws on a shallow bed (Photon's shallows). Two
     // ripple layers crossing; lines where their heights match. Strongest in the shallows, gone with depth.
     if (!(texture(u_OpaqueDepth, refrUv).r >= 1.0) && column < 8.0) {
@@ -120,16 +126,15 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
         float h1 = texture(u_WaterNormalTex, bed.xz / 3.0 + u_WaterScroll.xy * 1.3).b;
         float h2 = texture(u_WaterNormalTex, vec2(bed.z, -bed.x) / 2.5 + u_WaterScroll.zw * 1.6).b;
         float caust = pow(1.0 - abs(h1 - h2), 10.0);
-        behind *= 1.0 + caust * 1.6 * sunUp0 * skyVis * exp(-column * 0.35) * smoothstep(0.0, 0.3, column);
+        behind *= 1.0 + caust * 1.4 * sunUp * sunVisible * exp(-column * 0.35) * smoothstep(0.0, 0.3, column);
     }
     // Light scattered back out of the water body (what deep water looks like), lit by sky and sun.
-    float sunUp = smoothstep(-0.05, 0.2, u_LightDir.y);
     vec3 deepAlbedo = vec3(0.008, 0.036, 0.052) * mix(vec3(1.0), tintN * 1.4, 0.35);
     vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.45 * skyVis) * deepAlbedo
                    + u_BlockLightColor * deepAlbedo * aurum_lightLevel(lightCoord.x) * 0.5;
     vec3 deep = aurum_toLinear(aurum_tonemap(deepHdr));
-    // Even the shallowest water tints the bed a little blue-green (Photon: never pure sand colour).
-    vec3 under = behind * trans * vec3(0.82, 0.94, 0.96) + deep * (1.0 - trans);
+    // A small surface tint keeps water present without hiding sand and stone just beneath it.
+    vec3 under = behind * trans * vec3(0.91, 0.97, 0.99) + deep * (1.0 - trans);
 
     // ---- Reflection.
     vec3 R = reflect(V, n);
@@ -167,11 +172,12 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
         vec3 ns = normalize(n + vec3(-gs.x, 0.0, -gs.y));
         float nh = max(dot(n, H), 0.0);
         float nhs = max(dot(ns, H), 0.0);
-        float spec = pow(nhs, 2200.0) * 110.0 * sparkleFade + pow(nh, 1800.0) * 20.0 + pow(nh, 220.0) * 1.0;
-        vec2 sh = aurum_shadow(pos, ng);
-        float lit = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
-        vec3 glint = u_LightColor * spec * lit * fresnel * 6.0;
-        color += aurum_toLinear(aurum_tonemap(glint));
+        // Broaden and temper the highlight: the previous high-power lobes were added after their own tone map,
+        // leaving clipped white dots instead of a continuous sun path. Bound the added light by what remains
+        // below display white, so the reflected sky and shoreline keep their colour under the sparkle.
+        float spec = pow(nhs, 1200.0) * 45.0 * sparkleFade + pow(nh, 500.0) * 8.0 + pow(nh, 90.0) * 0.5;
+        vec3 glint = aurum_toLinear(aurum_tonemap(u_LightColor * spec * sunVisible * fresnel * 2.0));
+        color += glint * max(vec3(1.0) - color, vec3(0.0)) * 0.85;
     }
 
     // ---- Shore edge: a thin, soft, broken bright line where the water is very shallow.

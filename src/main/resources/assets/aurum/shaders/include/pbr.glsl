@@ -15,6 +15,7 @@ int aurum_atlasFlags(vec2 uv) {
 // g_pomShadow (1 lit, 0 shadowed by the relief).
 vec3 g_pomWall = vec3(0.0);
 float g_pomShadow = 1.0;
+float g_pomCavity = 0.0;
 
 float aurum_pomDepthAt(ivec2 cell, ivec2 tmin, ivec2 tsize) {
     // GLSL's % is undefined for negative operands, which broke the relief on faces whose texture runs the other
@@ -30,6 +31,7 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
     vec2 duvx = dFdx(uv), duvy = dFdy(uv);
     g_pomWall = vec3(0.0);
     g_pomShadow = 1.0;
+    g_pomCavity = 0.0;
     if (u_PbrParams.y <= 0.0) return uv;
     float dist = length(pos);
     if (dist > u_PbrParams.z) return uv;
@@ -82,6 +84,8 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
         // A wall faces back along the step: -u or -v (world direction of increasing u is along gu).
         vec3 axis = wallAxis == 0 ? gu * float(stepDir.x) : gv * float(stepDir.y);
         g_pomWall = -normalize(axis);
+        // A deeper exposed pixel wall receives less open-sky light than the face at the top of the relief.
+        g_pomCavity = clamp(sHit, 0.0, 1.0);
     }
     vec2 pHit = p0 + dp * sHit;
     // Keep the lookup inside the hit cell (texel centre on the crossed axis) so walls show the cell's colour.
