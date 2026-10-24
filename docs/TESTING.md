@@ -34,6 +34,11 @@ and receiver coverage gaps; passing means those behaviours were reproduced, **no
 The existing voxel checks remain the geometry/finite-output controls. The new source-set harness supplies
 sixteen/seventeen inputs directly; it does not test runtime ranking or LambDynamicLights injection.
 
+The research contract now makes camera motion, moving receivers, moving sources, overlapping lamps,
+cache movement and continuous day/night transitions mandatory at each relevant integration gate. The
+current still captures and command-time snapshots do not pass those tests; per-frame recording and
+latency measurements remain required engineering work.
+
 The engineering gates require a common surface evaluator across terrain/core paths, coherent direct/indirect
 local transport and source ownership, then source-aware cave air and AO. Until those gates pass, do not
 promote this diagnostic candidate as unified lighting or publish a new mod version.

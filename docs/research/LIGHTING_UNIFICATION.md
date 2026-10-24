@@ -123,6 +123,83 @@ fog must not manufacture light in a sealed unlit chamber or make a nearby torch 
 A source-aware air field is a later integration gate, not justification to boost current cave fog. Sunbeams
 must remain separate from block-light air scattering and require a positive aperture/closed-aperture control.
 
+## Motion, overlapping sources and time are release gates
+
+The earlier plan mentioned movement, but did not specify the interactions or acceptance evidence adequately.
+A stationary room is only an initial control. Gates 1–3 each require movement and changing-light tests;
+motion is not postponed until outdoor polish. These tests are planned, not completed by the still captures.
+
+### What the reference adds to this research
+
+At the pinned revision, `shaders/program/shadowcomp1.glsl` explicitly moves the irradiance cache using the
+integer camera-position delta, clears samples outside the previous volume, and shifts stored source positions.
+The same program schedules groups across update frames and applies temporal accumulation decay. The lesson
+is that world-space identity, data age and history invalidation are part of lighting, not presentation details.
+Its per-update 0.99 GI decay is a reference implementation detail, not a time constant Aurum should copy.
+Aurum must define refresh/decay in elapsed time and measure its behaviour at different frame rates.
+A shared shader alone would not solve these cache/motion issues.
+
+### Required behaviour and controls
+
+| Case | Required behaviour | Test and evidence |
+|---|---|---|
+| Camera turns around a stationary scene | Diffuse illumination stays attached to world surfaces. Specular response can change with view direction. | Fixed camera position, full yaw/pitch sweeps; compare the same receiver in ungraded diffuse/component views. Look for screen-average tint feedback and screen-edge changes. |
+| Camera walks or sprints | A lamp and its shadows stay in place while the cache recentres. Entering new coverage must not brighten/darken a whole surface suddenly. | Walk/sprint in both directions across the current four-block recenter thresholds, all volume faces and corners; include vertical movement and negative coordinates. Record actual cache origin/revision/age with the clip. |
+| Object moves around a fixed lamp | Each moving surface samples its current world position and normal. Light does not stick to its previous pose. | Move/rotate a mob and a neutral rigid receiver through a circle, behind a wall and through a doorway; keep the camera fixed, then follow the object. Separate receiving illumination from casting shadows. |
+| Lamp moves around a fixed object | Light position, colour and occlusion follow the source. Removal cannot leave a persistent glowing footprint. | Carry, drop and pick up a torch; move a luminous entity; repeat with the dynamic-light mod disabled/enabled and with camera motion. Record source ownership and update latency. |
+| Moving occluder or edited world | Direct visibility changes promptly; indirect history is invalidated where it no longer applies. | Open/close a door, place/remove a wall, move a piston, toggle a furnace while a bake/upload is pending. Check both newly shadowed and newly exposed surfaces. |
+| Several lamps overlap | Contributions combine once in the agreed linear-light space; stronger overlap is handled by the shared display transform. | Equal-colour and warm/soul pairs, asymmetric intensities, occluded sources, then 1/16/17/32 sources. Add/remove/reorder sources and cross camera-driven selection boundaries. Measure isolated terms before the final image. |
+| Receiver leaves/enters coverage | Confidence changes consistently across terrain and core objects. Missing data is not valid black. | Move the same receiver through the boundary, then move the camera while the receiver stays fixed. Repeat during a rebake and with an overloaded source set. |
+| Day and night | Local lamps retain consistent source identity and exposure-normalised contribution. Sky/sun/moon alter the surrounding illumination coherently. | Repeat the same light/motion tests at noon, sunset, midnight and dawn, plus a sealed cave. Do not require identical final brightness when the environment/exposure changes. |
+| Continuous time progression | Sun/moon handover, shadow direction, ambient colour and exposure change without discrete flashes or stale daylight in caves. | Run continuously through sunset/night/dawn; also test time jumps as explicit discontinuities. Include rain transitions, cave entrance/exit and mixed torch/daylight. |
+| Teleport, reload, dimension switch | Unrelated cached light/history is discarded. A correct fallback appears until new data is ready. | Teleport beyond coverage, disconnect/rejoin and switch dimensions with a job pending. Never blend samples belonging to different locations/worlds. |
+
+### Engineering changes required by those cases
+
+- Anchor caches and source identities in world space. When origins move, reuse only matching world cells;
+  initialise newly exposed cells as unavailable. A field following the camera is not permission for the light
+  pattern to follow it.
+- Sample moving receivers from shared spatial data each draw. Keep a stable world normal/position convention
+  through terrain, model, entity and hand transforms; inventory/UI rendering must stay outside world lighting.
+- Establish one owner for moving/held sources. Static block snapshots cannot represent them; compatibility
+  requires an adapter or an explicitly consistent fallback. Updating a static cache faster does not supply
+  source information that was never captured.
+- Track source changes, occluder changes, field movement and time-of-day dependencies separately. Define
+  which invalidate direct light, indirect history and display state. Do not blindly rebuild static lamps
+  whenever the sun moves, or retain stale sky bounce through sunset.
+- Publish coherent fields. Blend old/new radiance only for matching positions and compatible visibility;
+  a newly placed opaque wall should not retain a long light-leak crossfade. Source removal needs fast stale
+  energy removal; indirect convergence can be gradual but must have a measured bound.
+- Make source-budget overflow explicit. The current cap of sixteen and peak clamp of 1.5 are part of the
+  audit: source culling can cause camera-dependent light changes, and clamping before composition can hide
+  overlap energy. A replacement needs a residual or consistent fallback, stable selection and one shared
+  HDR/display policy. Do not simply remove limits without measuring the cost.
+- Budget updates by elapsed time/work, and record queue age. Test under high and low frame rates. Frame-count
+  budgets alone make a six-/twenty-four-frame upload much slower when FPS drops.
+
+### Evidence needed before “unified lighting” can pass
+
+For each adapter, use a fixed-camera control and a moving-camera clip of the same scene. Add moving receivers,
+moving sources and source overlap before proceeding to fog tuning. Capture start, motion, stop and convergence;
+a final settled frame cannot reveal ghosting, trailing light or recenter popping.
+
+Extend the development recorder with timestamped actual camera/source/receiver poses, published/desired origins,
+source IDs/counts, revisions, confidence, queue age and source-change-to-visible-update latency. This per-frame
+recorder is required engineering work; the current command-time snapshots do not provide it. The existing
+modded room snapshots therefore do not count as a motion pass.
+
+Use component views to distinguish illumination changes from texture mip selection, specular highlights,
+exposure, animation or screen-space post effects. Compare a stationary receiver's diffuse component while
+only the camera moves; an unexplained change is a failure even if both endpoints look attractive. Follow a
+moving receiver with a fixed camera to expose light sticking and visibility lag. Repeat both together.
+
+Measure median/p95/p99 frame time, worst edit/recenter spikes, cache age and stale-light lifetime during motion
+on Intel UHD at the user's settings. Set numerical latency/error budgets from that baseline and publish them
+before visual acceptance; no such target-device budgets have been measured here. Software-renderer clips can
+reveal gross defects but cannot establish 60-FPS temporal quality or target-device latency. The result table
+must separately mark camera motion, receiver motion, source motion, multiple-source stress, daylight/night
+and continuous transitions as passed/failed/unverified. None are implied by a successful build.
+
 ## Ordered implementation gates
 
 | Gate | Engineering work | Required evidence before moving on |
