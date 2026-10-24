@@ -53,3 +53,5 @@ JAVA_HOME=/path/to/jdk21 python3 tools/check_voxel_lighting.py
 - `docs/TESTING.md` what to test for the current phase and which numbers to send back
 - `docs/SODIUM_NOTES.md` how Sodium's terrain shaders work and where Aurum hooks in
 - `docs/DECISIONS.md` where the build differs from the spec, and why
+
+Lighting work: [source research and diagnostic review](docs/reports/aurum-lighting-unification-research.html) — investigation and development tooling; the lighting clash is not fixed yet.

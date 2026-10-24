@@ -28,7 +28,7 @@ public final class TerrainUniforms {
             "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale",
             "u_SkySideToward", "u_SkySideAway", "u_CloudReflection", "u_PrevCloudViewProj", "u_CloudReflectionOn",
             "u_SkyAppearance", "u_WaterLake", "u_VoxelLight", "u_VoxelParams", "u_VoxelOrigin",
-            "u_CloudSdf", "u_CloudShadow", "u_CloudLayout", "u_FoliageDepth", "u_PixelLight"
+            "u_CloudSdf", "u_CloudShadow", "u_CloudLayout", "u_FoliageDepth", "u_PixelLight", "u_LightingDebug"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -64,6 +64,7 @@ public final class TerrainUniforms {
     public static void upload(int[] loc, boolean translucent) {
         AurumConfig c = AurumConfig.get();
         GL20C.glUniform1i(loc[0], mode);
+        GL20C.glUniform1i(loc[53], dev.impeccable.aurum.debug.LightingDebug.mode());
         if (mode == 0) return;
         if (mode == 2) {
             // Reuse terrain parameters in depth-only mode to bound small plant casters near the map centre.

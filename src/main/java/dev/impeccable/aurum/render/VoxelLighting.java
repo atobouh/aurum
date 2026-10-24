@@ -50,8 +50,10 @@ public final class VoxelLighting {
     private static int desiredX, desiredY, desiredZ;
     private static boolean ready;
     private static boolean hasSources;
+    private static int publishedCandidates, publishedSources, publishedFaces;
+    private static long publishedBakeNanos;
 
-    private record Job(VoxelLightBaker.Result result, int x, int y, int z, long revision, long generation) {}
+    private record Job(VoxelLightBaker.Result result, int x, int y, int z, long revision, long generation, int candidates, int sources) {}
     private VoxelLighting() {}
 
     public static int texture() { return ready && hasSources ? textures[front] : 0; }
@@ -61,6 +63,30 @@ public final class VoxelLighting {
     public static int originX() { return originX; }
     public static int originY() { return originY; }
     public static int originZ() { return originZ; }
+
+    /** Diagnostic metadata only; called on demand on the client thread. */
+    public static java.util.Map<String, Object> debugState() {
+        var state = new java.util.LinkedHashMap<String, Object>();
+        state.put("ready", ready); state.put("usable", usable()); state.put("hasSources", hasSources);
+        state.put("revision", revision); state.put("publishedRevision", bakedRevision);
+        state.put("generation", generation); state.put("collecting", collecting != null);
+        state.put("baking", pending != null); state.put("uploading", uploading != null);
+        state.put("snapshotCellsCaptured", collecting == null ? 0 : collecting.cursor);
+        state.put("uploadRow", uploading == null ? 0 : uploadRow);
+        state.put("origin", new int[]{originX, originY, originZ});
+        state.put("desiredOrigin", new int[]{desiredX, desiredY, desiredZ});
+        state.put("fieldSide", SIDE); state.put("detail", detail);
+        state.put("publishedCandidates", publishedCandidates); state.put("publishedSources", publishedSources);
+        state.put("sourceCap", 16); state.put("publishedFaces", publishedFaces);
+        state.put("publishedBakeMillis", publishedBakeNanos / 1_000_000.0);
+        state.put("sourceScope", "Static BlockState luminance only; no held/moving source adapter or indirect transport");
+        return state;
+    }
+
+    private static void recordPublished(Job job) {
+        publishedCandidates = job.candidates; publishedSources = job.sources;
+        publishedFaces = job.result.faces(); publishedBakeNanos = job.result.nanos();
+    }
 
     public static void onSectionRebuilt(int x, int y, int z) {
         if (currentWorld == null) return;
@@ -91,6 +117,7 @@ public final class VoxelLighting {
         if (uploading != null) {
             if (uploading.result.rgba().length == 0) {
                 originX = uploading.x; originY = uploading.y; originZ = uploading.z;
+                recordPublished(uploading);
                 detail = uploading.result.detail(); bakedRevision = uploading.revision;
                 ready = true; hasSources = false; uploading = null;
                 return;
@@ -115,7 +142,7 @@ public final class VoxelLighting {
             Snapshot s = collecting; collecting = null;
             VoxelLightBaker.Input input = s.input();
             pending = CompletableFuture.supplyAsync(() -> new Job(
-                    VoxelLightBaker.bake(input, () -> generation != s.generation), s.x, s.y, s.z, s.revision, s.generation), WORKER)
+                    VoxelLightBaker.bake(input, () -> generation != s.generation), s.x, s.y, s.z, s.revision, s.generation, s.candidates, input.lights().size()), WORKER)
                     .exceptionally(e -> { AurumMod.LOGGER.error("Voxel lighting bake failed; retaining vanilla fallback", e); return null; });
         }
     }
@@ -154,6 +181,7 @@ public final class VoxelLighting {
             MemoryUtil.memFree(upload); upload = null;
             front = back; width = r.width(); height = r.height(); detail = r.detail();
             originX = uploading.x; originY = uploading.y; originZ = uploading.z;
+            recordPublished(uploading);
             bakedRevision = uploading.revision; ready = true; hasSources = true;
             AurumMod.LOGGER.debug("Voxel field ready: side={}, faces={}, detail={}, bake={} ms, origin=({}, {}, {})",
                     SIDE, r.faces(), detail, r.nanos() / 1_000_000L, originX, originY, originZ);
@@ -174,7 +202,7 @@ public final class VoxelLighting {
         final float warmth = AurumConfig.get().blockLightWarmth / 100f;
         final IdentityHashMap<BlockState, Integer> shapeCache = new IdentityHashMap<>();
         final BlockPos.Mutable pos = new BlockPos.Mutable();
-        int cursor;
+        int cursor, candidates;
         Snapshot(ClientWorld world, int x, int y, int z, int subdivisions, long revision, long generation) {
             this.world = world; this.x = x; this.y = y; this.z = z; this.subdivisions = subdivisions;
             this.revision = revision; this.generation = generation;
@@ -189,6 +217,7 @@ public final class VoxelLighting {
             Integer shape = shapeCache.get(state);
             String id = shape == null || level > 0 ? Registries.BLOCK.getId(state.getBlock()).getPath() : "";
             if (level > 0) {
+                candidates++;
                 float[] colour = colours.get(state);
                 if (colour == null) { colour = lightColour(id, warmth); colours.put(state, colour); }
                 VoxelLightBaker.Light light = new VoxelLightBaker.Light(bx + .5f, by + .5f, bz + .5f,

@@ -67,6 +67,7 @@ void main() {
         // Translucent pass: water sprites get Aurum water; glass, ice and the rest keep the normal lighting.
         int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5) & 15;
         if (id == 9) {
+            if (u_LightingDebug > 0) { fragColor = vec4(0.8, 0.0, 0.8, 1.0); return; }
             fragColor = vec4(aurum_shadeWater(diffuseColor, v_Color, v_LightCoord, v_Position), 1.0);
             return;
         }

@@ -1,3 +1,43 @@
+# Lighting unification — research and diagnostic candidate
+
+See [the source audit and engineering contract](research/LIGHTING_UNIFICATION.md) and
+[the offline HTML review](reports/aurum-lighting-unification-research.html). This candidate adds
+**development diagnostics**, not a lighting fix or a new release. `dist/aurum-0.6.1.jar` is unchanged.
+
+Use a disposable copy of the Regasm Scenery profile. Do not place the new `lighting_contract.mcfunction`
+fixture in the natural scenery save. Its room has a lit furnace, torch, stone, zombie head and chest;
+other emitters can be present outside the room in the forty-block snapshot. Record actual source counts.
+Disable generated relief, authored PBR, waving, clouds and screen-average bounce for this isolation run;
+retain the same lighting/occlusion/fog settings between the views. A normal frame retains those post effects.
+
+Development commands:
+
+- `/aurumdev lighting off`: normal rendering.
+- `/aurumdev lighting direct|sky|block|fallback|voxel`: actual terrain illumination terms before albedo;
+  includes their respective terrain AO factors. `voxel` is the eligible raw sample, not indirect light or
+  a confidence-weighted final contribution. `fallback` uses the current lightmap, not separated dynamic sources.
+- `/aurumdev lighting coverage`: red fallback / green effective voxel replacement; blended edges are intermediate.
+  This does not prove source completeness or geometry correctness.
+- `/aurumdev lighting normal|ao|path`: geometry normal, terrain AO, or cyan terrain path. Water is purple.
+  Entities, block entities and hand **remain core-shaded**, not relit or marked by the diagnostic.
+- `/aurumdev lighting snapshot`: writes JSON under `run/debug/aurum-lighting/` with camera, eye light,
+  target, configuration, mods, fog and voxel cache/source metadata. Pair it with the actual capture.
+
+Aurum's composite is bypassed during isolation; Minecraft overlays/vignette and core-shaded objects remain.
+Views are not persisted in settings, are reset on disconnect, and cannot be enabled in a release client.
+Do not read their encoded colours as absolute physical irradiance. No shader/path coverage claims beyond
+what is marked above. Verify switching and reset at runtime, and inspect both normal and restored frames.
+
+Run `JAVA_HOME=/workspace/jdk21 python3 tools/check_lighting_contract.py` for seven **current-behaviour
+characterizations** using the production baker. It reproduces valid dark back faces, omitted-source energy
+and receiver coverage gaps; passing means those behaviours were reproduced, **not that they were fixed**.
+The existing voxel checks remain the geometry/finite-output controls. The new source-set harness supplies
+sixteen/seventeen inputs directly; it does not test runtime ranking or LambDynamicLights injection.
+
+The engineering gates require a common surface evaluator across terrain/core paths, coherent direct/indirect
+local transport and source ownership, then source-aware cave air and AO. Until those gates pass, do not
+promote this diagnostic candidate as unified lighting or publish a new mod version.
+
 # Testing: 0.6.1 — daylight readability after real footage
 
 The expanded natural-scene review uses the separate **Aurum Regasm Scenery** save and the exact

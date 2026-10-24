@@ -175,6 +175,7 @@ public final class PostPass {
         GlStateManager._viewport(0, 0, width, height);
         comp.bind();
         comp.set1i("u_Scene", UNIT_A);
+        comp.set1i("u_LightingDebug", dev.impeccable.aurum.debug.LightingDebug.mode());
         comp.set1i("u_Depth", UNIT_B);
         // Reuse the existing before-translucent copy to identify far transparent surfaces. No extra buffer.
         comp.set1i("u_BeforeTranslucentDepth", 0);

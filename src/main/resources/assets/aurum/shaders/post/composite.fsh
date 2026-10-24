@@ -8,6 +8,7 @@
 // and colour grade together. Clouds, rays and bloom arrive pre-computed at reduced resolution.
 // Runs after the hand is drawn; the hand has its own depth texture so it never gets fogged.
 
+uniform int u_LightingDebug;
 uniform sampler2D u_Scene;
 uniform sampler2D u_Depth;
 uniform sampler2D u_BeforeTranslucentDepth;
@@ -202,6 +203,8 @@ vec3 flare(vec2 uv, float vis) {
 
 void main() {
     vec3 scene = texture(u_Scene, v_Uv).rgb;
+    // Preserve contribution views: no fog, AO, grade, bloom, rays or sharpening over diagnostic colours.
+    if (u_LightingDebug > 0) { fragColor = vec4(scene, 1.0); return; }
     vec3 original = scene;
     bool cloudCovered = false;
     float depth = texture(u_Depth, v_Uv).r;

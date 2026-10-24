@@ -134,14 +134,27 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
 
     float blockBrightness = blk / (4.0 - 3.0 * blk); // vanilla's light curve
     vec3 blockLight = u_BlockLightColor * blockBrightness;
+    vec4 voxel = vec4(0.0);
     if (blk > 0.001 && !foliage) {
-        vec4 voxel = aurum_voxelLight(pos, ng);
+        voxel = aurum_voxelLight(pos, ng);
         blockLight = mix(blockLight, voxel.rgb * u_BlockLightColor.r, voxel.a);
     }
     blockBrightness = max(blockLight.r, max(blockLight.g, blockLight.b)) / max(u_BlockLightColor.r, 0.001);
     // Ambient receives the full local AO. Sun and nearby blocklight keep their lit face/detail visible.
     vec3 light = direct * mix(1.0, ao, 0.35) + ambient * ao
                + blockLight * mix(1.0, ao, 0.6) + vec3(u_TerrainParams.z);
+
+    // Isolate the actual production terms before material response. No beauty settings are changed.
+    // Coverage displays effective replacement: red=fallback, green=voxel, including boundary blending.
+    if (u_LightingDebug == 1) return aurum_tonemap(direct * mix(1.0, ao, 0.35));
+    if (u_LightingDebug == 2) return aurum_tonemap(ambient * ao);
+    if (u_LightingDebug == 3) return aurum_tonemap(blockLight * mix(1.0, ao, 0.6));
+    if (u_LightingDebug == 4) return aurum_tonemap(u_BlockLightColor * (blk / (4.0 - 3.0 * blk)) * mix(1.0, ao, 0.6));
+    if (u_LightingDebug == 5) return aurum_tonemap(voxel.rgb * u_BlockLightColor.r * mix(1.0, ao, 0.6));
+    if (u_LightingDebug == 6) return vec3(1.0 - voxel.a, voxel.a, 0.0);
+    if (u_LightingDebug == 7) return ng * 0.5 + 0.5;
+    if (u_LightingDebug == 8) return vec3(ao);
+    if (u_LightingDebug == 9) return vec3(0.0, 0.8, 0.8);
 
     vec3 color = albedo * light * (1.0 + coating * 0.08);
     if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {
