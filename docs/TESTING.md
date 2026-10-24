@@ -1,5 +1,12 @@
 # Testing: 0.6.1 — daylight readability after real footage
 
+The expanded natural-scene review uses the separate **Aurum Regasm Scenery** save and the exact
+profile in `research/regasm-scenery-profile.json`. Its five world datapacks were active before
+first generation. See `research/REGASM_NATURAL_SCENERY_REVIEW.md` for cameras, exclusions, runtime
+repairs and readiness checks; this covers a documented mod subset, not the full user installation.
+Do not load the older Visual Lab under missing registry data or run fixture functions in the
+natural scenery save. The two saves use different dependency profiles.
+
 Reproduce High with LabPBR off, as confirmed by the user. The supplied inventory includes Nature's
 Spirit, Fabric Seasons and its Terralith compatibility pack, not only Terralith. Use the optional
 `modded_canopy` fixture with those local test dependencies; hashes are recorded in

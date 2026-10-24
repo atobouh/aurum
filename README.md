@@ -14,6 +14,7 @@ measurement on that machine.
 
 - [Download Aurum 0.6.1](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.6.1.jar)
 - [Daylight correction: evidence and compatibility tests](docs/reports/aurum-0.6.1-daylight-review.html)
+- [Natural scenery with the regasm datapack stack](docs/reports/aurum-regasm-natural-scenery-review.html)
 - [Visual report with matched reference captures](docs/reports/aurum-0.6.0-visual-review.html)
 - [Direct source review and testing procedure](docs/research/LOCAL_LIGHT_CLOUD_REVIEW_060.md)
 

@@ -1,0 +1,29 @@
+{
+  "log": "aurum-regasm-capture-client.log",
+  "selectedEvidence": [
+    "[06:32:15] [Render thread/INFO] (Aurum) Compiled 14 Aurum shader program(s)",
+    "[06:32:16] [Render thread/INFO] (Aurum) Aurum terrain shader installed over Sodium's",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag minecraft:sand as it is missing following references: wet-sand:moist_suspicious_sand (from fabric), wet-sand:wet_suspicious_sand (from fabric), wet-sand:soaked_suspicious_sand (from fabric)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag minecraft:overworld_carver_replaceables as it is missing following references: #minecraft:sand (from vanilla)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag minecraft:dead_bush_may_place_on as it is missing following references: #minecraft:sand (from vanilla)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag wet-sand:wettable as it is missing following references: wet-sand:moist_suspicious_sand (from fabric), wet-sand:wet_suspicious_sand (from fabric), wet-sand:soaked_suspicious_sand (from fabric)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag minecraft:mineable/shovel as it is missing following references: wet-sand:moist_suspicious_sand (from fabric), wet-sand:wet_suspicious_sand (from fabric), wet-sand:soaked_suspicious_sand (from fabric)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag natures_spirit:turnip_root_replaceable as it is missing following references: #minecraft:sand (from fabric)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag minecraft:azalea_grows_on as it is missing following references: #minecraft:sand (from vanilla)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag natures_spirit:turnip_stem_grows_on as it is missing following references: #minecraft:sand (from fabric)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag terralith:sandy_blocks as it is missing following references: #minecraft:sand (from file/Terralith_1.20_v2.5.4.zip)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag minecraft:bamboo_plantable_on as it is missing following references: #minecraft:sand (from vanilla)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't load tag wet-sand:can_grow_sugar_cane as it is missing following references: wet-sand:wet_suspicious_sand (from fabric), wet-sand:soaked_suspicious_sand (from fabric)",
+    "[06:32:26] [Worker-Main-3/ERROR] (Minecraft) Couldn't parse element loot_tables:wilderflowers:blocks/playful_wildflowers",
+    "[06:33:40] [Server thread/INFO] (Minecraft) [Not Secure] [Player783] VERIFIED_NATURAL_MAPLE",
+    "[06:33:41] [Render thread/INFO] (Minecraft) [System] [CHAT] [Player783] VERIFIED_NATURAL_MAPLE",
+    "[06:38:18] [Server thread/INFO] (Minecraft) [Not Secure] [Player783] VERIFIED_NATURAL_FIR",
+    "[06:38:18] [Render thread/INFO] (Minecraft) [System] [CHAT] [Player783] VERIFIED_NATURAL_FIR",
+    "[06:42:22] [Server thread/INFO] (Minecraft) [Not Secure] [Player783] VERIFIED_NATURAL_MARSH",
+    "[06:42:22] [Render thread/INFO] (Minecraft) [System] [CHAT] [Player783] VERIFIED_NATURAL_MARSH",
+    "[06:47:27] [Worker-Main-2/ERROR] (Minecraft) Hanging entity at invalid position: BlockPos{x=203, y=48, z=159}",
+    "[06:53:16] [Worker-Main-28/WARN] (Minecraft) Unable to load item from: {count:1,id:\"minecraft:salmon\"}"
+  ],
+  "modpackComplete": false,
+  "productRendererChanged": false
+}
