@@ -10,6 +10,8 @@
 
 uniform sampler2D u_Scene;
 uniform sampler2D u_Depth;
+uniform sampler2D u_BeforeTranslucentDepth;
+uniform vec4 u_SurfaceEdge; // x valid copied depth, yz original opaque edge fade
 uniform sampler2D u_HandDepth;
 uniform sampler2D u_Bounce;
 uniform sampler2D u_Clouds;   // half resolution, premultiplied
@@ -28,8 +30,9 @@ uniform vec4 u_SunGlow;     // rgb warm scattered sunlight, a = golden-hour amou
 uniform vec4 u_Fog;         // x distance density, y height density, z height falloff, w camera height above sea level
 uniform vec4 u_Fog3;        // x clear zone (blocks), y most the fog may cover, z fog desaturation
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
+uniform vec4 u_PixelLight; // x crisp light reconstruction, y world grid (used by the producer)
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
-uniform vec4 u_Grade;       // x saturation, y vibrance, z contrast
+uniform vec4 u_Grade;       // x saturation, y vibrance, z contrast, w detail sharpening
 uniform vec4 u_CloudSlab;   // x cloud volume bottom, y top, z high layer height (relative to camera),
                             // w 0 off, 1 on, 2 on + sharpen edges, 3 on + smooth
 uniform vec4 u_SunScreen;   // xy sun position (uv), z width / height, w sun in front of the camera (0..1)
@@ -71,6 +74,26 @@ vec3 grade(vec3 c) {
     return pow(saturate(fromOklab(lab)), vec3(1.0 / 2.2));
 }
 
+// Four neighbouring scene reads, fused into this composite. Use the original scene's luminance detail,
+// not sharpened bloom/fog/rays, and preserve chromaticity when applying it to the composed image.
+vec3 sharpenDetail(vec3 composed, vec3 original, vec2 uv) {
+    vec2 px = 1.0 / vec2(textureSize(u_Scene, 0));
+    vec4 n = vec4(luminance(texture(u_Scene, uv + vec2(px.x, 0.0)).rgb),
+                  luminance(texture(u_Scene, uv - vec2(px.x, 0.0)).rgb),
+                  luminance(texture(u_Scene, uv + vec2(0.0, px.y)).rgb),
+                  luminance(texture(u_Scene, uv - vec2(0.0, px.y)).rgb));
+    float y = luminance(original);
+    float lo = min(y, min(min(n.x, n.y), min(n.z, n.w)));
+    float hi = max(y, max(max(n.x, n.y), max(n.z, n.w)));
+    float contrast = hi - lo;
+    // Reject nearly flat/noisy areas and damp high-contrast silhouettes to avoid ringing and crawling edges.
+    float adapt = smoothstep(0.008, 0.045, contrast) * (1.0 - smoothstep(0.22, 0.6, contrast));
+    float detail = (y - dot(n, vec4(0.25))) * 0.85 * u_Grade.w * adapt;
+    detail = clamp(detail, -min(0.035, contrast * 0.15), min(0.035, contrast * 0.15));
+    float cy = max(luminance(composed), 1e-4);
+    return saturate(composed * max((cy + detail) / cy, 0.0));
+}
+
 // Distance along the ray to the nearest cloud layer (the cloud volume's entry, or the high layer's plane).
 float cloudEntry(vec3 dir) {
     float t = 1e9;
@@ -91,6 +114,12 @@ float cloudEntry(vec3 dir) {
 // open-air values behind them.
 vec2 volumetricLit(vec2 uv, float dist) {
     vec2 size = vec2(textureSize(u_Volumetric, 0));
+    if (u_PixelLight.x > 0.5) {
+        // Keep the march's native pixel cells. No bilinear upscale or spatial blur across a shaft boundary.
+        vec2 v = texelFetch(u_Volumetric, ivec2(clamp(floor(uv * size), vec2(0.0), size - 1.0)), 0).rg;
+        v.r = floor(v.r * 32.0 + 0.5) / 32.0;
+        return v;
+    }
     vec2 base = floor(uv * size) + 0.5;
     float g = min(dist, u_Volumetric2.x) / u_Volumetric2.x;
     vec2 sum = vec2(0.0);
@@ -102,7 +131,7 @@ vec2 volumetricLit(vec2 uv, float dist) {
             vec2 d = abs(tc - uv * size);
             float broad = max(0.0, 1.6 - d.x) * max(0.0, 1.6 - d.y);
             float close = exp(-dot(d, d) * 3.5);
-            float spatial = mix(close, broad, smoothstep(8.0, 28.0, dist));
+            float spatial = mix(close, broad, smoothstep(8.0, 28.0, dist) * (1.0 - 0.85 * u_Volumetric2.y));
             float depthGate = mix(220.0, 60.0, smoothstep(8.0, 28.0, dist));
             float w = spatial * exp(-abs(v.g - g) * depthGate) + 1e-5;
             sum += v * w;
@@ -139,6 +168,14 @@ float airPhase(float cosTheta) {
     return 0.08 + 0.22 * (1.0 - g * g) / (d * sqrt(d));
 }
 
+float lightRayMask(vec2 uv) {
+    if (u_PixelLight.x > 0.5) {
+        ivec2 size = textureSize(u_Rays, 0);
+        return texelFetch(u_Rays, ivec2(clamp(floor(uv * vec2(size)), vec2(0.0), vec2(size - 1))), 0).r;
+    }
+    return texture(u_Rays, uv).r;
+}
+
 // A subtle lens flare: warm halo, a short horizontal streak, and faint ghosts mirrored through the centre.
 vec3 flare(vec2 uv, float vis) {
     vec2 aspect = vec2(u_SunScreen.z, 1.0);
@@ -165,6 +202,8 @@ vec3 flare(vec2 uv, float vis) {
 
 void main() {
     vec3 scene = texture(u_Scene, v_Uv).rgb;
+    vec3 original = scene;
+    bool cloudCovered = false;
     float depth = texture(u_Depth, v_Uv).r;
     bool hand = u_Flags.z > 0.5 && texture(u_HandDepth, v_Uv).r < 1.0;
 
@@ -201,8 +240,13 @@ void main() {
             // The same air supplies fog and shafts. A clear foreground stays transparent; under cover the
             // shorter path can still reveal a beam from an opening. Taking the larger opacity avoids counting
             // the same scattering medium twice.
-            float airDensity = 0.0025 * (1.0 + 2.0 * u_Volumetric2.z) * (1.0 + 5.0 * u_Volumetric2.y);
-            float beamOpacity = 1.0 - exp(-vl.g * u_Volumetric2.x * airDensity * u_Extras.w);
+            float airDensity = 0.00020 + 0.0009 * u_Volumetric2.z;
+            float airRange = vl.g * u_Volumetric2.x;
+            // Being under a tree must not turn the entire distant forest into dense indoor haze.
+            float opticalDepth = airRange * airDensity
+                    + 0.0045 * u_Volumetric2.y * 32.0 * (1.0 - exp(-airRange * 0.03125));
+            float beamOpacity = 1.0 - exp(-opticalDepth * u_Extras.w);
+            float atmosphereFog = f;
             f = max(f, beamOpacity);
             if (f > 0.002) {
                 // Fog takes the sky's colour in that direction, so it is warmer toward the sun at golden hour.
@@ -210,14 +254,16 @@ void main() {
                 float toSun = dot(dir, u_SunDir);
                 vec3 inscatter = u_SunGlow.rgb * airPhase(toSun) * (0.15 + 0.85 * u_SunGlow.a);
                 // Haze in shadow does not glow: with volumetric light on, shadowed lanes of air stay darker.
-                if (u_Extras.w > 0.0) inscatter *= vl.r;
+                if (u_Extras.w > 0.0) inscatter *= vl.r * mix(1.0, 2.0, u_Volumetric2.y);
                 // The haze itself is near-neutral (the sky's pinks would turn it into a flat pink soup); its warmth
                 // comes from the sunlight scattered toward the sun.
                 vec3 fogRad = aurum_fogRadiance(dir, u_SunDir);
                 fogRad = mix(fogRad, vec3(luminance(fogRad)), u_Fog3.z);
                 // Cover removes ambient skylight, while a sunlit opening can still illuminate the air.
                 // Darkening the entire fog source here would also erase the beam inside a cave or room.
-                fogRad *= mix(1.0, 0.08, u_Fog2.x);
+                fogRad *= mix(1.0, 0.002, max(u_Fog2.x, u_Volumetric2.y));
+                // Extra shaft opacity carries sunlight; do not also inject a sky-coloured ambient veil.
+                fogRad *= min(atmosphereFog / max(f, 0.0001), 1.0);
                 vec3 fogColor = aurum_tonemap(fogRad + inscatter);
                 vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
                 float bl = max(luminance(bounce), 1e-4);
@@ -232,14 +278,22 @@ void main() {
         if (u_Flags.y > 0.5) {
             // Hide the render-distance edge by fading into the sky behind it. Chunks load in a cylinder
             // around the player, so the edge is measured horizontally (vanilla's terrain fog does the same).
-            float edge = smoothstep(u_Fog2.y, u_Fog2.z, length(dir.xz) * dist);
+            float horizontal = length(dir.xz) * dist;
+            vec2 edgeRange = u_SurfaceEdge.yz;
+            if (u_SurfaceEdge.x > 0.5 && horizontal > u_Fog2.y
+                    && depth < texture(u_BeforeTranslucentDepth, v_Uv).r - 1e-7) {
+                // Water (or another nearer transparent surface) lies in front of the copied opaque scene.
+                // Keep the stronger horizon fade off opaque foliage and blocks.
+                edgeRange = u_Fog2.yz;
+            }
+            float edge = smoothstep(edgeRange.x, edgeRange.y, horizontal);
             scene = mix(scene, sky, edge);
         }
     }
 
     if (!hand) {
         // Clouds go over whatever the ray meets after reaching a cloud layer (sky, or terrain seen from above).
-        if (u_CloudSlab.w > 0.5 && dist > cloudEntry(dir)) {
+        if (u_CloudSlab.w > 0.5 && dist > cloudEntry(dir) + 0.25) {
             vec4 cl = texture(u_Clouds, v_Uv);
             if (u_CloudSlab.w > 2.5) {
                 // Soft clouds: four extra bilinear taps (a 4x4 texel tent) smooth out the ray-march jitter.
@@ -253,6 +307,7 @@ void main() {
                 cl = vec4(cl.rgb * (a / cl.a), a);
             }
             scene = scene * (1.0 - cl.a) + cl.rgb;
+            cloudCovered = cl.a > 0.01;
         }
         vec3 hue = u_SunGlow.rgb / max(max(u_SunGlow.r, max(u_SunGlow.g, u_SunGlow.b)), 1e-4);
         vec3 rayColor = mix(vec3(1.0), hue, 0.65);
@@ -262,14 +317,15 @@ void main() {
             // adding that directly drew a wide, blurry wedge instead of beams. Compare neighbouring angular
             // paths so only actual cloud/terrain gaps produce a shaft. The shadow-map pass handles beams in
             // front of nearby terrain.
-            float rays = texture(u_Rays, v_Uv).r;
+            float rays = lightRayMask(v_Uv);
             float r = length((v_Uv - u_SunScreen.xy) * vec2(u_SunScreen.z, 1.0));
             vec2 tangent = normalize(vec2(-(v_Uv.y - u_SunScreen.y),
                                           (v_Uv.x - u_SunScreen.x) * u_SunScreen.z) + vec2(1e-5));
             vec2 offset = tangent * (0.018 + 0.045 * r) / vec2(u_SunScreen.z, 1.0);
-            float surround = 0.5 * (texture(u_Rays, clamp(v_Uv + offset, 0.0, 1.0)).r
-                                  + texture(u_Rays, clamp(v_Uv - offset, 0.0, 1.0)).r);
+            float surround = 0.5 * (lightRayMask(clamp(v_Uv + offset, 0.0, 1.0))
+                                  + lightRayMask(clamp(v_Uv - offset, 0.0, 1.0)));
             float shaft = max(rays - surround - 0.015, 0.0);
+            if (u_PixelLight.x > 0.5) shaft = floor(shaft * 32.0 + 0.5) / 32.0;
             float openSky = (depth >= 1.0 ? 1.0 : 0.0) * (1.0 - texture(u_Clouds, v_Uv).a);
             // Rays start a little away from the sun: piled up on its face they only blow it out to white.
             scene += rayColor * pow(shaft, 1.35) * 0.85 * exp(-r * 2.2)
@@ -283,5 +339,6 @@ void main() {
     }
 
     if (u_Flags.w > 0.5) scene = grade(scene);
+    if (u_Grade.w > 0.0 && !hand && !cloudCovered && depth < 1.0) scene = sharpenDetail(scene, original, v_Uv);
     fragColor = vec4(scene, 1.0);
 }

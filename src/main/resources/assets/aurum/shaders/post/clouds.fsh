@@ -3,6 +3,7 @@
 #include "common.glsl"
 #import <aurum:include/tonemap.glsl>
 #import <aurum:include/sky_lut.glsl>
+#import <aurum:include/cloud_motion.glsl>
 
 // Aurum clouds, two styles from one source (docs/research/SKY_EXTRAS.md, rounds two to four).
 // Layouts are baked by CloudBaker into a distance field: Aurum's own clusters (default) or the resource pack's
@@ -28,7 +29,7 @@ uniform vec3 u_LightDir;
 uniform vec3 u_LightColor;
 uniform vec3 u_SkyAmbient;
 uniform vec4 u_SunGlow;      // rgb warm scattered sunlight, a = golden-hour amount
-uniform vec4 u_Layers;       // x cloud base height relative to camera, y max distance, z time (blocks, wrapped), w unused
+uniform vec4 u_Layers;       // x cloud base height relative to camera, y max distance, z time (blocks, wrapped), w wind variation
 uniform vec4 u_Offset;       // xy layout offset at the camera (cells), zw unused
 uniform vec4 u_Shape;        // x blocks per texel, y coverage (texels), z rain, w unused
 uniform vec4 u_Look;         // x shading amount, y brightness, z unused, w haze density
@@ -50,7 +51,7 @@ uniform float u_ShapeSet;     // 0 Aurum layout (R, tier G), 1 resource pack lay
 
 // Distance to a layout: tier 0 the base layer, tier 1 the second tier stacked on the biggest clouds.
 float cloud2d(vec2 xz, vec2 offset, float scale, int tier) {
-    vec2 uv = (offset + xz / scale) / u_TexSize;
+    vec2 uv = aurum_cloudCells(offset + xz / scale, u_Layers.z, u_Layers.w) / u_TexSize;
     vec3 t = texture(u_CloudSdf, uv).rgb;
     // The resource pack layout has no second tier of its own: its big clouds shrunk by one cell stand in.
     float sdfValue = u_ShapeSet < 0.5 ? (tier == 0 ? t.r : t.g) : (tier == 0 ? t.b : t.b + 1.0);

@@ -49,6 +49,7 @@ public class AurumMod implements ClientModInitializer {
     public void onInitializeClient() {
         AurumConfig.load();
         Compat.check();
+        if (FabricLoader.getInstance().isDevelopmentEnvironment()) dev.impeccable.aurum.debug.VisualLab.register();
 
         settingsKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding("key.aurum.settings", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F7, "key.categories.aurum"));

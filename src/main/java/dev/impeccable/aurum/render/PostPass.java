@@ -176,10 +176,14 @@ public final class PostPass {
         comp.bind();
         comp.set1i("u_Scene", UNIT_A);
         comp.set1i("u_Depth", UNIT_B);
+        // Reuse the existing before-translucent copy to identify far transparent surfaces. No extra buffer.
+        comp.set1i("u_BeforeTranslucentDepth", 0);
+        GlUtil.bindTexture(0, WaterPass.captured ? WaterPass.depthTexture() : AurumTextures.clear());
         comp.set1i("u_HandDepth", UNIT_C);
         comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
         comp.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
+        comp.set4f("u_SkyAppearance", Atmosphere.skyAppearance[0], Atmosphere.skyAppearance[1], 0f, 0f);
         comp.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], dev.impeccable.aurum.director.Atmosphere.golden, 0f);
         // GlStateManager tracks only 12 units; 1-5 are free here (vanilla and terrain rebind theirs before drawing).
         comp.set1i("u_Clouds", 11);
@@ -193,6 +197,8 @@ public final class PostPass {
         float[] ss = SkyExtras.sunScreen;
         comp.set4f("u_SunScreen", ss[0], ss[1], ss[2], ss[3]);
         comp.set4f("u_Extras", SkyExtras.rayStrength, SkyExtras.bloomStrength, SkyExtras.flareStrength, SkyExtras.volumetricStrength);
+        comp.set4f("u_PixelLight", c.lightEdgeStyle == dev.impeccable.aurum.config.LightEdgeStyle.VOXEL_CRISP ? 1f : 0f,
+                c.lightPixelGrid, 0f, 0f);
         comp.set4f("u_Volumetric2", dev.impeccable.aurum.render.shadow.ShadowRenderer.range() * 0.95f, FogDirector.enclosed,
                 Math.min(1f, FogDirector.distanceDensity / 0.0015f), 0f);
         comp.setMatrix("u_InvProj", invProj);
@@ -205,12 +211,20 @@ public final class PostPass {
         comp.set4f("u_Fog", FogDirector.distanceDensity, FogDirector.heightDensity, 0.07f, cameraHeight);
         float far = MinecraftClient.getInstance().gameRenderer.getViewDistance();
         float bounceFog = c.bounceEnabled ? 0.25f * c.bounceStrength / 100f : 0f;
-        comp.set4f("u_Fog2", FogDirector.cave, far * 0.80f, far * 0.98f, bounceFog);
+        // Whole-section visibility and asynchronously arriving chunks make the nominal outer radius
+        // unreliable for a clean ocean horizon. Keep the clear foreground, then finish a broad fade
+        // inside that boundary; this also avoids preserving a clipped reflection at the last section.
+        float edgeEnd = far * 0.66f;
+        comp.set4f("u_Fog2", FogDirector.cave, edgeEnd * 0.78f, edgeEnd, bounceFog);
+        // Opaque trees/blocks keep the original range and contrast. Only far transparent surfaces need
+        // the broader boundary fade; query the copy only beyond its clear zone in the shader.
+        comp.set4f("u_SurfaceEdge", WaterPass.captured ? 1f : 0f, far * 0.80f, far * 0.98f, 0f);
         comp.set4f("u_Fog3", FogDirector.clearZone, 0.88f, 0.30f, 0f);
         boolean fog = aurumWorld && c.fogEnabled && SkyState.current() != null;
         boolean edge = aurumWorld && c.edgeFade && SkyState.current() != null;
         comp.set4f("u_Flags", fog ? 1f : 0f, edge ? 1f : 0f, handValid ? 1f : 0f, 1f);
-        comp.set4f("u_Grade", c.saturation / 100f, c.vibrance / 100f, c.contrast / 100f, 0f);
+        comp.set4f("u_Grade", c.saturation / 100f, c.vibrance / 100f, c.contrast / 100f,
+                c.sharpnessEnabled ? c.sharpness / 100f : 0f);
         comp.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
         comp.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
         GlUtil.bindTexture(UNIT_A, sceneTex);
@@ -231,7 +245,7 @@ public final class PostPass {
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, main.getDepthAttachment(), 0);
 
         // Unbind our textures from the high units and restore the state vanilla expects next.
-        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 1, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
+        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 0, 1, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         main.beginWrite(true);

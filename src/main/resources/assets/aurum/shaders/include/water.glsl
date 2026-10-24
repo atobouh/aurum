@@ -13,6 +13,7 @@ uniform sampler2D u_OpaqueColor;
 uniform sampler2D u_WaterNormalTex; // tiling ripples: rg slope, b height
 uniform vec4 u_WaterParams;        // xy 1 / framebuffer size, z screen-space reflections on, w wave strength
 uniform vec4 u_WaterScroll;        // ripple layer offsets (tile units, wrapped)
+uniform float u_WaterLake;        // 0 original Aurum, 1 calm lake; intermediate values blend parameters
 uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_ModelViewMatrix;
 uniform sampler2D u_CloudReflection;
@@ -37,10 +38,11 @@ vec2 aurum_waterSlope(vec2 xz, float dist) {
     float fine = 1.0 / (1.0 + dist * 0.05);
     b = vec2(-b.y, b.x); // undo the layer's rotation
     // Far water settles (Photon: calm, clean reflections toward the horizon).
-    float calm = 1.0 / (1.0 + dist * 0.020);
+    float calm = 1.0 / (1.0 + dist * mix(0.020, 0.030, u_WaterLake));
     // Put the movement into broad swells, with less short-scale chop. Shoreline reflections keep their
     // silhouette while the surface still reads as moving water rather than a flat mirror.
-    return (a * 0.064 + b * 0.030 * fine + c * 0.020 * fine * fine) * calm * u_WaterParams.w;
+    vec3 slopes = mix(vec3(0.064, 0.030, 0.020), vec3(0.032, 0.014, 0.005), u_WaterLake);
+    return (a * slopes.x + b * slopes.y * fine + c * slopes.z * fine * fine) * calm * u_WaterParams.w;
 }
 
 // Screen-space reflection of the opaque scene. Returns rgb (display) and a = hit confidence.
@@ -115,14 +117,15 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     // The biome water colour nudges it (swamps murkier, warm oceans bluer) without painting the water.
     vec3 tint = aurum_toLinear(vertexColor.rgb);
     vec3 tintN = tint / max(max(tint.r, max(tint.g, tint.b)), 1e-3);
-    vec3 sigma = vec3(0.60, 0.20, 0.13) * mix(vec3(1.0), 1.6 - tintN * 0.8, 0.5);
+    vec3 sigma = mix(vec3(0.60, 0.20, 0.13), vec3(0.13, 0.065, 0.045), u_WaterLake)
+               * mix(vec3(1.0), 1.6 - tintN * 0.8, 0.5);
     vec3 trans = exp(-sigma * column);
     // u_LightDir follows the moon at night; sunny caustics and glitter must use the actual sun direction.
     float sunUp = smoothstep(-0.05, 0.2, u_SunDirW.y);
     float sunVisible = 0.0;
     if (ng.y > 0.3 && sunUp > 0.0) {
         vec2 sh = aurum_shadow(pos, ng);
-        sunVisible = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
+        sunVisible = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y) * aurum_cloudShadow(pos);
     }
     // Caustics: the bright, wobbling light network sunlight draws on a shallow bed (Photon's shallows). Two
     // ripple layers crossing; lines where their heights match. Strongest in the shallows, gone with depth.
@@ -131,11 +134,12 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
         float h1 = texture(u_WaterNormalTex, bed.xz / 4.0 + u_WaterScroll.xy * 1.3).b;
         float h2 = texture(u_WaterNormalTex, vec2(bed.z, -bed.x) / 2.0 + u_WaterScroll.zw * 1.6).b;
         float caust = pow(1.0 - abs(h1 - h2), 10.0);
-        behind *= 1.0 + caust * 1.4 * sunUp * sunVisible * exp(-column * 0.35) * smoothstep(0.0, 0.3, column);
+        behind *= 1.0 + caust * mix(1.4, 0.45, u_WaterLake) * sunUp * sunVisible
+                       * exp(-column * 0.35) * smoothstep(0.0, 0.3, column);
     }
     // Light scattered back out of the water body (what deep water looks like), lit by sky and sun.
     vec3 deepAlbedo = vec3(0.008, 0.036, 0.052) * mix(vec3(1.0), tintN * 1.4, 0.35);
-    vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.45 * skyVis) * deepAlbedo
+    vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.45 * sunVisible) * deepAlbedo
                    + u_BlockLightColor * deepAlbedo * aurum_lightLevel(lightCoord.x) * 0.5;
     vec3 deep = aurum_toLinear(aurum_tonemap(deepHdr));
     // A small surface tint keeps water present without hiding sand and stone just beneath it.
@@ -170,7 +174,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     float cosT = clamp(dot(-V, n), 0.0, 1.0);
     float fresnel = 0.02 + 0.98 * pow(1.0 - cosT, 5.0);
     // A little extra reflection at mid angles: real water looks glassier than pure Schlick on a monitor.
-    fresnel = min(fresnel + 0.15 * (1.0 - cosT) * (1.0 - cosT), 0.95);
+    fresnel = min(fresnel + mix(0.15, 0.08, u_WaterLake) * (1.0 - cosT) * (1.0 - cosT), 0.95);
 
     vec3 color = mix(under, refl, fresnel);
 
@@ -190,14 +194,18 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
         vec2 g1 = texture(u_WaterNormalTex, s1 + u_WaterScroll.wz * 2.3).rg * 2.0 - 1.0;
         vec2 g2 = texture(u_WaterNormalTex, s2 + u_WaterScroll.xy * 3.1).rg * 2.0 - 1.0;
         // Facets steep enough to catch the sun across a wide field around its reflection, as in Photon.
-        vec2 gs = (g1 * 0.25 + vec2(g2.y, -g2.x) * 0.20) * sparkleFade * u_WaterParams.w;
+        vec2 gs = (g1 * 0.25 + vec2(g2.y, -g2.x) * 0.20) * sparkleFade * u_WaterParams.w
+                * mix(1.0, 0.18, u_WaterLake);
         vec3 ns = normalize(n + vec3(-gs.x, 0.0, -gs.y));
         float nh = max(dot(n, H), 0.0);
         float nhs = max(dot(ns, H), 0.0);
         // Broaden and temper the highlight: the previous high-power lobes were added after their own tone map,
         // leaving clipped white dots instead of a continuous sun path. Bound the added light by what remains
         // below display white, so the reflected sky and shoreline keep their colour under the sparkle.
-        float spec = pow(nhs, 1200.0) * 45.0 * sparkleFade + pow(nh, 500.0) * 8.0 + pow(nh, 90.0) * 0.5;
+        float glitter = pow(nhs, 1200.0) * 45.0 * sparkleFade;
+        float spec = glitter * mix(1.0, 0.10, u_WaterLake)
+                   + pow(nh, mix(500.0, 320.0, u_WaterLake)) * mix(8.0, 5.0, u_WaterLake)
+                   + pow(nh, 90.0) * 0.5;
         vec3 glint = aurum_toLinear(aurum_tonemap(u_LightColor * spec * sunVisible * fresnel * 2.0));
         color += glint * max(vec3(1.0) - color, vec3(0.0)) * 0.85;
     }
@@ -206,8 +214,8 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     if (!openBottom) {
         float h = texture(u_WaterNormalTex, wp.xz / 4.0 + u_WaterScroll.zw * 0.5).b;
         float edge = (1.0 - smoothstep(0.0, 0.35 + 0.25 * h, column)) * smoothstep(0.35, 0.65, h + 0.25);
-        vec3 foamHdr = (u_SkyAmbient * skyVis + u_LightColor * sunUp * 0.6 * skyVis) * 0.55;
-        color = mix(color, aurum_toLinear(aurum_tonemap(foamHdr)), edge * 0.45);
+        vec3 foamHdr = (u_SkyAmbient * skyVis + u_LightColor * sunUp * 0.6 * sunVisible) * 0.55;
+        color = mix(color, aurum_toLinear(aurum_tonemap(foamHdr)), edge * mix(0.45, 0.12, u_WaterLake));
     }
 
     return aurum_toDisplay(color);

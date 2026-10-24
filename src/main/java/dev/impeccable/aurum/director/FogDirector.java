@@ -50,12 +50,13 @@ public final class FogDirector {
             swamp = biome.getKey().map(k -> k.getValue().getPath().contains("swamp")).orElse(false) ? 1f : 0f;
         }
 
+        float biomeHaze = swamp * c.biomeHaze / 100f;
         float strength = c.fogEnabled ? c.fogStrength / 100f : 0f;
         // Densities matched to the references (docs/research/LOOK_FOG.md): about half of 0.3.3's at golden hour and
         // in rain, where the user saw a flat pink or beige soup. Caves keep their dense, dark haze.
         tDistance = strength * (0.0002f + 0.0008f * golden + 0.0025f * rain + 0.002f * thunder
-                + 0.003f * swamp + 0.012f * underground);
-        tHeight = c.fogEnabled && c.heightFog ? strength * (0.003f * golden + 0.006f * rain + 0.010f * swamp) * (1f - underground) : 0f;
+                + 0.003f * biomeHaze + 0.012f * underground);
+        tHeight = c.fogEnabled && c.heightFog ? strength * (0.003f * golden + 0.006f * rain + 0.010f * biomeHaze) * (1f - underground) : 0f;
         tClear = 32f - 12f * Math.max(rain, swamp);
         tCave = underground;
         tEnclosed = clamp01((12f - skyLight) / 8f);

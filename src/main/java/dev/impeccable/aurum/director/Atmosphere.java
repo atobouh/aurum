@@ -27,6 +27,8 @@ public final class Atmosphere {
     public static final float[] whiteBalance = {1f, 1f, 1f};
     /** Look-preset sky tone for the shaders: saturation offset, lavender/teal tint. */
     public static final float[] skyTone = {0f, 0f};
+    /** Display-sky clarity / temperature; intentionally independent of surface irradiance. */
+    public static final float[] skyAppearance = {1f, -0.2f};
     private static float[] daylight;
 
     /** Linear multiplier applied before the tonemap; adapts gently between day and night. */
@@ -142,6 +144,8 @@ public final class Atmosphere {
         whiteBalance[2] *= 1f - 0.28f * temp;
         skyTone[0] = (c.skySaturation - 100) / 100f;
         skyTone[1] = c.skyLavender / 50f;
+        skyAppearance[0] = c.skyClarity / 100f * (1f - 0.85f * lut.rain);
+        skyAppearance[1] = c.skyTemperature / 50f * (1f - 0.85f * lut.rain);
 
         // Torch light is defined in display terms so it looks the same at noon and midnight.
         float warmth = c.blockLightWarmth / 100f;

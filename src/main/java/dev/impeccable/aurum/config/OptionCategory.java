@@ -27,6 +27,8 @@ public enum OptionCategory {
         return switch (this) {
             case SKY -> new SimpleOption<?>[]{
                     bool("sky_enabled", c.skyEnabled, v -> c.skyEnabled = v),
+                    percent("sky_clarity", 0, 100, () -> c.skyClarity, v -> c.skyClarity = v),
+                    ranged("sky_temperature", -50, 50, "aurum.unit.plain", () -> c.skyTemperature, v -> c.skyTemperature = v),
                     choice("sun_shape", List.of(SunShape.values()), c.sunShape,
                             v -> Text.translatable("aurum.sun_shape." + v.name().toLowerCase()), v -> c.sunShape = v),
                     percent("sunset_intensity", 0, 200, () -> c.sunsetIntensity, v -> c.sunsetIntensity = v),
@@ -35,10 +37,15 @@ public enum OptionCategory {
             };
             case LIGHTING -> new SimpleOption<?>[]{
                     bool("lighting_enabled", c.lightingEnabled, v -> c.lightingEnabled = v),
+                    bool("voxel_lighting", c.voxelLightingEnabled, v -> c.voxelLightingEnabled = v),
+                    percent("voxel_lighting_strength", 0, 100, () -> c.voxelLightingStrength, v -> c.voxelLightingStrength = v),
+                    choice("voxel_detail", List.of(4, 8), c.voxelDetail,
+                            v -> Text.literal(v + " / block"), v -> c.voxelDetail = v),
                     percent("sun_strength", 0, 200, () -> c.sunStrength, v -> c.sunStrength = v),
                     percent("ambient_strength", 0, 200, () -> c.ambientStrength, v -> c.ambientStrength = v),
                     percent("block_light_warmth", 0, 100, () -> c.blockLightWarmth, v -> c.blockLightWarmth = v),
                     percent("ao_boost", 0, 100, () -> c.aoBoost, v -> c.aoBoost = v),
+                    percent("foliage_depth", 0, 100, () -> c.foliageDepth, v -> c.foliageDepth = v),
                     bool("normals_enabled", c.normalsEnabled, v -> c.normalsEnabled = v),
                     percent("normal_strength", 0, 200, () -> c.normalStrength, v -> c.normalStrength = v),
                     bool("labpbr", c.labPbr, v -> c.labPbr = v),
@@ -58,6 +65,10 @@ public enum OptionCategory {
             };
             case SHADOWS -> new SimpleOption<?>[]{
                     bool("shadows_enabled", c.shadowsEnabled, v -> c.shadowsEnabled = v),
+                    choice("light_edge_style", List.of(LightEdgeStyle.values()), c.lightEdgeStyle,
+                            v -> Text.translatable("aurum.light_edge_style." + v.name().toLowerCase()), v -> c.lightEdgeStyle = v),
+                    choice("light_pixel_grid", List.of(4, 8, 16), c.lightPixelGrid,
+                            v -> Text.literal(v + " / block"), v -> c.lightPixelGrid = v),
                     choice("shadow_resolution", List.of(1024, 1536, 2048, 3072), c.shadowResolution,
                             v -> Text.literal(v + " px"), v -> c.shadowResolution = v),
                     ranged("shadow_distance", 2, 8, "aurum.unit.chunks", () -> c.shadowDistance, v -> c.shadowDistance = v),
@@ -69,10 +80,14 @@ public enum OptionCategory {
                     bool("fog_enabled", c.fogEnabled, v -> c.fogEnabled = v),
                     percent("fog_strength", 0, 200, () -> c.fogStrength, v -> c.fogStrength = v),
                     bool("height_fog", c.heightFog, v -> c.heightFog = v),
+                    percent("biome_haze", 0, 100, () -> c.biomeHaze, v -> c.biomeHaze = v),
                     bool("edge_fade", c.edgeFade, v -> c.edgeFade = v),
             };
             case WATER -> new SimpleOption<?>[]{
                     bool("water_enabled", c.waterEnabled, v -> c.waterEnabled = v),
+                    choice("water_style", List.of(WaterStyle.values()), c.waterStyle,
+                            v -> Text.translatable("aurum.water_style." + v.name().toLowerCase()), v -> c.waterStyle = v),
+                    percent("water_style_blend", 0, 100, () -> c.waterStyleBlend, v -> c.waterStyleBlend = v),
                     bool("water_reflections", c.waterReflections, v -> c.waterReflections = v),
                     percent("wave_strength", 0, 200, () -> c.waveStrength, v -> c.waveStrength = v),
                     bool("vertex_waves", c.vertexWaves, v -> c.vertexWaves = v),
@@ -91,6 +106,9 @@ public enum OptionCategory {
                     bool("clouds_full_res", c.cloudsFullRes, v -> c.cloudsFullRes = v),
                     ranged("cloud_height", 0, 160, "aurum.unit.blocks_above", () -> c.cloudHeight, v -> c.cloudHeight = v),
                     percent("cloud_speed", 0, 300, () -> c.cloudSpeed, v -> c.cloudSpeed = v),
+                    percent("cloud_motion_variation", 0, 100, () -> c.cloudMotionVariation, v -> c.cloudMotionVariation = v),
+                    bool("cloud_shadows_enabled", c.cloudShadowsEnabled, v -> c.cloudShadowsEnabled = v),
+                    percent("cloud_shadow_strength", 0, 100, () -> c.cloudShadowStrength, v -> c.cloudShadowStrength = v),
                     bool("clouds_pack_shapes", c.cloudsPackShapes, v -> c.cloudsPackShapes = v),
                     percent("cloud_coverage", 0, 100, () -> c.cloudCoverage, v -> c.cloudCoverage = v),
                     percent("cloud_shading", 0, 200, () -> c.cloudShading, v -> c.cloudShading = v),
@@ -102,6 +120,8 @@ public enum OptionCategory {
                     ranged("pom_distance", 8, 48, "aurum.unit.blocks", () -> c.pomDistance, v -> c.pomDistance = v),
             };
             case GRADE -> new SimpleOption<?>[]{
+                    bool("sharpness_enabled", c.sharpnessEnabled, v -> c.sharpnessEnabled = v),
+                    percent("sharpness", 0, 100, () -> c.sharpness, v -> c.sharpness = v),
                     choice("tonemap", List.of(Tonemap.values()), c.tonemap,
                             v -> Text.translatable("aurum.tonemap." + v.name().toLowerCase()), v -> c.tonemap = v),
                     percent("white_balance", 0, 100, () -> c.whiteBalance, v -> c.whiteBalance = v),
@@ -167,7 +187,8 @@ public enum OptionCategory {
                                              java.util.function.Function<T, Text> label, Consumer<T> setter) {
         Codec<T> codec = Codec.INT.xmap(values::get, values::indexOf);
         return new SimpleOption<>(key(id), tooltip(id),
-                (text, v) -> GameOptions.getGenericValueText(text, label.apply(v)),
+                // Cycling buttons add their caption; returning it here too duplicates and clips the label.
+                (text, v) -> label.apply(v),
                 new SimpleOption.PotentialValuesBasedCallbacks<>(values, codec),
                 value, edit(id, setter));
     }

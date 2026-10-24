@@ -17,6 +17,7 @@ public enum TimerSection {
     AURUM_POST("Aurum post (all passes)", 1),
     AURUM_CLOUDS("Clouds", 2),
     AURUM_EFFECTS("Rays, flare, bloom", 2),
+    AURUM_VOXEL("Voxel cache upload", 1),
     HUD("HUD", 1);
 
     public static final TimerSection[] VALUES = values();

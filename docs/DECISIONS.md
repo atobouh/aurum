@@ -112,3 +112,21 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-23 | Quadratic 24/12 CPU sky integration, exact segment attenuation and height-baked diffuse second scattering | Numerical sky error and missing diffuse horizon light; preserve the existing GPU lookup and cloud style |
 | 2026-10-23 | Directional moon sky and lower airglow; smaller ambient compensation and horizon replacement | A flat blue night gradient and strong painted horizon obscured atmospheric structure |
 | 2026-10-23 | Nearby shadow filter radius halved; High volumetric samples increase from 10 to 16, Medium to 12 | User reports stable High performance on UHD and explicitly prioritizes shadow/light definition; Low retains 10 taps, candidate cost remains to be measured on target hardware |
+
+
+## 0.6.0: bounded local voxel light and selectable crisp edges
+
+The user explicitly requested coloured voxel block lighting and pixel-art shadows/rays. Local light
+therefore uses a sliced snapshot, a background collision-box traversal and a bounded, double-buffered
+surface atlas. It is local direct terrain light, not full GI. Natural shadows remain the default;
+Voxel Crisp is optional because nearest coverage and extra visibility taps trade smooth motion and
+ray cost for a deliberate pixel finish. No extra full-screen composite is added.
+
+A software OpenGL client and disposable Terralith world are now available, superseding the original
+specification's statement that the agent cannot run Minecraft or see its screen. Actual captures,
+source reviews and geometry/finite-output checks establish local correctness only. The user's explicit
+request to implement/build is the authority to deliver this candidate; Intel UHD frame-time acceptance
+remains outstanding. Software-renderer FPS cannot establish the target GPU's budget.
+
+See `research/LOCAL_LIGHT_CLOUD_REVIEW_060.md` for implementation limits, reference provenance and
+the forest scattering and water-depth findings.

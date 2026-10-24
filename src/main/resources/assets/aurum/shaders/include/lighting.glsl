@@ -1,6 +1,8 @@
 // Forward terrain lighting for the replacement Sodium fragment shader. Everything is linear HDR until the
 // final tonemap. Inputs come from terrain_uniforms.glsl.
 
+uniform float u_FoliageDepth;
+
 float aurum_lightLevel(float coord) {
     // Sodium packs light as level * 16 + 8 out of 256.
     return clamp((coord * 256.0 - 8.0) / 240.0, 0.0, 1.0);
@@ -69,7 +71,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     } else if (material == 4) {
         // Leaf cubes retain their face direction. A smaller light floor gives the canopy distinct sunlit
         // tops, side faces and shaded interiors instead of nearly uniform lime-green lighting.
-        n = normalize(n + vec3(0.0, 0.45, 0.0));
+        n = normalize(n + vec3(0.0, mix(0.45, 0.20, u_FoliageDepth), 0.0));
         ndl = clamp(dot(n, u_LightDir) * 0.82 + 0.18, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
     } else {
         // A restrained low-sun diffuse wrap keeps rough horizontal blocks lit while the shadow map still
@@ -92,7 +94,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         float lit = material == 4 ? max(sh.x, leafTransmit) : sh.x;
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
-    directVis *= g_pomShadow;
+    directVis *= g_pomShadow * aurum_cloudShadow(pos);
     vec3 direct = u_LightColor * (ndl * directVis);
 
     // Vertical faces sample the sky in their own direction. The sky table is integrated on the CPU,
@@ -107,6 +109,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         // Vanilla leaf AO distinguishes the interior of a crown. Keep that local occlusion in the sky fill
         // instead of letting the broad ambient term turn every cube the same shade of green.
         ambient *= mix(0.60, 0.94, ao);
+        ambient *= mix(1.0, mix(0.62, 1.0, smoothstep(0.60, 1.0, sky)), u_FoliageDepth);
     }
     ambient *= 1.0 - 0.18 * g_pomCavity;
     // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.
@@ -116,9 +119,15 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     ambient *= mix(vec3(1.0), bounceTint, u_TerrainParams.w * (1.0 - clamp(ndl * directVis, 0.0, 1.0)));
 
     float blockBrightness = blk / (4.0 - 3.0 * blk); // vanilla's light curve
+    vec3 blockLight = u_BlockLightColor * blockBrightness;
+    if (blk > 0.001 && !foliage) {
+        vec4 voxel = aurum_voxelLight(pos, ng);
+        blockLight = mix(blockLight, voxel.rgb * u_BlockLightColor.r, voxel.a);
+    }
+    blockBrightness = max(blockLight.r, max(blockLight.g, blockLight.b)) / max(u_BlockLightColor.r, 0.001);
     // Ambient receives the full local AO. Sun and nearby blocklight keep their lit face/detail visible.
     vec3 light = direct * mix(1.0, ao, 0.35) + ambient * ao
-               + u_BlockLightColor * (blockBrightness * mix(1.0, ao, 0.6)) + vec3(u_TerrainParams.z);
+               + blockLight * mix(1.0, ao, 0.6) + vec3(u_TerrainParams.z);
 
     vec3 color = albedo * light * (1.0 + coating * 0.08);
     if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {

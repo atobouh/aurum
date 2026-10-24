@@ -1,3 +1,46 @@
+# Testing: 0.6.0 — voxel light, cloud shadows and pixel-art light edges
+
+Build with JDK 21. Run `JAVA_HOME=/path/to/jdk21 python3 tools/check_voxel_lighting.py` and
+`JAVA_HOME=/path/to/jdk21 python3 tools/check_sky_model.py`. The voxel fixtures check an opaque wall,
+an aperture, both halves of a slab, unloaded cells, emitter self-occlusion, hue, cancellation,
+determinism and a surface shadow. They run the production Java baker.
+
+Use a disposable copy of the seed/world documented in the capture manifest. Install the four
+functions under `tools/visual_lab` in a development test datapack, not in a real save. The development
+client alone registers `/aurumdev reload` and `/aurumdev freezeclouds true|false`, for reproducible
+captures. Teleport first and wait for destination chunks before executing a fixture function. Inspect
+actual openings, blockers and mesh/shadow readiness; a fixed delay alone is not proof of readiness.
+`tools/capture_visual_lab.py` saves the original PNG plus configuration/command metadata.
+
+- **Beam hall:** at time 11500, compare Natural / Voxel Crisp / God Rays off at the same camera and
+  default ray strength 100. Seal all three windows and compare on/off again. Closed rooms must not
+  develop an ambient glow. Repeat at 1024 and 2048 shadow resolution. Inspect motion for ordered
+  patterns, stepping and shadow-map aliasing; pixel-art mode is not an alias-free reconstruction.
+- **Local light:** warm torch and blue soul torch in the neutral room, 4/8 detail, Natural/Crisp and
+  voxel off. Check coloured faces, cube and slab silhouettes. Place another occluder and wait for a
+  new cached result. Move through the volume boundary; check fallback, and remove every light.
+- **Terralith forest:** use the actual test dependency/version and biome listed in the manifest.
+  Hold camera/time/cloud phase/wind fixed for cloud-shadow on/off and canopy-depth comparisons.
+  Stand under leaves and look into the distance: canopy enclosure must not fog the entire forest.
+  Then unfreeze clouds and record motion at the normal 100% speed.
+- **Detail board:** compare sharpening 0/65, then Natural/Crisp shadow edges. Check texture hue,
+  halos, generated relief and grid stability when moving the camera across a fraction of a block.
+- **Sky/water:** repeat village noon/sunset/night. Compare the water transition at 0/50/100 with
+  screen-space reflections enabled and at the existing lake camera. The 0% option preserves the
+  original wave/glitter parameters; lighting/atmosphere improvements still apply to both styles.
+- **Ocean:** clear noon / sunset / night / rain at the recorded camera, plus a submerged lake view.
+  Inspect the chunk boundary and sun path. The wider far-transparent fade must not pale opaque trees
+  in the village or forest; it reuses the before-translucent depth copy and adds no surface buffer.
+- Check toggles, in-game category tooltips, disconnect/rejoin, and startup shader compilation.
+  Aurum's added fragment samplers remain within the OpenGL 3.3 minimum limit. Sodium's atlas and
+  lightmap bindings remain on units 0 and 1; cloud SDF uses 2, the local-light atlas 15.
+
+The test client uses llvmpipe OpenGL 3.3, 1280×720, vanilla textures and 12 chunks. This does not measure
+Intel UHD performance or the user's complete 200-mod setup. On the reported stable-60-FPS machine,
+compare the same world, resolution and High settings with 0.5.10, then 0.6.0 Natural and Voxel Crisp.
+Include walking, block edits and frame-time percentiles; a still frame does not test cache refresh cost.
+Crisp shadows/reconstruction reduce filtering reads; crisp ray integration uses extra adaptive taps.
+
 # Testing: 0.5.10 — atmosphere and expanded shader references
 
 Run `JAVA_HOME=/path/to/jdk21 python3 tools/check_sky_model.py` for numerical convergence and finite

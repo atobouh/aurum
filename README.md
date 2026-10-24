@@ -4,15 +4,16 @@ A Fabric 1.20.1 client mod with its own rendering pipeline on top of Sodium 0.5.
 light, shadows, atmospheric haze, clouds and reflective water. Its performance target is 60 FPS at 1080p on an
 Intel UHD 620; the current cloud environment cannot verify that target.
 
-Current build: **0.5.10**. It includes sky and terrain lighting, generated relief, shadows, fog and shafts,
-reflective/refractive water, clouds, bloom and lens flare. Photon, Complementary, Rethinking Voxels and Derivative Main are the visual references;
+Current build: **0.6.0**. It adds cached, occluded coloured block light, cloud shadows and varying wind, a selectable calm-lake water
+treatment, bounded sharpening, canopy depth and a Voxel Crisp shadow/ray option. Existing sky, relief,
+reflections, bloom and flare remain. Photon, Complementary, Rethinking Voxels and Derivative Main are the visual references;
 the matched captures still show a quality gap. Derivative captures use a clearly labelled community fork.
 The user reports stable 60 FPS on Intel UHD, High, 12 chunks and roughly 200 mods; this new build still needs
 measurement on that machine.
 
-- [Download Aurum 0.5.10](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.5.10.jar)
-- [Visual report with matched reference captures](docs/reports/aurum-0.5.10-atmosphere-review.html)
-- [Direct source review and testing procedure](docs/research/ATMOSPHERE_REFERENCE_REVIEW_0510.md)
+- [Download Aurum 0.6.0](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.6.0.jar)
+- [Visual report with matched reference captures](docs/reports/aurum-0.6.0-visual-review.html)
+- [Direct source review and testing procedure](docs/research/LOCAL_LIGHT_CLOUD_REVIEW_060.md)
 
 ## Build
 
@@ -24,10 +25,11 @@ Needs **JDK 21** (the mod itself runs on the game's Java 17).
 
 The jar lands in `build/libs/`.
 
-Check atmospheric integration independently of Minecraft:
+Check sky integration and voxel visibility independently of Minecraft:
 
 ```bash
 JAVA_HOME=/path/to/jdk21 python3 tools/check_sky_model.py
+JAVA_HOME=/path/to/jdk21 python3 tools/check_voxel_lighting.py
 ```
 
 ## Requirements

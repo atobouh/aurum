@@ -9,6 +9,8 @@
 #import <aurum:include/shadow.glsl>
 #import <aurum:include/sky_lut.glsl>
 #import <aurum:include/pbr.glsl>
+#import <aurum:include/voxel_light.glsl>
+#import <aurum:include/cloud_shadow.glsl>
 #import <aurum:include/lighting.glsl>
 #import <aurum:include/water.glsl>
 

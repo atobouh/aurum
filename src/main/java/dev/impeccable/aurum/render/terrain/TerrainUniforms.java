@@ -26,7 +26,9 @@ public final class TerrainUniforms {
             "u_ShadowMapPrev", "u_ShadowMatrixPrev",
             "u_AurumPass", "u_SkyLut", "u_SkyGrade", "u_OpaqueDepth", "u_OpaqueColor", "u_WaterNormalTex",
             "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale",
-            "u_SkySideToward", "u_SkySideAway", "u_CloudReflection", "u_PrevCloudViewProj", "u_CloudReflectionOn"
+            "u_SkySideToward", "u_SkySideAway", "u_CloudReflection", "u_PrevCloudViewProj", "u_CloudReflectionOn",
+            "u_SkyAppearance", "u_WaterLake", "u_VoxelLight", "u_VoxelParams", "u_VoxelOrigin",
+            "u_CloudSdf", "u_CloudShadow", "u_CloudLayout", "u_FoliageDepth", "u_PixelLight"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -131,8 +133,37 @@ public final class TerrainUniforms {
         GL20C.glUniform1i(loc[26], UNIT_SKY_LUT);
         GL20C.glUniform1f(loc[27], Atmosphere.skyGrade());
         GL20C.glUniform4f(loc[34], Atmosphere.skyTone[0], Atmosphere.skyTone[1], Atmosphere.golden, 0f);
+        GL20C.glUniform4f(loc[43], Atmosphere.skyAppearance[0], Atmosphere.skyAppearance[1], 0f, 0f);
         GL20C.glUniform3f(loc[33], Atmosphere.sunDir[0], Atmosphere.sunDir[1], Atmosphere.sunDir[2]);
         GlUtil.bindTexture(UNIT_SKY_LUT, dev.impeccable.aurum.sky.SkyState.texture());
+        boolean voxel = mode == 1 && dev.impeccable.aurum.render.VoxelLighting.usable();
+        GL20C.glUniform1i(loc[45], 15);
+        GL20C.glUniform4f(loc[46], dev.impeccable.aurum.render.VoxelLighting.SIDE,
+                dev.impeccable.aurum.render.VoxelLighting.detail(),
+                voxel ? (float) dev.impeccable.aurum.render.VoxelLighting.width() / dev.impeccable.aurum.render.VoxelLighting.detail() : 1f,
+                voxel ? c.voxelLightingStrength / 100f : 0f);
+        GL20C.glUniform3f(loc[47],
+                (float) (dev.impeccable.aurum.render.VoxelLighting.originX() - ShadowRenderer.cameraX),
+                (float) (dev.impeccable.aurum.render.VoxelLighting.originY() - ShadowRenderer.cameraY),
+                (float) (dev.impeccable.aurum.render.VoxelLighting.originZ() - ShadowRenderer.cameraZ));
+        GlUtil.bindTextureHigh(15, voxel ? dev.impeccable.aurum.render.VoxelLighting.texture() : 0);
+
+        net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
+        boolean cloudShadow = SkyExtras.cloudsActive && c.cloudShadowsEnabled && client.world != null;
+        GL20C.glUniform1f(loc[51], c.foliageDepth / 100f);
+        GL20C.glUniform4f(loc[52], c.lightEdgeStyle == dev.impeccable.aurum.config.LightEdgeStyle.VOXEL_CRISP ? 1f : 0f,
+                c.lightPixelGrid, 0f, 0f);
+        GL20C.glUniform1i(loc[48], 2);
+        GL20C.glUniform4f(loc[49], client.world == null ? 0f :
+                        (float) (client.world.getDimensionEffects().getCloudsHeight() + c.cloudHeight - ShadowRenderer.cameraY + 7),
+                cloudShadow ? c.cloudShadowStrength / 100f : 0f,
+                SkyExtras.cloudDrift(), c.cloudMotionVariation / 100f);
+        GL20C.glUniform4f(loc[50], SkyExtras.cloudOffsetX(ShadowRenderer.cameraX),
+                SkyExtras.cloudOffsetZ(ShadowRenderer.cameraZ),
+                client.world == null ? 0f : Math.max(-SkyExtras.cloudCoverage(client.world, client.getTickDelta()),
+                        -0.8f * client.world.getRainGradient(client.getTickDelta())), c.cloudsPackShapes ? 1f : 0f);
+        // Sodium uses units 0/1 for block atlas/lightmap. Unit 2 is free; preserve both bindings.
+        GlUtil.bindTexture(2, dev.impeccable.aurum.bake.CloudBaker.texture());
 
         // LabPBR: specular and emission whenever pack data exists; parallax (3D blocks) only in opaque passes.
         boolean pbr = c.labPbr && dev.impeccable.aurum.bake.AtlasBaker.packHasPbr;
@@ -147,6 +178,8 @@ public final class TerrainUniforms {
         boolean water = translucent && WaterPass.captured && dev.impeccable.aurum.sky.SkyState.current() != null;
         GL20C.glUniform1i(loc[25], water ? 1 : 0);
         if (water) {
+            GL20C.glUniform1f(loc[44], c.waterStyle == dev.impeccable.aurum.config.WaterStyle.CALM_LAKE
+                    ? c.waterStyleBlend / 100f : 0f);
             GL20C.glUniform1i(loc[28], UNIT_OPAQUE_DEPTH);
             GL20C.glUniform1i(loc[29], UNIT_OPAQUE_COLOR);
             GL20C.glUniform1i(loc[30], UNIT_WATER_NORMAL);
