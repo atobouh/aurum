@@ -4,6 +4,7 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 
 | Date | Decision | Reason |
 | --- | --- | --- |
+| 2026-10-24 | 0.6.1: sky-occluded diffuse fill under cloud shadows and less compounded daytime canopy attenuation; night/specular sky visibility retained | User's actual 0.6.0 High / LabPBR-off footage exposed dark land beneath a bright sky; controlled forest and seasonal foliage checks narrow the cause |
 | 2026-10-21 | Loom **1.11.8** on Gradle **8.14.3**, not the newest Loom (1.19.2) | Loom 1.19 needs Gradle 9.8 and a Java 25 runtime; 1.11 runs on JDK 21, which is easier to install for local builds |
 | 2026-10-21 | Building needs **JDK 21**; the jar targets Java 17 | Loom 1.11 runs on 21; `options.release = 17` keeps the mod loadable on the game's Java 17 |
 | 2026-10-21 | Fabric Loader 0.20.1, Fabric API 0.92.12+1.20.1, Yarn 1.20.1+build.10 | Latest for 1.20.1 on fabricmc.net today |

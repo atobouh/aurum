@@ -1,4 +1,17 @@
-# Testing: 0.6.0 — voxel light, cloud shadows and pixel-art light edges
+# Testing: 0.6.1 — daylight readability after real footage
+
+Reproduce High with LabPBR off, as confirmed by the user. The supplied inventory includes Nature's
+Spirit, Fabric Seasons and its Terralith compatibility pack, not only Terralith. Use the optional
+`modded_canopy` fixture with those local test dependencies; hashes are recorded in
+`research/visual-compatibility-061.json`. Compare frozen-cloud forest views with cloud shadows on/off,
+then old/new lighting at unchanged settings. Keep the dark canopy in frame. Repeat at midnight,
+inside a sealed room at noon, and beside the lake. Respect seasonal colours rather than forcing
+all foliage green. The full user world/modpack remains outside this reproduction.
+
+Native captures and limits: `reports/aurum-0.6.1-daylight-review.html` and its capture manifest.
+The terrain shader adds no new texture reads or passes; Intel UHD frame-time testing remains needed.
+
+## Existing feature checks from 0.6.0
 
 Build with JDK 21. Run `JAVA_HOME=/path/to/jdk21 python3 tools/check_voxel_lighting.py` and
 `JAVA_HOME=/path/to/jdk21 python3 tools/check_sky_model.py`. The voxel fixtures check an opaque wall,
@@ -6,7 +19,7 @@ an aperture, both halves of a slab, unloaded cells, emitter self-occlusion, hue,
 determinism and a surface shadow. They run the production Java baker.
 
 Use a disposable copy of the seed/world documented in the capture manifest. Install the four
-functions under `tools/visual_lab` in a development test datapack, not in a real save. The development
+base functions under `tools/visual_lab` in a development test datapack, not in a real save. The development
 client alone registers `/aurumdev reload` and `/aurumdev freezeclouds true|false`, for reproducible
 captures. Teleport first and wait for destination chunks before executing a fixture function. Inspect
 actual openings, blockers and mesh/shadow readiness; a fixed delay alone is not proof of readiness.

@@ -82,6 +82,12 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     }
 
     float skyVis = sky * sky;
+    // Minecraft's skylight already falls through a canopy. Squaring it again for diffuse daylight,
+    // then applying leaf and vertex AO, crushed shaded crowns in dense modded forests. Retain the
+    // stronger night occlusion and the original specular visibility, but recover diffuse sky access
+    // during the day. Zero skylight still means zero sky fill (including sealed interiors).
+    float daylightFill = smoothstep(0.05, 0.35, u_SunDirW.y);
+    float diffuseSkyVis = mix(skyVis, sky, 0.75 * daylightFill);
     // Without a shadow map, sky light is the only hint of cover. Inside the shadow range the real shadow takes
     // over; a weak sky-light gate stays so sealed caves never catch sunlight through thin ceilings.
     float directVis = smoothstep(0.55, 0.95, sky);
@@ -94,7 +100,8 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         float lit = material == 4 ? max(sh.x, leafTransmit) : sh.x;
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
-    directVis *= g_pomShadow * aurum_cloudShadow(pos);
+    float cloudVisibility = aurum_cloudShadow(pos);
+    directVis *= g_pomShadow * cloudVisibility;
     vec3 direct = u_LightColor * (ndl * directVis);
 
     // Vertical faces sample the sky in their own direction. The sky table is integrated on the CPU,
@@ -104,12 +111,19 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     vec3 sideSky = mix(u_SkySideAway, u_SkySideToward, sunSide * 0.5 + 0.5);
     vec3 ambient = (u_SkyAmbient * max(n.y, 0.0)
                   + (sideSky + u_GroundAmbient * 0.5) * (1.0 - abs(n.y))
-                  + u_GroundAmbient * max(-n.y, 0.0)) * skyVis;
+                  + u_GroundAmbient * max(-n.y, 0.0)) * diffuseSkyVis;
+    // A cloud redistributes part of the intercepted sun into broad diffuse light. Previously it
+    // only removed sunlight, leaving large patches of land much darker than the sky and water.
+    // Keep the footprint and hard block shadows: this small hemisphere fill is sky-occluded and
+    // still receives local AO below. It adds no texture lookup or full-screen pass.
+    ambient += u_LightColor * ((1.0 - cloudVisibility) * 0.16 * max(u_SunDirW.y, 0.0)
+               * diffuseSkyVis * (0.45 + 0.55 * max(n.y, 0.0)));
     if (material == 4) {
         // Vanilla leaf AO distinguishes the interior of a crown. Keep that local occlusion in the sky fill
         // instead of letting the broad ambient term turn every cube the same shade of green.
-        ambient *= mix(0.60, 0.94, ao);
-        ambient *= mix(1.0, mix(0.62, 1.0, smoothstep(0.60, 1.0, sky)), u_FoliageDepth);
+        ambient *= mix(mix(0.60, 0.94, ao), mix(0.75, 1.0, ao), daylightFill);
+        float canopyFloor = mix(0.62, 0.82, daylightFill);
+        ambient *= mix(1.0, mix(canopyFloor, 1.0, smoothstep(0.60, 1.0, sky)), u_FoliageDepth);
     }
     ambient *= 1.0 - 0.18 * g_pomCavity;
     // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.

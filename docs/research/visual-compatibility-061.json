@@ -1,0 +1,39 @@
+{
+  "userReported": {
+    "aurum": "0.6.0",
+    "quality": "High",
+    "labPbr": false,
+    "inventoryModCount": 135
+  },
+  "testAdditions": [
+    {
+      "file": "TerraBlender-fabric-1.20.1-3.0.1.11.jar",
+      "sha256": "08a9be3e5657c4b9ad954d8b002c1b448284e745b8524468d45e62902dafbfc5",
+      "scope": "local visual test only; not bundled",
+      "id": "terrablender",
+      "version": "3.0.1.11"
+    },
+    {
+      "file": "naturespirit-2.2.5-1.20.1.jar",
+      "sha256": "93ce1637124377e9b41a8ddb5c065b0e3c2e55dd55b463acd130a771cb9ce3a3",
+      "scope": "local visual test only; not bundled",
+      "id": "natures_spirit",
+      "version": "2.2.5-1.20.1"
+    },
+    {
+      "file": "fabric-seasons-2.4.2-BETA+1.20.jar",
+      "sha256": "20ae3bd1451c38688d15a81085f94d39731f2cd3b30b5aee1659dc6e2b49e0f5",
+      "scope": "local visual test only; not bundled",
+      "id": "seasons",
+      "version": "2.4.2-BETA+1.20"
+    },
+    {
+      "file": "fabric-seasons-terralith-2.3.7-compat-1.0.jar",
+      "sha256": "c709416512c59958e4f00d2fa318a81436f14caa32554a8e5a97bfd13dfb9524",
+      "scope": "local visual test only; not bundled",
+      "id": "seasonsterralithcompat",
+      "version": "1.0-2.3.7"
+    }
+  ],
+  "notReproduced": "Full user world, its 135 mods, mod configurations and resource packs are not available."
+}

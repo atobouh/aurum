@@ -14,6 +14,12 @@ readiness. F3+A rebuilds the client meshes when needed.
 | `aurum_lab:voxel_room` | `/tp @s 568.5 202 509.5 180 24` | Warm/soul torches, solid cubes and partial slabs |
 | `aurum_lab:detail_board` | `/tp @s 610.5 202 512.5 115 4` | Texture detail and a pillar shadow |
 | `aurum_lab:cloud_plane` | `/tp @s 864.5 245 944.5 180 40` | Flat grass plane at Y200; raise cloud height to 80 for this fixture |
+| `aurum_lab:modded_canopy` | `/tp @s 1026.5 204 1042.5 180 8` | Optional: requires Nature's Spirit 2.2.5. Red/orange maple, yellow aspen and spruce controls |
+
+For the modded canopy at Y200, set cloud height to 160 so the cloud-to-ground separation resembles
+ordinary low terrain with height 24. With Fabric Seasons installed, `/season set fall` followed by
+`/time add 6000` selects fall at noon; `/time set 6000` would reset the season's absolute time.
+Restore cloud height 24 before returning to ordinary terrain.
 
 The beam function finishes at its general overview camera; teleport back to the initial camera for
 the matched three-opening view. Keep time, weather, wave/plant motion settings and camera fixed for
