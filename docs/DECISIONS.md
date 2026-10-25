@@ -104,3 +104,13 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | PBR reflections: roughness-aware Fresnel (exponent 4), sky + block-light reflections, x2, scaled by the Gloss (sheen) slider | Gloss invisible in 0.5.x (user) |
 | 2026-10-22 | Generated relief (height from texel brightness, 16 % range) for opaque textures without pack height maps; option "3D for all textures", on | User: wood and many textures had no effect (Seraphic for 1.20.1 covers ~150 textures; modded blocks none) |
 | 2026-10-25 | One water look, Complementary-style: vanilla texture lines drive normals and faint streaks, dark glassy mirror, terrain reflections on all presets; Photon glitter and caustics removed | User: "no two modes, just one mode"; done with overly realistic water (docs/research/WATER_ONE.md) |
+
+## 0.5.3-water.2: shore line (2026-10-25)
+
+- The user asked for the thin, light line that the Nostalgia reference shows where water meets land.
+- The soft shore rim is replaced by that line.
+  - It is a lit, near-white line wherever the vertical water depth to the block behind the surface drops to zero.
+  - A faint halo sits around it.
+  - Its width grows with distance, so it stays a few pixels wide.
+  - Pixel-sized cells shimmer slowly, so the line reads as lapping water.
+- It shows only on top faces, and not over open drops.

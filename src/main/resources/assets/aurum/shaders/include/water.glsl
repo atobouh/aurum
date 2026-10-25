@@ -192,11 +192,22 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
         color += glint * max(vec3(1.0) - color, vec3(0.0)) * 0.9;
     }
 
-    // ---- Shore edge: a soft, slightly brighter rim where the water thins out against blocks.
-    if (!openBottom) {
-        float edge = 1.0 - smoothstep(0.0, 0.45, column);
-        vec3 rimHdr = (u_SkyAmbient * skyVis + u_LightColor * sunUp * 0.5 * sunVisible) * 0.45;
-        color = mix(color, aurum_toLinear(aurum_tonemap(rimHdr)), edge * 0.18);
+    // ---- Shore line: a thin, bright, lit-white line where the surface meets a block (sand, a bank, a wall), with
+    // a faint halo, as in the user's Nostalgia reference. Measured as vertical water depth, widened with distance
+    // so it keeps a steady few-pixel width instead of vanishing or aliasing far away. Pixel-sized cells shimmer
+    // slowly so the line reads as lapping water rather than a painted stroke.
+    if (!openBottom && ng.y > 0.3) {
+        float depthV = column * max(-V.y, 0.03);
+        float w = 0.07 + dist * 0.003;
+        float line0 = 1.0 - smoothstep(0.0, w, depthV);
+        float halo = 1.0 - smoothstep(0.0, w * 6.0, depthV);
+        vec2 cell = floor(wp.xz * 8.0);
+        float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+        float shimmer = 0.7 + 0.3 * sin(6.2831853 * (h + u_WaterScroll.x * 4.0));
+        vec3 foamHdr = u_SkyAmbient * skyVis * 1.3 + u_LightColor * sunUp * sunVisible * 0.7
+                     + u_BlockLightColor * blockL * 0.4;
+        vec3 foam = aurum_toLinear(aurum_tonemap(foamHdr));
+        color = mix(color, foam, clamp(line0 * 0.95 * shimmer + halo * 0.16, 0.0, 0.92));
     }
 
     return aurum_toDisplay(color);

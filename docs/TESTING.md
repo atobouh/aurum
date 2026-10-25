@@ -174,3 +174,9 @@ Pick the High preset again in F7, or switch the option on, to try it.
 - Soft, full resolution
 
 Take them at noon looking up, plus once at golden hour facing the sun. Also send the FPS.
+
+## 0.5.3-water.2: shore line
+
+- Look at a sandy beach, a dirt bank and a stone wall in the water, at noon and at sunset. A thin, light line should follow every edge where water meets a block.
+- Up close it should be about one pixel line, and far away it should neither vanish nor flicker.
+- Shallow sand under the water must not get a line. Only blocks that cross the surface do.
