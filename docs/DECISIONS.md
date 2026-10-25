@@ -188,3 +188,9 @@ the forest scattering and water-depth findings.
 
   The references sit at 0.35–0.52 and 0.17–0.25. Distant canopy stays a little less saturated because of the
   0.7.1 haze and grade.
+
+## 0.7.3: temporal anti-aliasing (2026-10-25)
+
+- See docs/research/TAA.md.
+- TAA is on by default on every preset, because it is the clearest "premium" difference from the references.
+- It can be turned off ("Anti-aliasing (TAA)"), and its sharpening is adjustable ("TAA sharpening", default 50).

@@ -118,6 +118,8 @@ public enum OptionCategory {
                     ranged("pom_distance", 8, 48, "aurum.unit.blocks", () -> c.pomDistance, v -> c.pomDistance = v),
             };
             case GRADE -> new SimpleOption<?>[]{
+                    bool("taa", c.taa, v -> c.taa = v),
+                    percent("taa_sharpen", 0, 100, () -> c.taaSharpen, v -> c.taaSharpen = v),
                     bool("sharpness_enabled", c.sharpnessEnabled, v -> c.sharpnessEnabled = v),
                     percent("sharpness", 0, 100, () -> c.sharpness, v -> c.sharpness = v),
                     choice("tonemap", List.of(Tonemap.values()), c.tonemap,

@@ -203,6 +203,9 @@ public final class PostPass {
         comp.set4f("u_AoParams", SkyExtras.aoDrawn ? SkyExtras.aoStrength : 0f, SkyExtras.AO_RANGE, 0f, 0f);
         GlUtil.drawFullscreenTriangle();
         ShaderProgram.unbind();
+        // Temporal anti-aliasing over the finished image (depth still detached, so it can be sampled).
+        TemporalAA.resolve(main, sceneTex, sceneFbo, main.getDepthAttachment(), handDepthTex, handValid,
+                invProj, invView, worldView, worldProjection);
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, main.getDepthAttachment(), 0);
 
         // Unbind our textures from the high units and restore the state vanilla expects next.

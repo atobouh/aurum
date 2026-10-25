@@ -34,6 +34,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "render", at = @At("HEAD"), require = 1)
     private void aurum$beginFrame(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         FrameDirector.beginFrame(tickDelta);
+        dev.impeccable.aurum.render.TemporalAA.beginFrame();
         this.aurum$frameTimer = GpuTimers.begin(TimerSection.FRAME);
     }
 
@@ -70,7 +71,12 @@ public abstract class GameRendererMixin {
             target = "Lnet/minecraft/client/render/GameRenderer;renderHand(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/Camera;F)V"))
     private void aurum$timeHand(GameRenderer self, MatrixStack matrices, Camera camera, float tickDelta, Operation<Void> original) {
         int t = GpuTimers.begin(TimerSection.HAND);
-        original.call(self, matrices, camera, tickDelta);
+        dev.impeccable.aurum.render.TemporalAA.setInHand(true);
+        try {
+            original.call(self, matrices, camera, tickDelta);
+        } finally {
+            dev.impeccable.aurum.render.TemporalAA.setInHand(false);
+        }
         PostPass.afterHand(MinecraftClient.getInstance().getFramebuffer());
         GpuTimers.end(t);
     }
@@ -85,6 +91,12 @@ public abstract class GameRendererMixin {
     private void aurum$handDepth(int mask, boolean getError, Operation<Void> original) {
         PostPass.beforeHand(MinecraftClient.getInstance().getFramebuffer());
         original.call(mask, getError);
+    }
+
+    /** Reason: TAA jitters the world's projection by a sub-pixel amount each frame (not the hand's). */
+    @Inject(method = "getBasicProjectionMatrix", at = @At("RETURN"), require = 1)
+    private void aurum$jitter(double fov, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Matrix4f> cir) {
+        dev.impeccable.aurum.render.TemporalAA.jitter(cir.getReturnValue());
     }
 
     /** Reason: Aurum's combined post pass runs once the world and hand are drawn, before the HUD. */

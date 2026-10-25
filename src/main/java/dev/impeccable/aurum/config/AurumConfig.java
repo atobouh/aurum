@@ -137,6 +137,10 @@ public final class AurumConfig {
     public int skySaturation = 70;
     /** -50 teal .. +50 lavender. */
     public int skyLavender = 0;
+    /** Temporal anti-aliasing: smooth edges and stable leaves (the references' soft, solid look). */
+    public boolean taa = true;
+    /** Sharpening applied in the TAA resolve so the image stays crisp. */
+    public int taaSharpen = 50;
     public boolean sharpnessEnabled = true;
     public int sharpness = 65;
 
@@ -277,6 +281,7 @@ public final class AurumConfig {
         skyTemperature = clamp(skyTemperature, -50, 50);
         waterStyleBlend = clamp(waterStyleBlend, 0, 100);
         sharpness = clamp(sharpness, 0, 100);
+        taaSharpen = clamp(taaSharpen, 0, 100);
         voxelLightingStrength = clamp(voxelLightingStrength, 0, 100);
         voxelDetail = voxelDetail == 8 ? 8 : 4;
         if (lightEdgeStyle == null) lightEdgeStyle = LightEdgeStyle.NATURAL;

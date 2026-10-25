@@ -443,3 +443,14 @@ Take them at noon looking up, plus once at golden hour facing the sun. Also send
   - nothing should look emissive in the shade.
 - **Night:** leaves must not glow, apart from faint moonlight.
 - **Mobs and chests:** unchanged, because they don't use the leaf path.
+
+## 0.7.3: TAA
+
+- **Standing still:**
+  - leaf crowns should look solid and smooth while keeping their texture;
+  - block edges should have no stair-steps;
+  - distant forest should not shimmer.
+- **Moving and turning fast:** look for trails or ghosts behind mobs, the hand, or tree edges against the sky.
+  Report any with a screenshot.
+- **Water:** the vanilla lines should stay visible.
+- **FPS:** compare F8 with TAA on and off.

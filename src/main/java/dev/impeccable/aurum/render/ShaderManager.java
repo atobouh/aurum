@@ -24,6 +24,7 @@ public final class ShaderManager {
     private static final String[][] PROGRAMS = {
             {"sky/sky", "post/fullscreen.vsh", "sky/sky.fsh"},
             {"post/composite", "post/fullscreen.vsh", "post/composite.fsh"},
+            {"post/taa", "post/fullscreen.vsh", "post/taa.fsh"},
             {"post/clouds_blocky", "post/fullscreen.vsh", "post/clouds.fsh"},
             {"post/clouds_soft", "post/fullscreen.vsh", "post/clouds.fsh", "CLOUD_SOFT"},
             {"post/rays_mask", "post/fullscreen.vsh", "post/rays_mask.fsh"},
