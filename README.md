@@ -7,7 +7,8 @@ Intel UHD 620; the current cloud environment cannot verify that target.
 Experimental lighting build: **0.6.2-alpha.1**. Terrain and ten supported model shader variants share a surface-light evaluator. A bounded static visibility field supports up to 32 sources with exact receiver falloff, plus a neutral local bounce estimate. When LambDynamicLights is installed, static voxel replacement is paused for a consistent propagated-light compatibility path. This alpha does not complete dynamic voxel lighting, cave fog/AO or the full lighting plan.
 
 - [Download Aurum 0.6.2-alpha.1](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.6.2-alpha.1.jar)
-- [Lighting alpha: screenshots, motion footage and test results](docs/reports/aurum-0.6.2-alpha.1-lighting-review.html)
+- [Download the illustrated lighting report (ZIP)](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.6.2-alpha.1-lighting-report.zip) — extract all, then open `Aurum-lighting-report/index.html`; all images and videos work offline.
+- [Single-file HTML report source](docs/reports/aurum-0.6.2-alpha.1-lighting-review.html) — GitHub shows this as raw text; download it before opening in a browser.
 - [Implementation and remaining gates](docs/research/LIGHTING_IMPLEMENTATION_062_ALPHA1.md)
 
 Stable build: **0.6.1**. It corrects excessive daytime canopy darkening and adds diffuse fill beneath cloud shadows,

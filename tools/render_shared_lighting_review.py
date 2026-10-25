@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the offline alpha review from original captures and development telemetry."""
 from pathlib import Path
-import argparse,sys,json,base64,hashlib,html,re,math
+import argparse,sys,json,base64,hashlib,html,re,math,zipfile
 root=Path(__file__).resolve().parents[1]
 local=Path('/workspace/test-tools/python')
 if local.exists():sys.path.insert(0,str(local))
@@ -91,3 +91,46 @@ if release:body+='<p><small>JAR · '+str(release['bytes'])+' bytes · SHA-256 '+
 body+='</header><main><h2>Runtime results</h2><div class="table-scroll"><table><thead><tr><th>Check</th><th>Result and scope</th></tr></thead><tbody>'+''.join('<tr><td>'+esc(str(k).replace('_',' ').capitalize())+'</td><td>'+esc(str(v))+'</td></tr>' for k,v in results.items())+'</tbody></table></div><h2>Actual motion footage</h2><p>Motion is recorded separately from still-image acceptance. These clips cannot establish 60-FPS behaviour on Intel UHD. Moving receivers are tested; moving-entity shadows from local lamps are not implemented.</p><div class="gallery">'+''.join(clips)+'</div><h2>Original game captures</h2><p>The constructed room and elevated source-count fixture are in a disposable copy of the documented modded save. Captures wait for a settled matching cache, except explicitly native/compatibility bypasses. Natural scenes are labelled separately.</p><div class="gallery">'+''.join(figures)+'</div><h2>Capture state</h2><div class="table-scroll"><table><thead><tr><th>Frame</th><th>Actual mode</th><th>World time</th><th>Candidate sources</th><th>Published / current revision</th></tr></thead><tbody>'+''.join(rows)+'</tbody></table></div><details><summary>Implementation, verification and remaining gates</summary>'+md+'</details></main><dialog><button>Close</button><img alt="Enlarged original capture"></dialog><script>const d=document.querySelector("dialog");document.querySelectorAll(".image").forEach(b=>b.onclick=()=>{d.querySelector("img").src=b.querySelector("img").src;d.showModal()});d.querySelector("button").onclick=()=>d.close();</script>'
 p=root/'docs/reports/aurum-0.6.2-alpha.1-lighting-review.html';p.write_text('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aurum — shared lighting alpha review</title><style>'+css+'</style>'+body+'</html>')
 print(p,len(manifest),'images',len(motion),'clips',p.stat().st_size,'bytes')
+
+# Raw GitHub HTML is served as text/plain. Offer a real offline download whose
+# index uses ordinary relative media files instead of enormous data-URI lines.
+bundle=root/'dist/aurum-0.6.2-alpha.1-lighting-report.zip'
+prefix='Aurum-lighting-report/'
+with zipfile.ZipFile(bundle,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
+ images=iter(manifest);videos=iter(motion);packaged=[]
+ def extract_image(match):
+  item=next(images);name=item['image'];assert Path(name).name==name
+  data=base64.b64decode(match.group(1),validate=True)
+  assert hashlib.sha256(data).hexdigest()==item['sha256'],name
+  archive.writestr(prefix+'media/'+name,data);packaged.append(name)
+  return 'src="media/'+name+'"'
+ def extract_video(match):
+  item=next(videos);name=item['name']+'.webm';assert Path(name).name==name
+  data=base64.b64decode(match.group(1),validate=True)
+  assert hashlib.sha256(data).hexdigest()==item['videoSha256'],name
+  archive.writestr(prefix+'media/'+name,data);packaged.append(name)
+  return 'src="media/'+name+'"'
+ offline=re.sub(r'src="data:image/png;base64,([^"]+)"',extract_image,p.read_text())
+ offline=re.sub(r'src="data:video/webm;base64,([^"]+)"',extract_video,offline)
+ assert len(packaged)==len(manifest)+len(motion)
+ assert 'data:image/png;base64,' not in offline and 'data:video/webm;base64,' not in offline
+ offline=offline.replace('https://raw.githubusercontent.com/atobouh/aurum/codex/docs/research/lighting-062-alpha1-evidence.json','evidence.json')
+ # Lead with the actual screenshots rather than a long table of test results.
+ start=offline.index('<h2>Original game captures</h2>');end=offline.index('<h2>Capture state</h2>',start)
+ gallery=offline[start:end];offline=offline[:start]+offline[end:]
+ offline=offline.replace('<main>','<main>'+gallery,1)
+ offline=offline.replace('<p class="lead">',f'<p>Offline report: all {len(manifest)} screenshots and {len(motion)} videos are included in the adjacent media folder. Keep the extracted folder together.</p><p class="lead">',1)
+ offline=offline.replace('</figure>','</figure>\n')
+ archive.writestr(prefix+'index.html',offline)
+ archive.writestr(prefix+'evidence.json',json.dumps(evidence,indent=2)+'\n')
+ archive.writestr(prefix+'README.txt',
+  'Aurum 0.6.2-alpha.1 lighting report\n\n'
+  '1. Extract the entire ZIP (Windows: right-click, Extract All).\n'
+  '2. Open Aurum-lighting-report/index.html in Chrome, Edge or Firefox.\n'
+  '3. Keep index.html, evidence.json and the media folder together.\n\n'
+  f'All {len(manifest)} original PNG screenshots and {len(motion)} WebM clips are included.\n'
+  'They load offline, without GitHub, a local server or installation.\n'
+  'The alpha JAR download is a separate online link inside the report.\n\n'
+  'This is an experimental lighting milestone. Cave acceptance, dynamic\n'
+  'voxel source transport and target Intel UHD measurements remain open.\n')
+print(bundle,bundle.stat().st_size,'bytes; offline HTML with',len(manifest),'original images and',len(motion),'clips')
