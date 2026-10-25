@@ -166,3 +166,25 @@ the forest scattering and water-depth findings.
   locked fog.
 - Bloom threshold changed from 0.85 / 0.10 to 0.77 / 0.14.
 - Config version is now 12. Only an untouched Aurum look is moved to the new values.
+
+## 0.7.2: lighting step 1, leaves (2026-10-25)
+
+- See docs/research/LIGHTING_AUDIT.md, finding 1.
+- Leaf cubes:
+  - less upward lift (0.30–0.12, was 0.45–0.20);
+  - less wrap (`dot * 0.90 + 0.10`, was 0.82 + 0.18), so a crown has a sunlit side and a dark far side;
+  - the grey backlight floor is lowered to 0.03–0.09.
+- New coloured transmission for leaves and plants:
+  - sunlight scattered through the leaf comes out as albedo × hue², a saturated yellow-green;
+  - strength is 0.30 + 0.70 × backlight² for leaves and 0.35 for plants;
+  - it follows shadow and cloud shadow, plus a faint 0.03 glow inside the canopy;
+  - it costs one shadow lookup on back-facing leaves, with no new pass or texture.
+- Measured on matched renders (lit-leaf saturation, lit p90 in linear light):
+
+  | Scene | Before | After |
+  | --- | --- | --- |
+  | Under trees | 0.41, 0.128 | 0.48, 0.158 |
+  | Noon canopy | 0.33, 0.176 | 0.41, 0.247 |
+
+  The references sit at 0.35–0.52 and 0.17–0.25. Distant canopy stays a little less saturated because of the
+  0.7.1 haze and grade.

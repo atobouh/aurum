@@ -14,6 +14,7 @@ vec3 aurum_localBlockLight(vec2 lightCoord, vec3 pos, vec3 normal, out vec4 voxe
 }
 struct AurumLight {
     vec3 direct; vec3 ambient; vec3 block; vec3 fallback; vec3 voxel;
+    vec3 transmit; // light scattered through leaves and plants; the caller tints it by the albedo's hue
     float coverage; float ndl; float directVis; float skyVis; float blockBrightness;
 };
 AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
@@ -30,8 +31,10 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
     } else if (material == 4) {
         // Leaf cubes retain their face direction. A smaller light floor gives the canopy distinct sunlit
         // tops, side faces and shaded interiors instead of nearly uniform lime-green lighting.
-        n = normalize(n + vec3(0.0, mix(0.45, 0.20, u_FoliageDepth), 0.0));
-        ndl = clamp(dot(n, u_LightDir) * 0.82 + 0.18, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
+        // 0.7.2: less lift and wrap, so a crown has a bright sun side and a dark far side (lighting audit);
+        // the glow inside the canopy comes from the coloured transmission below, not from flat wrap.
+        n = normalize(n + vec3(0.0, mix(0.30, 0.12, u_FoliageDepth), 0.0));
+        ndl = clamp(dot(n, u_LightDir) * 0.90 + 0.10, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
     } else {
         // A restrained low-sun diffuse wrap keeps rough horizontal blocks lit while the shadow map still
         // cuts dark paths through them. Pure Lambert at grazing incidence made both sides read as ambient
@@ -50,18 +53,32 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
     // Without a shadow map, sky light is the only hint of cover. Inside the shadow range the real shadow takes
     // over; a weak sky-light gate stays so sealed caves never catch sunlight through thin ceilings.
     float directVis = smoothstep(0.55, 0.95, sky);
-    if (ndl > 0.0 && sky > 0.05) {
+    bool thin = material == 4 || foliage;
+    float leafSun = directVis;   // sunlight reaching this leaf, without the backlight floor
+    float leafBack = 0.0;
+    if ((ndl > 0.0 || thin) && sky > 0.05) {
         vec2 sh = aurum_shadow(pos, ng);
         // Thin leaves pass a little backlight, while front-facing leaves in shadow stay dark.
         // The former fixed 22% sunlight floor made whole crowns glow evenly.
-        float leafBack = 1.0 - max(dot(ng, u_LightDir), 0.0);
-        float leafTransmit = 0.04 + 0.10 * leafBack * leafBack;
+        leafBack = 1.0 - max(dot(ng, u_LightDir), 0.0);
+        float leafTransmit = 0.03 + 0.06 * leafBack * leafBack;
         float lit = material == 4 ? max(sh.x, leafTransmit) : sh.x;
+        leafSun = mix(leafSun, sh.x * smoothstep(0.05, 0.3, sky), sh.y);
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
     float cloudVisibility = aurum_cloudShadow(pos);
     directVis *= pomShadow * cloudVisibility;
     vec3 direct = u_LightColor * (ndl * directVis);
+    // Leaves and plants scatter sunlight through themselves: what comes out is their own colour, roughly
+    // squared (yellow-green, saturated), strongest when lit from behind. This is the references' glowing
+    // canopy (Photon). Shaded interior leaves keep a faint green glow from light scattered between leaves.
+    vec3 transmit = vec3(0.0);
+    if (thin) {
+        float sunUpT = smoothstep(-0.05, 0.2, u_LightDir.y);
+        float through = material == 4 ? 0.30 + 0.70 * leafBack * leafBack : 0.35;
+        transmit = u_LightColor * sunUpT * (leafSun * through * aurum_cloudShadow(pos) * pomShadow
+                 + 0.03 * smoothstep(0.3, 0.9, sky));
+    }
 
     // Vertical faces sample the sky in their own direction. The sky table is integrated on the CPU,
     // so terrain pays only a few multiplies, without tracing or another texture lookup.
@@ -90,7 +107,7 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
     float blockBrightness;
     blockBrightness = max(blockLight.r, max(blockLight.g, blockLight.b)) / max(u_BlockLightColor.r, 0.001);
     AurumLight result;
-    result.direct = direct; result.ambient = ambient; result.block = blockLight;
+    result.direct = direct; result.ambient = ambient; result.block = blockLight; result.transmit = transmit;
     result.fallback = u_BlockLightColor * (blk / (4.0 - 3.0 * blk));
     result.voxel = voxel.rgb * u_BlockLightColor.r; result.coverage = voxel.a;
     result.ndl = ndl; result.directVis = directVis;

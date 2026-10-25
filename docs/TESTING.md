@@ -434,3 +434,12 @@ Take them at noon looking up, plus once at golden hour facing the sun. Also send
 - **Rain:** check it is not too white or misty. "Distance haze" in F7 → Fog can be lowered.
 - **Settings:** an edited colour or another look must keep its values after the update.
 - **FPS:** the haze costs a few instructions per pixel in the existing composite pass, with no new pass.
+
+## 0.7.2: leaves
+
+- **Forest in sun:**
+  - crowns should show a bright, lively yellow-green on the sun side and darker insides;
+  - leaves seen against the sun should glow green;
+  - nothing should look emissive in the shade.
+- **Night:** leaves must not glow, apart from faint moonlight.
+- **Mobs and chests:** unchanged, because they don't use the leaf path.
