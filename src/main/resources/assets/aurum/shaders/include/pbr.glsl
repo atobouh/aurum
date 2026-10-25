@@ -155,12 +155,16 @@ vec3 aurum_pbrSpecular(vec3 albedo, vec4 pbr, vec3 n, vec3 pos, float directVis,
     // and the gloss was invisible (user).
     vec3 R = reflect(-V, n);
     R.y = max(R.y, 0.02);
-    vec3 Fr = f0 + (max(vec3(smoothness), f0) - f0) * pow(1.0 - nv, 4.0);
-    vec3 sky = aurum_skyRadiance(R, u_SunDirW) * skyVis;
+    // 0.7.4 (user: grass and stone bleached white with a PBR pack): the grazing ceiling follows smoothness squared,
+    // and a rough surface reflects the sky's average light (as bright as the sky fill on the ground), not the
+    // displayed sky in one direction. Only near-mirror surfaces show the sharp, bright sky. No extra x2.
+    float gloss2 = smoothness * smoothness;
+    vec3 Fr = f0 + (max(vec3(gloss2), f0) - f0) * pow(1.0 - nv, 5.0);
+    vec3 sky = mix(u_SkyAmbient, aurum_skyRadiance(R, u_SunDirW), gloss2 * gloss2) * skyVis;
     vec3 room = u_BlockLightColor * blockLight * 0.35;
     float clarity = mix(0.35, 1.0, smoothness);
     // u_PbrParams.x carries the Gloss setting (Sheen slider): 1 at 100 %.
-    vec3 env = (sky + room) * Fr * clarity * 2.0;
+    vec3 env = (sky + room) * Fr * clarity;
 
     diffuseScale = metal ? 0.15 : (1.0 - max(Fr.r, max(Fr.g, Fr.b)) * smoothness);
     return (spec + env) * u_PbrParams.x;

@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 12;
+    public int configVersion = 13;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -111,7 +111,7 @@ public final class AurumConfig {
     public int cloudSpeed = 100;
     public int cloudMotionVariation = 65;
     public boolean cloudShadowsEnabled = true;
-    public int cloudShadowStrength = 65;
+    public int cloudShadowStrength = 40;
     public int cloudCoverage = 50;
     public int cloudShading = 100;
 
@@ -276,6 +276,11 @@ public final class AurumConfig {
                 }
             }
             configVersion = 12;
+        }
+        if (configVersion < 13) {
+            // 0.7.4: at 65 % cloud shadows left most of the land dark and dull under soft clouds (user screenshots).
+            if (cloudShadowStrength == 65) cloudShadowStrength = 40;
+            configVersion = 13;
         }
         skyClarity = clamp(skyClarity, 0, 100);
         skyTemperature = clamp(skyTemperature, -50, 50);

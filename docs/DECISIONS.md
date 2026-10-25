@@ -194,3 +194,15 @@ the forest scattering and water-depth findings.
 - See docs/research/TAA.md.
 - TAA is on by default on every preset, because it is the clearest "premium" difference from the references.
 - It can be turned off ("Anti-aliasing (TAA)"), and its sharpening is adjustable ("TAA sharpening", default 50).
+
+## 0.7.4: user test fixes (2026-10-25)
+
+- **PBR bleaching** (user screenshots with Seraphic: grass and stone washed white, pale patches in shallow
+  water). The environment reflection reflected the full displayed sky, ×2, off any glossy texel.
+  - The grazing Fresnel ceiling now follows smoothness².
+  - The reflected light runs from the sky's average fill (rough) to the displayed sky (mirror), weighted by
+    smoothness⁴.
+  - The ×2 is gone.
+  - Verified on a Seraphic reproduction: grass keeps its true colour.
+- **Cloud shadow default 65 → 40.** Under soft clouds, 65 % left most of the land dark and dull (user images 2
+  and 3). Config v13 moves only an untouched 65.

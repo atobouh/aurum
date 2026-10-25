@@ -454,3 +454,11 @@ Take them at noon looking up, plus once at golden hour facing the sun. Also send
   Report any with a screenshot.
 - **Water:** the vanilla lines should stay visible.
 - **FPS:** compare F8 with TAA on and off.
+
+## 0.7.4
+
+- **With Seraphic and LabPBR on:**
+  - grass, stone and paths should keep their colour (no white film);
+  - shallow water should show its bed without pale rectangles;
+  - polished blocks should still shine.
+- **Under soft clouds:** the land should stay lit and colourful, with gentle cloud shadows.
