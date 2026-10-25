@@ -1,11 +1,9 @@
-// Aurum water, style B "Crystal Clear" with Photon as the reference (docs/research/WATER_PROPOSAL.md).
-// Runs in the translucent terrain pass for water sprites. Everything the water shows is computed here:
-//   - what lies under it: the opaque scene copied before this pass, refracted, tinted by the water column
-//     (Beer-Lambert absorption: clear turquoise shallows, deep teal)
-//   - what it reflects: the real sky (our sky table) and, on Medium/High, terrain by screen-space reflection
-//   - the sun: a sharp glint on fine ripples (glitter), hidden by shadows
-//   - a soft bright edge along shores
-// The result is written opaque (alpha 1) over the copy, so the blend stage does not tint it again.
+// Aurum water: one look, after Complementary Reimagined's (user decision 2026-10-25, docs/research/WATER_ONE.md).
+// The vanilla water texture stays: its live animation frame shows as a faint surface pattern and drives the surface
+// normals, so reflections break along the same pixel lines. Over it: mirror-like reflections of terrain (screen
+// space) and of the real sky and clouds, a clean sun reflection, moderate clarity (shallows show the bed, depth goes
+// dark), and soft shore edges. Runs in the translucent terrain pass for water sprites and writes the final colour
+// opaque over the scene copied before the pass, so the blend stage does not tint it again.
 
 uniform int u_AurumPass;           // 1 in the translucent pass when the opaque copy is valid
 uniform sampler2D u_OpaqueDepth;
@@ -76,110 +74,129 @@ vec4 aurum_waterSSR(vec3 posWorld, vec3 dirWorld, float dist) {
     return vec4(0.0);
 }
 
-vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
+// Luminance of the live water texture at a texel offset, wrapped inside the sprite (no bleeding into neighbours).
+float aurum_waterLum(vec2 uv, vec2 off, vec2 tileMin, vec2 tile) {
+    vec2 q = tileMin + mod(uv + off - tileMin, tile);
+    return dot(textureLod(u_BlockTex, q, 0.0).rgb, vec3(0.2126, 0.7152, 0.0722));
+}
+
+vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec2 uv) {
     vec3 dpdx = dFdx(pos), dpdy = dFdy(pos);
+    vec2 duvx = dFdx(uv), duvy = dFdy(uv);
     vec3 ng = normalize(cross(dpdx, dpdy));
     if (dot(ng, pos) > 0.0) ng = -ng;
     float dist = length(pos);
     vec3 V = pos / dist;            // camera -> surface
     vec3 wp = pos + u_CameraMod;    // world position modulo 256
 
-    // Surface normal: ripples on top faces (and gently on slanted flowing water), flat on sides.
-    vec3 n = ng;
+    // ---- Surface normal from the vanilla texture's pixel pattern (current animation frame), plus a slow, broad
+    // swell so open water still breathes. Crisp per texel: reflections break along the texture's lines.
+    vec2 atlas = vec2(textureSize(u_BlockTex, 0));
+    vec2 texel = 1.0 / atlas;
+    int flags = int(textureLod(u_NormalTex, uv, 0.0).a * 255.0 + 0.5);
+    vec2 tile = (flags & 0x80) != 0 ? vec2(16.0 * float(1 << ((flags >> 4) & 3))) * texel : vec2(1.0);
+    vec2 tileMin = floor(uv / tile) * tile;
+    vec2 cuv = (floor(uv * atlas) + 0.5) * texel;
+    float lc = aurum_waterLum(cuv, vec2(0.0), tileMin, tile);
+    float gx = aurum_waterLum(cuv, vec2(texel.x, 0.0), tileMin, tile) - aurum_waterLum(cuv, vec2(-texel.x, 0.0), tileMin, tile);
+    float gy = aurum_waterLum(cuv, vec2(0.0, texel.y), tileMin, tile) - aurum_waterLum(cuv, vec2(0.0, -texel.y), tileMin, tile);
+    // Cotangent frame (works for any texture rotation, so flowing water ripples along its flow).
+    vec3 dp2perp = cross(dpdy, ng), dp1perp = cross(ng, dpdx);
+    vec3 T = dp2perp * duvx.x + dp1perp * duvy.x;
+    vec3 B = dp2perp * duvx.y + dp1perp * duvy.y;
+    float invmax = inversesqrt(max(max(dot(T, T), dot(B, B)), 1e-30));
+    T *= invmax;
+    B *= invmax;
+    // The pattern fades with distance (sub-pixel lines only shimmer) and on side faces it stays gentle.
+    float patternFade = (1.0 - smoothstep(12.0, 48.0, dist)) * (ng.y > 0.3 ? 1.0 : 0.4);
+    // Gentle: the reference keeps a near-mirror that only wavers along the lines.
+    float k = 0.45 * patternFade * u_WaterParams.w;
+    vec3 n = normalize(ng - (T * gx + B * gy) * k);
     if (ng.y > 0.3) {
-        vec2 s = aurum_waterSlope(wp.xz, dist);
-        n = normalize(vec3(-s.x, 1.0, -s.y));
+        vec2 swell = texture(u_WaterNormalTex, wp.xz / 16.0 + u_WaterScroll.xy * 0.6).rg * 2.0 - 1.0;
+        n = normalize(n + vec3(-swell.x, 0.0, -swell.y) * 0.035 * u_WaterParams.w / (1.0 + dist * 0.02));
     }
 
     float skyL = aurum_lightLevel(lightCoord.y);
     float skyVis = skyL * skyL;
+    float blockL = aurum_lightLevel(lightCoord.x);
+    float sunUp = smoothstep(-0.05, 0.2, u_LightDir.y);
+    float sunVisible = 0.0;
+    if (sunUp > 0.0) {
+        vec2 sh = aurum_shadow(pos, ng);
+        sunVisible = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
+    }
 
-    // ---- What lies under the surface (refracted).
+    // ---- What lies under the surface (refracted a little along the pattern).
     vec2 screenUv = gl_FragCoord.xy * u_WaterParams.xy;
     float waterZ = aurum_viewDepth(gl_FragCoord.z);
-    vec2 refrUv = screenUv + (n.xz - ng.xz) * (0.35 / (1.0 + waterZ * 0.08));
+    vec2 refrUv = screenUv + (n.xz - ng.xz) * (0.25 / (1.0 + waterZ * 0.08));
     float behindZ = aurum_viewDepth(texture(u_OpaqueDepth, refrUv).r);
     if (behindZ < waterZ) { refrUv = screenUv; behindZ = aurum_viewDepth(texture(u_OpaqueDepth, screenUv).r); }
     vec3 behind = aurum_toLinear(texture(u_OpaqueColor, refrUv).rgb);
-    // Length of the ray inside the water.
     float column = max(behindZ - waterZ, 0.0) * dist / max(waterZ, 1e-3);
     bool openBottom = texture(u_OpaqueDepth, refrUv).r >= 1.0;
     if (openBottom) column = 1e4;
 
-    // Absorption per block: red goes first, then green -> turquoise shallows, deep teal. The biome water colour
-    // nudges it (swamps murkier, warm oceans bluer) without painting the water.
+    // Moderate clarity: the bed shows for a block or two, then the water's own colour takes over. The biome
+    // water colour sets that colour (swamps murky green, warm oceans bright teal), as in vanilla.
+    // The biome colour is kept, but pulled toward a dark green-teal: vanilla's saturated blue reads as plastic
+    // next to real reflections (the reference's water is dark and natural, the sky supplies the blue).
     vec3 tint = aurum_toLinear(vertexColor.rgb);
     vec3 tintN = tint / max(max(tint.r, max(tint.g, tint.b)), 1e-3);
-    vec3 sigma = vec3(0.80, 0.24, 0.16) * mix(vec3(1.0), 1.6 - tintN * 0.8, 0.5);
+    tintN = mix(vec3(0.42, 0.66, 0.62), tintN, 0.35);
+    vec3 sigma = vec3(0.85, 0.42, 0.36) * mix(vec3(1.0), 1.6 - tintN * 0.8, 0.5);
     vec3 trans = exp(-sigma * column);
-    float sunUp0 = smoothstep(-0.05, 0.2, u_LightDir.y);
-    // Caustics: the bright, wobbling light network sunlight draws on a shallow bed (Photon's shallows). Two
-    // ripple layers crossing; lines where their heights match. Strongest in the shallows, gone with depth.
-    if (!(texture(u_OpaqueDepth, refrUv).r >= 1.0) && column < 8.0) {
-        vec3 bed = wp + V * column;
-        float h1 = texture(u_WaterNormalTex, bed.xz / 3.0 + u_WaterScroll.xy * 1.3).b;
-        float h2 = texture(u_WaterNormalTex, vec2(bed.z, -bed.x) / 2.5 + u_WaterScroll.zw * 1.6).b;
-        float caust = pow(1.0 - abs(h1 - h2), 10.0);
-        behind *= 1.0 + caust * 1.6 * sunUp0 * skyVis * exp(-column * 0.35) * smoothstep(0.0, 0.3, column);
-    }
-    // Light scattered back out of the water body (what deep water looks like), lit by sky and sun.
-    float sunUp = smoothstep(-0.05, 0.2, u_LightDir.y);
-    vec3 deepAlbedo = vec3(0.008, 0.036, 0.052) * mix(vec3(1.0), tintN * 1.4, 0.35);
-    vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.45 * skyVis) * deepAlbedo
-                   + u_BlockLightColor * deepAlbedo * aurum_lightLevel(lightCoord.x) * 0.5;
+    vec3 deepAlbedo = vec3(0.006, 0.016, 0.018) * tintN * 1.6;
+    vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.4 * sunVisible) * deepAlbedo
+                   + u_BlockLightColor * deepAlbedo * blockL * 0.5;
     vec3 deep = aurum_toLinear(aurum_tonemap(deepHdr));
-    // Even the shallowest water tints the bed a little blue-green (Photon: never pure sand colour).
-    vec3 under = behind * trans * vec3(0.82, 0.94, 0.96) + deep * (1.0 - trans);
+    vec3 under = behind * trans + deep * (1.0 - trans);
 
-    // ---- Reflection.
+    // ---- The vanilla water skin: the texture itself, lit like terrain, laid thinly over what is underneath.
+    // Its bright pixel lines read through clearly; its dark base only slightly darkens the view.
+    // Only the texture's bright lines are kept (texels brighter than their neighbours), plus a thin veil of its
+    // colour, so the water reads as Minecraft water without the flat vanilla blue.
+    float around = 0.25 * (aurum_waterLum(cuv, vec2(texel.x, 0.0), tileMin, tile) + aurum_waterLum(cuv, vec2(-texel.x, 0.0), tileMin, tile)
+                         + aurum_waterLum(cuv, vec2(0.0, texel.y), tileMin, tile) + aurum_waterLum(cuv, vec2(0.0, -texel.y), tileMin, tile));
+    float line = smoothstep(0.02, 0.10, lc - around) * patternFade;
+    vec3 skin = aurum_toLinear(tex.rgb) * tintN;
+    float ndl = max(dot(n, u_LightDir), 0.0);
+    vec3 skinHdr = skin * (u_SkyAmbient * skyVis * 1.2 + u_LightColor * ndl * sunVisible
+                           + u_BlockLightColor * (blockL / (4.0 - 3.0 * blockL)));
+    vec3 skinLit = aurum_toLinear(aurum_tonemap(skinHdr));
+    under = mix(under, skinLit, 0.10);
+
+    // ---- Reflection: terrain (screen space) where found, otherwise the real sky.
     vec3 R = reflect(V, n);
     R.y = abs(R.y);
-    vec3 skyRefl = aurum_toLinear(aurum_tonemap(aurum_skyRadiance(R, u_SunDirW))) * mix(0.25, 1.0, skyVis);
-    vec3 refl = skyRefl;
+    vec3 refl = aurum_toLinear(aurum_tonemap(aurum_skyRadiance(R, u_SunDirW))) * mix(0.2, 1.0, skyVis);
     if (u_WaterParams.z > 0.5 && ng.y > 0.3) {
         vec4 ssr = aurum_waterSSR(pos, R, dist);
-        refl = mix(skyRefl, aurum_toLinear(ssr.rgb), ssr.a);
+        refl = mix(refl, aurum_toLinear(ssr.rgb), ssr.a);
     }
     float cosT = clamp(dot(-V, n), 0.0, 1.0);
+    // Glassy: Schlick plus a lift at middle angles, so the far half of a lake mirrors the shore like the reference.
     float fresnel = 0.02 + 0.98 * pow(1.0 - cosT, 5.0);
-    // A little extra reflection at mid angles: real water looks glassier than pure Schlick on a monitor.
-    fresnel = min(fresnel + 0.15 * (1.0 - cosT) * (1.0 - cosT), 0.95);
-
+    fresnel = min(fresnel + 0.35 * (1.0 - cosT) * (1.0 - cosT), 0.97);
     vec3 color = mix(under, refl, fresnel);
+    // The texture's light streaks sit on top of the reflection, faint, like the reference's pixel lines.
+    color += skinLit * line * 0.35 * (0.4 + 0.6 * fresnel);
 
-    // ---- Sun glint: a hot, very tight lobe on the fine ripples (Photon's glitter) plus a soft sheen.
+    // ---- Sun: one clean, bright reflection that breaks up only where the pixel pattern tilts the surface.
     if (ng.y > 0.3 && sunUp > 0.0) {
-        vec3 L = u_LightDir;
-        vec3 H = normalize(L - V);
-        // Glitter (Photon's signature): the sun catches thousands of tiny, steep wave facets. Two very fine
-        // layers (1 and 0.5 blocks per tile) tilt a separate glint normal much more than the visible ripples,
-        // so the highlight shatters into bright points spread over a wide path. Faded with distance (the
-        // texture's mips smooth them anyway) so far water keeps a clean path instead of noise.
-        // Sampled on skewed grids (integer matrices: still exactly periodic over 256 blocks) so the facets never
-        // line up into a visible grid of dots.
-        float sparkleFade = 1.0 / (1.0 + dist * 0.03);
-        vec2 s1 = vec2(3.0 * wp.x + wp.z, 3.0 * wp.z - wp.x) / 4.0;
-        vec2 s2 = vec2(2.0 * wp.x - 3.0 * wp.z, 3.0 * wp.x + 2.0 * wp.z) / 3.0;
-        vec2 g1 = texture(u_WaterNormalTex, s1 + u_WaterScroll.wz * 2.3).rg * 2.0 - 1.0;
-        vec2 g2 = texture(u_WaterNormalTex, s2 + u_WaterScroll.xy * 3.1).rg * 2.0 - 1.0;
-        // Facets steep enough to catch the sun across a wide field around its reflection, as in Photon.
-        vec2 gs = (g1 * 0.32 + vec2(g2.y, -g2.x) * 0.26) * sparkleFade * u_WaterParams.w;
-        vec3 ns = normalize(n + vec3(-gs.x, 0.0, -gs.y));
+        vec3 H = normalize(u_LightDir - V);
         float nh = max(dot(n, H), 0.0);
-        float nhs = max(dot(ns, H), 0.0);
-        float spec = pow(nhs, 2200.0) * 110.0 * sparkleFade + pow(nh, 1800.0) * 20.0 + pow(nh, 220.0) * 1.0;
-        vec2 sh = aurum_shadow(pos, ng);
-        float lit = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
-        vec3 glint = u_LightColor * spec * lit * fresnel * 6.0;
-        color += aurum_toLinear(aurum_tonemap(glint));
+        float spec = pow(nh, 900.0) * 30.0 + pow(nh, 120.0) * 0.6;
+        vec3 glint = aurum_toLinear(aurum_tonemap(u_LightColor * spec * sunVisible * fresnel * 2.0));
+        color += glint * max(vec3(1.0) - color, vec3(0.0)) * 0.9;
     }
 
-    // ---- Shore edge: a thin, soft, broken bright line where the water is very shallow.
+    // ---- Shore edge: a soft, slightly brighter rim where the water thins out against blocks.
     if (!openBottom) {
-        float h = texture(u_WaterNormalTex, wp.xz / 4.0 + u_WaterScroll.zw * 0.5).b;
-        float edge = (1.0 - smoothstep(0.0, 0.35 + 0.25 * h, column)) * smoothstep(0.35, 0.65, h + 0.25);
-        vec3 foamHdr = (u_SkyAmbient * skyVis + u_LightColor * sunUp * 0.6 * skyVis) * 0.55;
-        color = mix(color, aurum_toLinear(aurum_tonemap(foamHdr)), edge * 0.45);
+        float edge = 1.0 - smoothstep(0.0, 0.45, column);
+        vec3 rimHdr = (u_SkyAmbient * skyVis + u_LightColor * sunUp * 0.5 * sunVisible) * 0.45;
+        color = mix(color, aurum_toLinear(aurum_tonemap(rimHdr)), edge * 0.18);
     }
 
     return aurum_toDisplay(color);

@@ -3,6 +3,9 @@
 // Aurum replacement for Sodium 0.5.13's sodium:blocks/block_layer_opaque.fsh. The vanilla branch reproduces
 // Sodium's original output exactly; the Aurum branch does the lighting in include/lighting.glsl.
 
+// Declared before the includes: the water shader reads the live (animated) block texture.
+uniform sampler2D u_BlockTex;
+
 #import <sodium:include/fog.glsl>
 #import <aurum:include/terrain_uniforms.glsl>
 #import <aurum:include/tonemap.glsl>
@@ -23,8 +26,6 @@ in vec4 v_VanillaLight;
 in vec2 v_LightCoord;
 in vec3 v_Position;
 flat in int v_Material;
-
-uniform sampler2D u_BlockTex;
 
 uniform vec4 u_FogColor;
 uniform float u_FogStart;
@@ -62,7 +63,7 @@ void main() {
         // Translucent pass: water sprites get Aurum water; glass, ice and the rest keep the normal lighting.
         int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5) & 15;
         if (id == 9) {
-            fragColor = vec4(aurum_shadeWater(diffuseColor, v_Color, v_LightCoord, v_Position), 1.0);
+            fragColor = vec4(aurum_shadeWater(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord), 1.0);
             return;
         }
     }

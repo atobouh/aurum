@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 7;
+    public int configVersion = 8;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -203,6 +203,11 @@ public final class AurumConfig {
             pomEnabled = true;
             pomDistance = preset == Preset.LOW ? 16 : 24;
             configVersion = 7;
+        }
+        if (configVersion < 8) {
+            // 0.6.0 (water): one water look with terrain reflections on every preset.
+            waterReflections = true;
+            configVersion = 8;
         }
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;

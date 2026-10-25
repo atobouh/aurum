@@ -24,8 +24,8 @@ public enum Preset {
         c.entityShadows = medium;
 
         c.vertexWaves = medium;
-        // Terrain reflections in water (screen-space) on Medium and High; Low reflects the sky only.
-        c.waterReflections = medium;
+        // Terrain reflections are part of the one water look, on every preset.
+        c.waterReflections = true;
 
         // 3D blocks on every preset (the user's favourite PBR effect); Low keeps them closer.
         c.pomEnabled = true;

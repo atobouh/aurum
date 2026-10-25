@@ -1,3 +1,10 @@
+# Testing: water, one look (0.5.3-water.1)
+
+- Water now keeps the vanilla look (its pixel lines), dark and glassy, mirroring the shore, trees and sky, on every
+  preset. Glitter and caustics are gone by design.
+- Check: a lake at noon from the shore, a swamp, a river at sunset, looking straight down in shallows, and FPS
+  (F8 "Translucent") next to a big lake.
+
 # Testing: 0.5.3
 
 - **3D for all textures** (F7 > POM, on): blocks your PBR pack has no height map for (wood, modded blocks) get
