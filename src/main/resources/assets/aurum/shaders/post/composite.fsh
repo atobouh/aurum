@@ -14,7 +14,6 @@ uniform sampler2D u_Depth;
 uniform sampler2D u_BeforeTranslucentDepth;
 uniform vec4 u_SurfaceEdge; // x valid copied depth, yz original opaque edge fade
 uniform sampler2D u_HandDepth;
-uniform sampler2D u_Bounce;
 uniform sampler2D u_Clouds;   // half resolution, premultiplied
 uniform sampler2D u_Rays;     // quarter resolution, open sky along the line to the sun
 uniform sampler2D u_Bloom;    // quarter resolution
@@ -268,9 +267,6 @@ void main() {
                 // Extra shaft opacity carries sunlight; do not also inject a sky-coloured ambient veil.
                 fogRad *= min(atmosphereFog / max(f, 0.0001), 1.0);
                 vec3 fogColor = aurum_tonemap(fogRad + inscatter);
-                vec3 bounce = texelFetch(u_Bounce, ivec2(0), 0).rgb;
-                float bl = max(luminance(bounce), 1e-4);
-                fogColor *= mix(vec3(1.0), clamp(bounce / bl, 0.0, 2.0), u_Fog2.w);
                 // The scene is already display-mapped for vanilla compatibility. Compose air in display-linear
                 // light; blending gamma values raised shadows and erased colour before the final grade.
                 scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),

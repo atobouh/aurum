@@ -44,7 +44,7 @@ public final class LightingDebug {
         report.put("requestedView", selected.name().toLowerCase(Locale.ROOT));
         report.put("activeView", View.values()[mode()].name().toLowerCase(Locale.ROOT));
         report.put("terrainMode", TerrainUniforms.mode);
-        report.put("scope", "Terrain contribution diagnostic only. Water is purple; entities/block entities/hand retain core shading. Post effects bypassed while active.");
+        report.put("scope", "Terrain and supported model contribution diagnostic. Water is purple; unsupported shaders retain their own shading. Aurum post effects bypassed while active.");
         if (client.world != null) {
             var camera = client.gameRenderer.getCamera();
             var p = camera.getPos();
@@ -66,6 +66,9 @@ public final class LightingDebug {
                 "block", Atmosphere.blockLight.clone(), "exposure", Atmosphere.exposure, "minimum", Atmosphere.minLight));
         report.put("fog", Map.of("density", FogDirector.distanceDensity, "heightDensity", FogDirector.heightDensity,
                 "cave", FogDirector.cave, "enclosed", FogDirector.enclosed, "clearZone", FogDirector.clearZone));
+        report.put("surface", dev.impeccable.aurum.render.surface.SurfaceLighting.debugState());
+        report.put("renderer", dev.impeccable.aurum.render.GlInfo.renderer());
+        report.put("gamma", client.options.getGamma().getValue());
         report.put("voxel", VoxelLighting.debugState());
         report.put("config", AurumConfig.get());
         report.put("mods", FabricLoader.getInstance().getAllMods().stream()

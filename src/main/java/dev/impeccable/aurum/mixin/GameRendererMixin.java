@@ -91,5 +91,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "renderWorld", at = @At("RETURN"), require = 1)
     private void aurum$postPass(float tickDelta, long limitTime, MatrixStack matrices, CallbackInfo ci) {
         PostPass.run(MinecraftClient.getInstance().getFramebuffer());
+        dev.impeccable.aurum.debug.LightingMotionRecorder.sample();
+        dev.impeccable.aurum.render.surface.SurfaceLighting.endWorld();
     }
 }

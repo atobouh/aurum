@@ -9,6 +9,6 @@ setblock -1250 -42 4117 minecraft:zombie_head[rotation=8]
 setblock -1249 -43 4117 minecraft:chest[facing=south]
 setblock -1254 -43 4118 minecraft:torch
 gamemode spectator @s
-tp @s -1250.5 -41 4124.5 180 8
+tp @s -1250.5 -42 4121.5 180 8
 time set 1350000
 weather clear

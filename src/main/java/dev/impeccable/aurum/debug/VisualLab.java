@@ -13,7 +13,9 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.arg
 public final class VisualLab {
     private VisualLab() {}
     public static void register() {
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> LightingDebug.reset());
+        LightingMotionRecorder.registerMotion();
+        LightingTestBridge.register();
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> { LightingDebug.reset(); LightingMotionRecorder.reset(); });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> {
             var lighting = literal("lighting");
             for (var view : LightingDebug.View.values()) {
@@ -22,7 +24,7 @@ public final class VisualLab {
                     context.getSource().sendFeedback(Text.literal(view == LightingDebug.View.OFF
                             ? "Aurum lighting view: OFF; normal rendering restored."
                             : "Aurum lighting view: " + view
-                            + "; terrain only; water purple; core objects unchanged; post effects bypassed."));
+                            + "; shared terrain/model terms; water purple; unsupported shaders unchanged; Aurum post bypassed."));
                     return 1;
                 }));
             }
@@ -39,6 +41,12 @@ public final class VisualLab {
             }));
             dispatcher.register(
                 literal("aurumdev")
+                        .then(literal("lightrecord")
+                            .then(literal("start").executes(context -> { LightingMotionRecorder.start(); context.getSource().sendFeedback(Text.literal("Lighting recording started")); return 1; }))
+                            .then(literal("stop").executes(context -> { try { var path=LightingMotionRecorder.stop(); context.getSource().sendFeedback(Text.literal("Lighting recording saved: " + path.getFileName())); return 1; } catch(java.io.IOException e) { context.getSource().sendError(Text.literal(e.getMessage())); return 0; } })))
+                        .then(literal("lightmotion")
+                            .then(literal("start").executes(context -> { LightingMotionRecorder.motion(true); return 1; }))
+                            .then(literal("stop").executes(context -> { LightingMotionRecorder.motion(false); return 1; })))
                         .then(lighting)
                         .then(literal("reload").executes(context -> { AurumConfig.load(); return 1; }))
                         .then(literal("freezeclouds").then(argument("frozen", BoolArgumentType.bool())

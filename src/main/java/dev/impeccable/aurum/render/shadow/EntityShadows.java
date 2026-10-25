@@ -100,6 +100,7 @@ public final class EntityShadows {
         RenderSystem.enablePolygonOffset();
         RenderSystem.polygonOffset(1.5f, 4.0f);
         int drawn = 0;
+        dev.impeccable.aurum.render.surface.SurfaceLighting.depthPass = true;
         try {
             MatrixStack matrices = new MatrixStack();
             for (Entity e : client.world.getEntities()) {
@@ -120,6 +121,7 @@ public final class EntityShadows {
             failed = true;
             AurumMod.LOGGER.error("Entity shadow pass failed; entity shadows disabled for this session", ex);
         } finally {
+            dev.impeccable.aurum.render.surface.SurfaceLighting.depthPass = false;
             RenderSystem.polygonOffset(0f, 0f);
             RenderSystem.disablePolygonOffset();
             dispatcher.setRenderShadows(client.options.getEntityShadows().getValue());

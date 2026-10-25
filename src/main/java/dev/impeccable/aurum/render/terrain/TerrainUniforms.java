@@ -28,7 +28,7 @@ public final class TerrainUniforms {
             "u_WaterParams", "u_WaterScroll", "u_SunDirW", "u_SkyTone", "u_PbrTex", "u_PbrParams", "u_PbrScale",
             "u_SkySideToward", "u_SkySideAway", "u_CloudReflection", "u_PrevCloudViewProj", "u_CloudReflectionOn",
             "u_SkyAppearance", "u_WaterLake", "u_VoxelLight", "u_VoxelParams", "u_VoxelOrigin",
-            "u_CloudSdf", "u_CloudShadow", "u_CloudLayout", "u_FoliageDepth", "u_PixelLight", "u_LightingDebug"
+            "u_CloudSdf", "u_CloudShadow", "u_CloudLayout", "u_FoliageDepth", "u_PixelLight", "u_LightingDebug", "u_LocalLightPosLevel[0]", "u_LocalLightColor[0]", "u_LocalLightCount"
     };
 
     public static final int UNIT_NORMAL = 3;
@@ -84,7 +84,7 @@ public final class TerrainUniforms {
         GL20C.glUniform3fv(loc[39], Atmosphere.skySideAway);
         GL20C.glUniform3fv(loc[5], Atmosphere.blockLight);
         float normals = c.normalsEnabled ? c.normalStrength / 100f * 0.9f : 0f;
-        float bounce = c.bounceEnabled ? c.bounceStrength / 100f * 0.35f : 0f;
+        float bounce = c.bounceEnabled ? c.bounceStrength / 100f : 0f;
         GL20C.glUniform4f(loc[6], normals, c.aoBoost / 100f, Atmosphere.minLight, bounce);
         GL20C.glUniform1i(loc[7], UNIT_NORMAL);
         GL20C.glUniform1i(loc[8], UNIT_BOUNCE);
@@ -138,9 +138,14 @@ public final class TerrainUniforms {
         GL20C.glUniform3f(loc[33], Atmosphere.sunDir[0], Atmosphere.sunDir[1], Atmosphere.sunDir[2]);
         GlUtil.bindTexture(UNIT_SKY_LUT, dev.impeccable.aurum.sky.SkyState.texture());
         boolean voxel = mode == 1 && dev.impeccable.aurum.render.VoxelLighting.usable();
+        GL20C.glUniform1i(loc[56], voxel ? dev.impeccable.aurum.render.VoxelLighting.lightCount() : 0);
+        if (voxel) {
+            GL20C.glUniform4fv(loc[54], dev.impeccable.aurum.render.VoxelLighting.lightPositions());
+            GL20C.glUniform3fv(loc[55], dev.impeccable.aurum.render.VoxelLighting.lightColors());
+        }
         GL20C.glUniform1i(loc[45], 15);
         GL20C.glUniform4f(loc[46], dev.impeccable.aurum.render.VoxelLighting.SIDE,
-                dev.impeccable.aurum.render.VoxelLighting.detail(),
+                dev.impeccable.aurum.render.VoxelLighting.probeSide(),
                 voxel ? (float) dev.impeccable.aurum.render.VoxelLighting.width() / dev.impeccable.aurum.render.VoxelLighting.detail() : 1f,
                 voxel ? c.voxelLightingStrength / 100f : 0f);
         GL20C.glUniform3f(loc[47],
@@ -205,6 +210,16 @@ public final class TerrainUniforms {
                 GlUtil.bindTextureHigh(UNIT_CLOUD_REFLECTION, 0);
             }
         }
+    }
+
+    /** Model draws rebind shared samplers after vanilla restores its atlas/overlay/lightmap bindings. */
+    public static void bindModelTextures() {
+        GlUtil.bindTexture(5, dev.impeccable.aurum.bake.CloudBaker.texture());
+        GlUtil.bindTexture(UNIT_SHADOW, ShadowRenderer.frontTexture());
+        GlUtil.bindTexture(UNIT_SHADOW_PREV, ShadowRenderer.previousTexture());
+        GlUtil.bindTexture(UNIT_ENTITY_SHADOW, EntityShadows.usable() ? EntityShadows.texture() : ShadowRenderer.frontTexture());
+        GlUtil.bindTextureHigh(15, dev.impeccable.aurum.render.VoxelLighting.usable()
+                ? dev.impeccable.aurum.render.VoxelLighting.texture() : 0);
     }
 
     private static float smooth(float e0, float e1, float x) {

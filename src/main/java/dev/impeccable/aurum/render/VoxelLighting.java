@@ -26,11 +26,11 @@ import java.util.concurrent.Executors;
 /**
  * Bounded nearby voxel lighting: time-sliced client-world snapshot, background visibility bake, then a
  * double-buffered half-float atlas uploaded 64 rows at a time. No world access occurs on the worker.
- * The visible volume is 16 blocks across; vanilla block light remains the fallback outside it.
+ * The incident volume is 16 blocks across; propagated block light is the common fallback outside it.
  */
 public final class VoxelLighting {
     public static final int SIDE = 16;
-    private static final int SNAP = 40, MARGIN = (SNAP - SIDE) / 2;
+    private static final int SNAP = 56, MARGIN = (SNAP - SIDE) / 2;
     private static final java.util.concurrent.ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "Aurum voxel light baker"); t.setDaemon(true); t.setPriority(Thread.MIN_PRIORITY); return t;
     });
@@ -52,12 +52,21 @@ public final class VoxelLighting {
     private static boolean hasSources;
     private static int publishedCandidates, publishedSources, publishedFaces;
     private static long publishedBakeNanos;
+    private static int lastUnloadedCells;
+    private static final float[] lightPositions = new float[dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS*4], lightColors = new float[dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS*3];
+    public static float[] lightPositions() { return lightPositions; }
+    public static float[] lightColors() { return lightColors; }
+    public static int lightCount() { return publishedSources; }
 
-    private record Job(VoxelLightBaker.Result result, int x, int y, int z, long revision, long generation, int candidates, int sources) {}
+    private record Job(VoxelLightBaker.Result result, int x, int y, int z, long revision, long generation, int candidates, int sources, List<VoxelLightBaker.Light> lightData) {}
     private VoxelLighting() {}
 
     public static int texture() { return ready && hasSources ? textures[front] : 0; }
-    public static boolean usable() { return ready && hasSources && AurumConfig.get().voxelLightingEnabled; }
+    public static boolean usable() { return ready && publishedCandidates <= dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS && !dynamicCompatibility() && AurumConfig.get().voxelLightingEnabled; }
+    public static boolean dynamicCompatibility() {
+        return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("lambdynlights");
+    }
+    public static int probeSide() { return SIDE * (detail == 8 ? 2 : 1); }
     public static int detail() { return detail; }
     public static int width() { return width; }
     public static int originX() { return originX; }
@@ -71,21 +80,35 @@ public final class VoxelLighting {
         state.put("revision", revision); state.put("publishedRevision", bakedRevision);
         state.put("generation", generation); state.put("collecting", collecting != null);
         state.put("baking", pending != null); state.put("uploading", uploading != null);
+        state.put("lastSnapshotUnloadedCells", lastUnloadedCells);
+        state.put("snapshotSide", SNAP);
         state.put("snapshotCellsCaptured", collecting == null ? 0 : collecting.cursor);
         state.put("uploadRow", uploading == null ? 0 : uploadRow);
         state.put("origin", new int[]{originX, originY, originZ});
         state.put("desiredOrigin", new int[]{desiredX, desiredY, desiredZ});
         state.put("fieldSide", SIDE); state.put("detail", detail);
         state.put("publishedCandidates", publishedCandidates); state.put("publishedSources", publishedSources);
-        state.put("sourceCap", 16); state.put("publishedFaces", publishedFaces);
+        state.put("sourceCap", dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS); state.put("publishedProbes", publishedFaces);
         state.put("publishedBakeMillis", publishedBakeNanos / 1_000_000.0);
-        state.put("sourceScope", "Static BlockState luminance only; no held/moving source adapter or indirect transport");
+        state.put("dynamicCompatibilityFallback", dynamicCompatibility());
+        state.put("sourceOverflowFallback", publishedCandidates > dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS);
+        state.put("backend", "per-source visibility probes, exact receiver falloff/direction, bounded neutral single-bounce estimate");
+        state.put("sourcePositionLevelsRelativeToOrigin", lightPositions.clone());
+        state.put("sourceColors", lightColors.clone());
+        state.put("sourceScope", "Static emitters; coherent propagated fallback when LambDynamicLights is installed or source budget overflows");
         return state;
     }
 
     private static void recordPublished(Job job) {
         publishedCandidates = job.candidates; publishedSources = job.sources;
         publishedFaces = job.result.faces(); publishedBakeNanos = job.result.nanos();
+        java.util.Arrays.fill(lightPositions, 0); java.util.Arrays.fill(lightColors, 0);
+        for (int i=0; i<job.lightData.size(); i++) {
+            var light=job.lightData.get(i);
+            lightPositions[i*4]=light.x()-MARGIN; lightPositions[i*4+1]=light.y()-MARGIN;
+            lightPositions[i*4+2]=light.z()-MARGIN; lightPositions[i*4+3]=light.level();
+            lightColors[i*3]=light.red(); lightColors[i*3+1]=light.green(); lightColors[i*3+2]=light.blue();
+        }
     }
 
     public static void onSectionRebuilt(int x, int y, int z) {
@@ -93,7 +116,7 @@ public final class VoxelLighting {
         int wx = x * 16, wy = y * 16, wz = z * 16;
         if (wx + 16 >= desiredX - MARGIN && wx < desiredX + SIDE + MARGIN
                 && wy + 16 >= desiredY - MARGIN && wy < desiredY + SIDE + MARGIN
-                && wz + 16 >= desiredZ - MARGIN && wz < desiredZ + SIDE + MARGIN) revision++;
+                && wz + 16 >= desiredZ - MARGIN && wz < desiredZ + SIDE + MARGIN) { revision++; ready = false; }
     }
 
     public static void update(ClientWorld world, Vec3d camera, boolean enabled) {
@@ -105,6 +128,7 @@ public final class VoxelLighting {
             currentWorld = enabled ? world : null;
             if (!enabled) return;
         }
+        if (dynamicCompatibility()) { ready = false; return; }
         desiredX = (int) Math.floor((camera.x + 2) / 4) * 4 - SIDE / 2;
         desiredY = (int) Math.floor((camera.y + 2) / 4) * 4 - SIDE / 2;
         desiredZ = (int) Math.floor((camera.z + 2) / 4) * 4 - SIDE / 2;
@@ -112,7 +136,12 @@ public final class VoxelLighting {
         if (lastWarmth != AurumConfig.get().blockLightWarmth) { lastWarmth = AurumConfig.get().blockLightWarmth; revision++; }
         if (pending != null && pending.isDone()) {
             Job job = pending.getNow(null); pending = null;
-            if (job != null && job.generation == generation && job.result != null) uploading = job;
+            if (job != null && job.generation == generation && job.revision == revision && job.result != null) uploading = job;
+        }
+        if (collecting != null && collecting.revision != revision) collecting = null;
+        if (uploading != null && uploading.revision != revision) {
+            uploading = null;
+            if (upload != null) { MemoryUtil.memFree(upload); upload = null; }
         }
         if (uploading != null) {
             if (uploading.result.rgba().length == 0) {
@@ -134,15 +163,17 @@ public final class VoxelLighting {
         // Snapshot access is deliberately budgeted on the client thread; the worker only sees copied boxes.
         long deadline = System.nanoTime() + 1_000_000L;
         int count = 0;
-        while (collecting.cursor < SNAP * SNAP * SNAP && count++ < 2048) {
+        while (collecting.cursor < SNAP * SNAP * SNAP && count++ < 8192) {
             collecting.captureNext();
             if ((count & 31) == 0 && System.nanoTime() >= deadline) break;
         }
         if (collecting.cursor == SNAP * SNAP * SNAP) {
             Snapshot s = collecting; collecting = null;
+            lastUnloadedCells = s.unloaded;
+            if (s.unloaded > 0) { ready = false; return; }
             VoxelLightBaker.Input input = s.input();
             pending = CompletableFuture.supplyAsync(() -> new Job(
-                    VoxelLightBaker.bake(input, () -> generation != s.generation), s.x, s.y, s.z, s.revision, s.generation, s.candidates, input.lights().size()), WORKER)
+                    dev.impeccable.aurum.bake.IncidentLightBaker.bake(input, () -> generation != s.generation), s.x, s.y, s.z, s.revision, s.generation, s.candidates, input.lights().size(), input.lights()), WORKER)
                     .exceptionally(e -> { AurumMod.LOGGER.error("Voxel lighting bake failed; retaining vanilla fallback", e); return null; });
         }
     }
@@ -183,7 +214,7 @@ public final class VoxelLighting {
             originX = uploading.x; originY = uploading.y; originZ = uploading.z;
             recordPublished(uploading);
             bakedRevision = uploading.revision; ready = true; hasSources = true;
-            AurumMod.LOGGER.debug("Voxel field ready: side={}, faces={}, detail={}, bake={} ms, origin=({}, {}, {})",
+            AurumMod.LOGGER.debug("Voxel field ready: side={}, probes={}, detail={}, bake={} ms, origin=({}, {}, {})",
                     SIDE, r.faces(), detail, r.nanos() / 1_000_000L, originX, originY, originZ);
             uploading = null;
         }
@@ -196,13 +227,13 @@ public final class VoxelLighting {
         final int[] ids = new int[SNAP * SNAP * SNAP];
         final byte[] emission = new byte[ids.length];
         final List<float[]> shapes = new ArrayList<>();
-        final PriorityQueue<VoxelLightBaker.Light> lights = new PriorityQueue<>(17,
+        final PriorityQueue<VoxelLightBaker.Light> lights = new PriorityQueue<>(dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS + 1,
                 Comparator.comparingDouble(Snapshot::lightScore).reversed());
         final IdentityHashMap<BlockState, float[]> colours = new IdentityHashMap<>();
         final float warmth = AurumConfig.get().blockLightWarmth / 100f;
         final IdentityHashMap<BlockState, Integer> shapeCache = new IdentityHashMap<>();
         final BlockPos.Mutable pos = new BlockPos.Mutable();
-        int cursor, candidates;
+        int cursor, candidates, unloaded;
         Snapshot(ClientWorld world, int x, int y, int z, int subdivisions, long revision, long generation) {
             this.world = world; this.x = x; this.y = y; this.z = z; this.subdivisions = subdivisions;
             this.revision = revision; this.generation = generation;
@@ -211,18 +242,19 @@ public final class VoxelLighting {
         void captureNext() {
             int bx = cursor % SNAP, bz = (cursor / SNAP) % SNAP, by = cursor / (SNAP * SNAP);
             pos.set(x - MARGIN + bx, y - MARGIN + by, z - MARGIN + bz);
-            if (!world.isChunkLoaded(pos)) { ids[cursor++] = -1; return; }
+            if (!world.isChunkLoaded(pos)) { ids[cursor++] = -1; unloaded++; return; }
             BlockState state = world.getBlockState(pos);
             int level = state.getLuminance();
             Integer shape = shapeCache.get(state);
             String id = shape == null || level > 0 ? Registries.BLOCK.getId(state.getBlock()).getPath() : "";
-            if (level > 0) {
+            if (level > 0) emission[cursor] = (byte) level;
+            if (level > 0 && dev.impeccable.aurum.bake.IncidentLightBaker.couldContribute(bx + .5f - MARGIN, by + .5f - MARGIN, bz + .5f - MARGIN, SIDE, level)) {
                 candidates++;
                 float[] colour = colours.get(state);
                 if (colour == null) { colour = lightColour(id, warmth); colours.put(state, colour); }
                 VoxelLightBaker.Light light = new VoxelLightBaker.Light(bx + .5f, by + .5f, bz + .5f,
                         level, colour[0], colour[1], colour[2]);
-                if (lights.size() < 16) lights.add(light);
+                if (lights.size() < dev.impeccable.aurum.bake.IncidentLightBaker.MAX_LIGHTS) lights.add(light);
                 else if (lightScore(light) < lightScore(lights.peek())) { lights.poll(); lights.add(light); }
                 emission[cursor] = (byte) level;
             }

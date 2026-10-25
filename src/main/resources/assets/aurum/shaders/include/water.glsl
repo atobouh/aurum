@@ -139,8 +139,10 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos) {
     }
     // Light scattered back out of the water body (what deep water looks like), lit by sky and sun.
     vec3 deepAlbedo = vec3(0.008, 0.036, 0.052) * mix(vec3(1.0), tintN * 1.4, 0.35);
+    vec4 localCoverage;
+    vec3 localLight = aurum_localBlockLight(lightCoord, pos, ng, localCoverage);
     vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.45 * sunVisible) * deepAlbedo
-                   + u_BlockLightColor * deepAlbedo * aurum_lightLevel(lightCoord.x) * 0.5;
+                   + localLight * deepAlbedo * 0.5;
     vec3 deep = aurum_toLinear(aurum_tonemap(deepHdr));
     // A small surface tint keeps water present without hiding sand and stone just beneath it.
     vec3 under = behind * trans * vec3(0.91, 0.97, 0.99) + deep * (1.0 - trans);

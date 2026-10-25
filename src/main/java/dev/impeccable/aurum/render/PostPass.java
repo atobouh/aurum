@@ -19,7 +19,6 @@ import org.lwjgl.opengl.GL30C;
  * <p>Per frame, after the hand is drawn:
  * <ol>
  *   <li>Copy the scene colour (the pass cannot read and write the same texture).</li>
- *   <li>Bounce gather at 32x16 and a 1x1 temporal blend (the Badlands glow colour, used next frame by terrain).</li>
  *   <li>Sky extras at reduced resolution: clouds, god rays, flare occlusion, bloom ({@link SkyExtras}).</li>
  *   <li>The composite: fog, edge fade, clouds, rays, bloom, flare and grade in one full-screen draw into the
  *       main framebuffer.</li>
@@ -28,16 +27,12 @@ import org.lwjgl.opengl.GL30C;
  * without a depth copy, and the hand is never fogged.
  */
 public final class PostPass {
-    private static final int GATHER_W = 32, GATHER_H = 16;
     private static final int UNIT_A = 6, UNIT_B = 7, UNIT_C = 8, UNIT_D = 9;
 
     private static int width, height;
     private static int sceneTex, sceneFbo;
     private static int handDepthTex;
     private static int depthAttachmentPoint = GL30C.GL_DEPTH_ATTACHMENT;
-    private static int gatherTex, gatherFbo, gatherLevels;
-    private static final int[] bounceTex = new int[2], bounceFbo = new int[2];
-    private static int bounceIndex;
 
     private static boolean handSwapped, handValid;
     private static boolean checkedHandFbo, handSwapBroken;
@@ -128,39 +123,6 @@ public final class PostPass {
 
         boolean aurumWorld = TerrainUniforms.mode == 1;
 
-        // 2. Bounce: gather, mip down to one texel, ease toward it.
-        if (aurumWorld && c.bounceEnabled) {
-            ShaderProgram gather = ShaderManager.get("post/bounce_gather");
-            GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, gatherFbo);
-            GlStateManager._viewport(0, 0, GATHER_W, GATHER_H);
-            gather.bind();
-            gather.set1i("u_Scene", UNIT_A);
-            gather.set1i("u_Depth", UNIT_B);
-            gather.setMatrix("u_InvProj", invProj);
-            org.lwjgl.opengl.GL20C.glUniform2f(gather.uniform("u_TexelStep"), 0.5f / GATHER_W, 0.5f / GATHER_H);
-            GlUtil.bindTexture(UNIT_A, sceneTex);
-            GlUtil.bindTexture(UNIT_B, main.getDepthAttachment());
-            GlUtil.drawFullscreenTriangle();
-            GlUtil.bindTexture(UNIT_A, gatherTex);
-            GlStateManager._activeTexture(0x84C0 + UNIT_A);
-            GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
-            GlStateManager._activeTexture(0x84C0);
-
-            int prev = bounceIndex, next = 1 - bounceIndex;
-            ShaderProgram blend = ShaderManager.get("post/bounce_blend");
-            GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, bounceFbo[next]);
-            GlStateManager._viewport(0, 0, 1, 1);
-            blend.bind();
-            blend.set1i("u_Gather", UNIT_A);
-            blend.set1i("u_Previous", UNIT_C);
-            blend.set1f("u_GatherLod", gatherLevels);
-            blend.set1f("u_Blend", 0.04f);
-            GlUtil.bindTexture(UNIT_C, bounceTex[prev]);
-            GlUtil.drawFullscreenTriangle();
-            bounceIndex = next;
-            AurumTextures.setBounce(bounceTex[next]);
-        }
-
         // 3. Sky extras: clouds, god rays, flare occlusion, bloom.
         if (aurumWorld) {
             SkyExtras.run(sceneTex, main.getDepthAttachment(), worldView, worldProjection, invProj, invView);
@@ -181,7 +143,6 @@ public final class PostPass {
         comp.set1i("u_BeforeTranslucentDepth", 0);
         GlUtil.bindTexture(0, WaterPass.captured ? WaterPass.depthTexture() : AurumTextures.clear());
         comp.set1i("u_HandDepth", UNIT_C);
-        comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
         comp.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
         comp.set4f("u_SkyAppearance", Atmosphere.skyAppearance[0], Atmosphere.skyAppearance[1], 0f, 0f);
@@ -211,7 +172,7 @@ public final class PostPass {
         float cameraHeight = (float) Math.max(-8.0, MinecraftClient.getInstance().gameRenderer.getCamera().getPos().y - 63.0);
         comp.set4f("u_Fog", FogDirector.distanceDensity, FogDirector.heightDensity, 0.07f, cameraHeight);
         float far = MinecraftClient.getInstance().gameRenderer.getViewDistance();
-        float bounceFog = c.bounceEnabled ? 0.25f * c.bounceStrength / 100f : 0f;
+        float bounceFog = 0f; // Camera-screen tint is not a lighting source.
         // Whole-section visibility and asynchronously arriving chunks make the nominal outer radius
         // unreliable for a clean ocean horizon. Keep the clear foreground, then finish a broad fade
         // inside that boundary; this also avoids preserving a clipped reflection at the last section.
@@ -231,7 +192,6 @@ public final class PostPass {
         GlUtil.bindTexture(UNIT_A, sceneTex);
         GlUtil.bindTexture(UNIT_B, main.getDepthAttachment());
         GlUtil.bindTexture(UNIT_C, handDepthTex);
-        GlUtil.bindTexture(UNIT_D, AurumTextures.bounce());
         GlUtil.bindTexture(10, SkyState.texture());
         int clear = AurumTextures.clear();
         GlUtil.bindTexture(11, SkyExtras.cloudsDrawn ? SkyExtras.cloudTexture() : clear);
@@ -277,17 +237,6 @@ public final class PostPass {
                 stencil ? GL30C.GL_DEPTH_STENCIL : GL11C.GL_DEPTH_COMPONENT,
                 stencil ? GL30C.GL_UNSIGNED_INT_24_8 : GL11C.GL_FLOAT, GL11C.GL_NEAREST);
 
-        gatherTex = GlUtil.createTexture(GL30C.GL_RGBA16F, GATHER_W, GATHER_H, GL11C.GL_RGBA, GL11C.GL_FLOAT, GL11C.GL_LINEAR);
-        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER, GL11C.GL_LINEAR_MIPMAP_LINEAR);
-        GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
-        gatherLevels = (int) Math.floor(Math.log(Math.max(GATHER_W, GATHER_H)) / Math.log(2));
-        gatherFbo = fbo(gatherTex);
-        for (int i = 0; i < 2; i++) {
-            bounceTex[i] = GlUtil.createTexture(GL30C.GL_RGBA16F, 1, 1, GL11C.GL_RGBA, GL11C.GL_FLOAT, GL11C.GL_NEAREST);
-            bounceFbo[i] = fbo(bounceTex[i]);
-            GL11C.glClearColor(0.2f, 0.2f, 0.2f, 1f);
-            GL11C.glClear(GL11C.GL_COLOR_BUFFER_BIT);
-        }
         GlStateManager._bindTexture(0);
         main.beginWrite(false);
     }
@@ -303,14 +252,7 @@ public final class PostPass {
         if (sceneTex == 0) return;
         GlStateManager._deleteTexture(sceneTex);
         GlStateManager._deleteTexture(handDepthTex);
-        GlStateManager._deleteTexture(gatherTex);
         GlStateManager._glDeleteFramebuffers(sceneFbo);
-        GlStateManager._glDeleteFramebuffers(gatherFbo);
-        for (int i = 0; i < 2; i++) {
-            GlStateManager._deleteTexture(bounceTex[i]);
-            GlStateManager._glDeleteFramebuffers(bounceFbo[i]);
-        }
-        AurumTextures.setBounce(0);
         sceneTex = 0;
     }
 }

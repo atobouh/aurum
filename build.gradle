@@ -58,3 +58,11 @@ loom {
         }
     }
 }
+
+// Runs production source adapters without a graphics context; live GL tests remain a separate check.
+tasks.register('checkSurfaceLighting', JavaExec) {
+    dependsOn tasks.testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.impeccable.aurum.render.surface.CoreShaderContractCheck'
+}
+tasks.check.dependsOn tasks.checkSurfaceLighting
