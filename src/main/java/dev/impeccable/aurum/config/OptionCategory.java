@@ -81,6 +81,7 @@ public enum OptionCategory {
                     percent("fog_strength", 0, 200, () -> c.fogStrength, v -> c.fogStrength = v),
                     bool("height_fog", c.heightFog, v -> c.heightFog = v),
                     percent("biome_haze", 0, 100, () -> c.biomeHaze, v -> c.biomeHaze = v),
+                    percent("distance_haze", 0, 200, () -> c.distanceHaze, v -> c.distanceHaze = v),
                     bool("edge_fade", c.edgeFade, v -> c.edgeFade = v),
             };
             case WATER -> new SimpleOption<?>[]{

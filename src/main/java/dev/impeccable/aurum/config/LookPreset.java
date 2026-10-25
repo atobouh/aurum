@@ -32,6 +32,9 @@ public enum LookPreset {
         c.shadeWarmth = d.shadeWarmth;
         c.skySaturation = d.skySaturation;
         c.skyLavender = d.skyLavender;
+        c.skyClarity = d.skyClarity;
+        c.skyTemperature = d.skyTemperature;
+        c.distanceHaze = d.distanceHaze;
         c.sunsetIntensity = d.sunsetIntensity;
         c.horizonWarmth = d.horizonWarmth;
         c.fogStrength = d.fogStrength;
@@ -43,6 +46,10 @@ public enum LookPreset {
         c.aoBoost = d.aoBoost;
         switch (this) {
             case AIRY -> {
+                // The other looks were tuned on the pre-0.7.1 base; keep that base where they did not set a value.
+                c.skyClarity = 75;
+                c.skyTemperature = -10;
+                c.temperature = 0;
                 // Measured: L 0.55-0.59, saturation 0.18-0.26, warmth ~0, near-white sky, heavy haze.
                 c.exposure = 98;
                 c.saturation = 94;
@@ -60,6 +67,10 @@ public enum LookPreset {
                 c.aoBoost = 65;
             }
             case CLEAR -> {
+                // The other looks were tuned on the pre-0.7.1 base; keep that base where they did not set a value.
+                c.skyClarity = 75;
+                c.skyTemperature = -10;
+                c.vibrance = 108;
                 // Measured: daylight warmth ~0, saturation 0.23-0.37, pale blue sky, sunsets warmth +0.49.
                 c.exposure = 104;
                 c.saturation = 96;
@@ -75,6 +86,11 @@ public enum LookPreset {
                 c.cloudCoverage = 45;
             }
             case WARM -> {
+                // The other looks were tuned on the pre-0.7.1 base; keep that base where they did not set a value.
+                c.skyClarity = 75;
+                c.skyTemperature = -10;
+                c.contrast = 105;
+                c.skySaturation = 100;
                 // Measured: warmth +0.08 to +0.19 all day, lavender-pink sky, warm shade, saturation ~0.34.
                 c.exposure = 106;
                 c.saturation = 100;
@@ -87,6 +103,9 @@ public enum LookPreset {
                 c.cloudCoverage = 55;
             }
             case VIVID -> {
+                // The other looks were tuned on the pre-0.7.1 base; keep that base where they did not set a value.
+                c.skyClarity = 75;
+                c.skyTemperature = -10;
                 // Measured: L 0.37-0.48, cool (-0.03 to -0.07), saturated blue sky, sunsets +0.30, strong bloom.
                 c.exposure = 88;
                 c.saturation = 106;

@@ -153,3 +153,16 @@ the forest scattering and water-depth findings.
   - sun visibility includes cloud shadows;
   - reflected clouds come from the previous frame's cloud buffer.
 - Config version is now 11. Steps 8–10 are Codex's; step 11 turns terrain reflections on for every preset.
+
+## 0.7.1: post-processing pass (2026-10-25)
+
+- See docs/research/POST_PROCESSING.md.
+- New default grade:
+  - exposure 110, saturation 88, vibrance 100, contrast 110;
+  - temperature +12, sky saturation 70.
+- Codex's sky clarity and sky temperature default to 0. They stay available as sliders. The other looks keep
+  their earlier values (75 / −10).
+- New "Distance haze" setting (aerial perspective), default 100. It lives in the composite, separate from the
+  locked fog.
+- Bloom threshold changed from 0.85 / 0.10 to 0.77 / 0.14.
+- Config version is now 12. Only an untouched Aurum look is moved to the new values.

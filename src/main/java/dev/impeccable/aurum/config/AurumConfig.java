@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 11;
+    public int configVersion = 12;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -36,8 +36,8 @@ public final class AurumConfig {
     public int horizonWarmth = 100;
     public int rainDesaturation = 70;
     /** Display sky only: does not retune the sun/moon or sky irradiance on blocks. */
-    public int skyClarity = 75;
-    public int skyTemperature = -10;
+    public int skyClarity = 0;
+    public int skyTemperature = 0;
 
     // Lighting and colour
     public boolean lightingEnabled = true;
@@ -81,6 +81,8 @@ public final class AurumConfig {
     public boolean fogEnabled = true;
     public int fogStrength = 100;
     public int biomeHaze = 40;
+    /** Aerial perspective: distant land fades into the pale horizon air, as in the Nostalgia/Photon references. */
+    public int distanceHaze = 100;
     public boolean heightFog = true;
     public boolean edgeFade = true;
 
@@ -123,16 +125,16 @@ public final class AurumConfig {
     // Colour grade
     public Tonemap tonemap = Tonemap.FILMIC;
     public int whiteBalance = 100;
-    public int exposure = 100;
-    public int saturation = 100;
-    public int vibrance = 108;
-    public int contrast = 105;
+    public int exposure = 110;
+    public int saturation = 88;
+    public int vibrance = 100;
+    public int contrast = 110;
     public LookPreset look = LookPreset.AURUM;
     /** -50 cool .. +50 warm. */
-    public int temperature = 0;
+    public int temperature = 12;
     /** -50 cool shade .. +50 warm shade. */
     public int shadeWarmth = 0;
-    public int skySaturation = 100;
+    public int skySaturation = 70;
     /** -50 teal .. +50 lavender. */
     public int skyLavender = 0;
     public boolean sharpnessEnabled = true;
@@ -252,6 +254,25 @@ public final class AurumConfig {
             waterReflections = true;
             configVersion = 11;
         }
+        if (configVersion < 12) {
+            // 0.7.1 post-processing pass (docs/research/POST_PROCESSING.md): calmer colour, neutral-warm light, a
+            // pale horizon sky and distance haze, measured against the Nostalgia/Photon references. Only an
+            // untouched Aurum look moves; edited colours and the other looks keep their values.
+            if (look == LookPreset.AURUM && exposure == 100 && saturation == 100 && vibrance == 108
+                    && contrast == 105 && temperature == 0 && skySaturation == 100) {
+                exposure = 110;
+                saturation = 88;
+                vibrance = 100;
+                contrast = 110;
+                temperature = 12;
+                skySaturation = 70;
+                if (skyClarity == 75 && skyTemperature == -10) {
+                    skyClarity = 0;
+                    skyTemperature = 0;
+                }
+            }
+            configVersion = 12;
+        }
         skyClarity = clamp(skyClarity, 0, 100);
         skyTemperature = clamp(skyTemperature, -50, 50);
         waterStyleBlend = clamp(waterStyleBlend, 0, 100);
@@ -262,6 +283,7 @@ public final class AurumConfig {
         lightPixelGrid = lightPixelGrid == 4 || lightPixelGrid == 8 ? lightPixelGrid : 16;
         foliageDepth = clamp(foliageDepth, 0, 100);
         biomeHaze = clamp(biomeHaze, 0, 100);
+        distanceHaze = clamp(distanceHaze, 0, 200);
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;
             default -> 1024;

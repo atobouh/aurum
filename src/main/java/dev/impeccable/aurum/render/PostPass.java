@@ -181,7 +181,7 @@ public final class PostPass {
         // Opaque trees/blocks keep the original range and contrast. Only far transparent surfaces need
         // the broader boundary fade; query the copy only beyond its clear zone in the shader.
         comp.set4f("u_SurfaceEdge", WaterPass.captured ? 1f : 0f, far * 0.80f, far * 0.98f, 0f);
-        comp.set4f("u_Fog3", FogDirector.clearZone, 0.88f, 0.30f, 0f);
+        comp.set4f("u_Fog3", FogDirector.clearZone, 0.88f, 0.30f, c.fogEnabled ? c.distanceHaze / 100f * 0.0026f : 0f);
         boolean fog = aurumWorld && c.fogEnabled && SkyState.current() != null;
         boolean edge = aurumWorld && c.edgeFade && SkyState.current() != null;
         comp.set4f("u_Flags", fog ? 1f : 0f, edge ? 1f : 0f, handValid ? 1f : 0f, 1f);

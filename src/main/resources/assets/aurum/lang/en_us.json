@@ -215,6 +215,8 @@
   "aurum.option.foliage_depth": "Canopy depth",
   "aurum.option.foliage_depth.tooltip": "Preserve leaf-face direction and reduce sky fill inside dense crowns. Keeps biome and resource-pack colours.",
   "aurum.option.biome_haze": "Biome haze",
+  "aurum.option.distance_haze": "Distance haze",
+  "aurum.option.distance_haze.tooltip": "Distant land fades into the bright air near the horizon, which gives scenes depth. Nearby blocks are not affected. Warm toward a low sun.",
   "aurum.option.biome_haze.tooltip": "Extra mist in swamp biomes, including matching modded biome names. Lower values preserve forest colour and depth. Weather fog is controlled separately.",
   "aurum.option.light_edge_style": "Light edges",
   "aurum.option.light_edge_style.tooltip": "Natural: filtered penumbrae. Voxel Crisp: world-aligned sun/moon shadow cells, nearest local-light samples, and unblurred native-pixel shafts. Map resolution still limits geometric detail.",

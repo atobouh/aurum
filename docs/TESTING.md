@@ -422,3 +422,15 @@ Take them at noon looking up, plus once at golden hour facing the sun. Also send
 - Look at a sandy beach, a dirt bank and a stone wall in the water, at noon and at sunset. A thin, light line should follow every edge where water meets a block.
 - Up close it should be about one pixel line, and far away it should neither vanish nor flicker.
 - Shallow sand under the water must not get a line. Only blocks that cross the surface do.
+
+## 0.7.1: post-processing
+
+- **Noon over a forest or a lake:**
+  - Distant hills should fade into pale blue-white air while nearby blocks keep full colour.
+  - The sky should be paler, with a bright horizon.
+  - Clouds should be white, not blue-white.
+- **Looking down from a mountain:** the valley below should stay clear. Only far distances should haze.
+- **Golden hour toward the sun:** the haze should be warm, not grey.
+- **Rain:** check it is not too white or misty. "Distance haze" in F7 → Fog can be lowered.
+- **Settings:** an edited colour or another look must keep its values after the update.
+- **FPS:** the haze costs a few instructions per pixel in the existing composite pass, with no new pass.

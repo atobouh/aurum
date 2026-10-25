@@ -28,7 +28,7 @@ uniform mat4 u_InvView;     // rotation only, view -> world
 uniform vec3 u_SunDir;
 uniform vec4 u_SunGlow;     // rgb warm scattered sunlight, a = golden-hour amount
 uniform vec4 u_Fog;         // x distance density, y height density, z height falloff, w camera height above sea level
-uniform vec4 u_Fog3;        // x clear zone (blocks), y most the fog may cover, z fog desaturation
+uniform vec4 u_Fog3;        // x clear zone (blocks), y most the fog may cover, z fog desaturation, w aerial haze density
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
 uniform vec4 u_PixelLight; // x crisp light reconstruction, y world grid (used by the producer)
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
@@ -271,6 +271,31 @@ void main() {
                 // light; blending gamma values raised shadows and erased colour before the final grade.
                 scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
                                 pow(max(fogColor, vec3(0.0)), vec3(2.2)), saturate(f)), vec3(1.0 / 2.2));
+            }
+        }
+
+        if (u_Fog3.w > 0.0) {
+            // Aerial perspective: distant land fades into the bright horizon air (the references' depth:
+            // hills 150 blocks away read pale blue-white, layers separate). Thicker low down, thinner over
+            // mountains; off in caves and under cover. Warm toward a low sun through the same scattering.
+            // Mean air density along the ray (density falls off with height above sea level, scale 50 blocks):
+            // looking down from a hill crosses thin air, so the near valley stays clear; a level view through
+            // low air hazes most.
+            float h0 = max(u_Fog.w, 0.0), h1 = max(u_Fog.w + dir.y * dist, 0.0);
+            float lowAir = abs(h1 - h0) > 0.5 ? 50.0 * (exp(-h0 / 50.0) - exp(-h1 / 50.0)) / (h1 - h0)
+                                              : exp(-h0 / 50.0);
+            float aerial = (1.0 - exp(-max(dist - 32.0, 0.0) * u_Fog3.w)) * lowAir
+                         * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
+            if (aerial > 0.002) {
+                vec3 airRad = aurum_fogRadiance(dir, u_SunDir) / 0.75;
+                // Daylight haze is a slightly greyed horizon; at golden hour it keeps the sky's warmth.
+                airRad = mix(airRad, vec3(luminance(airRad)), 0.25 * (1.0 - u_SunGlow.a));
+                float toSunA = dot(dir, u_SunDir);
+                vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.15 + 0.85 * u_SunGlow.a);
+                if (u_Extras.w > 0.0) glow *= vl.r;
+                vec3 airColor = aurum_tonemap(airRad + glow);
+                scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
+                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.7, 0.45, u_SunGlow.a))), vec3(1.0 / 2.2));
             }
         }
 

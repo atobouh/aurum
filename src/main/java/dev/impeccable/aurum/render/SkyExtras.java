@@ -367,7 +367,8 @@ public final class SkyExtras {
         pre.bind();
         pre.set1i("u_Scene", UNIT_A);
         GL20C.glUniform2f(pre.uniform("u_Texel"), 1f / width, 1f / height);
-        GL20C.glUniform2f(pre.uniform("u_Threshold"), 0.85f, 0.10f);
+        // A lower, soft threshold: bright sky and sunlit clouds get the references' gentle glow, not only the sun.
+        GL20C.glUniform2f(pre.uniform("u_Threshold"), 0.77f, 0.14f);
         GlUtil.bindTexture(UNIT_A, sceneTex);
         GlUtil.drawFullscreenTriangle();
 
