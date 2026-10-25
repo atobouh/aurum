@@ -113,7 +113,8 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     // The pattern fades with distance (sub-pixel lines only shimmer) and on side faces it stays gentle.
     float patternFade = (1.0 - smoothstep(12.0, 48.0, dist)) * (ng.y > 0.3 ? 1.0 : 0.4);
     // Gentle: the reference keeps a near-mirror that only wavers along the lines.
-    float k = 0.45 * patternFade * u_WaterParams.w;
+    // 0.7.5: calmer (user: "the water effect is pretty strong"); every texel was catching the sky as a speck.
+    float k = 0.25 * patternFade * u_WaterParams.w;
     vec3 n = normalize(ng - (T * gx + B * gy) * k);
     if (ng.y > 0.3) {
         vec2 swell = texture(u_WaterNormalTex, wp.xz / 16.0 + u_WaterScroll.xy * 0.6).rg * 2.0 - 1.0;
@@ -170,7 +171,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     vec3 skinHdr = skin * (u_SkyAmbient * skyVis * 1.2 + u_LightColor * ndl * sunVisible
                            + localLight);
     vec3 skinLit = aurum_toLinear(aurum_tonemap(skinHdr));
-    under = mix(under, skinLit, 0.10);
+    under = mix(under, skinLit, 0.07);
 
     // ---- Reflection: terrain (screen space) where found, otherwise the real sky.
     vec3 R = reflect(V, n);
@@ -200,7 +201,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     fresnel = min(fresnel + 0.35 * (1.0 - cosT) * (1.0 - cosT), 0.97);
     vec3 color = mix(under, refl, fresnel);
     // The texture's light streaks sit on top of the reflection, faint, like the reference's pixel lines.
-    color += skinLit * line * 0.35 * (0.4 + 0.6 * fresnel);
+    color += skinLit * line * 0.18 * (0.4 + 0.6 * fresnel);
 
     // ---- Sun: one clean, bright reflection that breaks up only where the pixel pattern tilts the surface.
     if (ng.y > 0.3 && sunUp > 0.0) {
@@ -217,16 +218,18 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     // slowly so the line reads as lapping water rather than a painted stroke.
     if (!openBottom && ng.y > 0.3) {
         float depthV = column * max(-V.y, 0.03);
-        float w = 0.07 + dist * 0.003;
+        // About 1.5 pixels wide on screen whatever the angle: at low views a fixed world width spread into a wide
+        // pale band along the far shore (user, 0.7.4).
+        float w = clamp(fwidth(depthV) * 1.5, 0.01, 0.10);
         float line0 = 1.0 - smoothstep(0.0, w, depthV);
-        float halo = 1.0 - smoothstep(0.0, w * 6.0, depthV);
+        float halo = 1.0 - smoothstep(0.0, w * 4.0, depthV);
         vec2 cell = floor(wp.xz * 8.0);
         float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
         float shimmer = 0.7 + 0.3 * sin(6.2831853 * (h + u_WaterScroll.x * 4.0));
         vec3 foamHdr = u_SkyAmbient * skyVis * 1.3 + u_LightColor * sunUp * sunVisible * 0.7
                      + localLight * 0.4;
         vec3 foam = aurum_toLinear(aurum_tonemap(foamHdr));
-        color = mix(color, foam, clamp(line0 * 0.95 * shimmer + halo * 0.16, 0.0, 0.92));
+        color = mix(color, foam, clamp(line0 * 0.85 * shimmer + halo * 0.10, 0.0, 0.85));
     }
 
     return aurum_toDisplay(color);

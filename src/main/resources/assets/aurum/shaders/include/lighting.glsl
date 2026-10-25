@@ -14,6 +14,11 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     // Sodium bakes vanilla's per-face shade into the AO channel; divide it back out so the sun does the shading.
     float shade = ng.x * ng.x * 0.6 + ng.z * ng.z * 0.8 + ng.y * ng.y * (ng.y > 0.0 ? 1.0 : 0.5);
     float ao = clamp(vertexColor.a / max(shade, 0.45), 0.0, 1.0);
+    // Vanilla interpolates corner occlusion linearly across a whole block face, so on thin blocks (snow layers,
+    // slabs) it reads as wide, blurry dark bands (user, since 0.0.1). Square the occlusion amount: full strength
+    // at the corner, falling off quickly away from it, so the darkening hugs the actual edge.
+    float occ = 1.0 - ao;
+    ao = 1.0 - min(occ * occ / 0.4, occ);
     ao = pow(ao, 1.0 + u_TerrainParams.y);
 
     bool foliage = aurum_isFoliage(material);

@@ -462,3 +462,10 @@ Take them at noon looking up, plus once at golden hour facing the sun. Also send
   - shallow water should show its bed without pale rectangles;
   - polished blocks should still shine.
 - **Under soft clouds:** the land should stay lit and colourful, with gentle cloud shadows.
+
+## 0.7.5
+
+- **Snow layers, slabs and steps:** edges should get a thin, crisp darkening, not wide blurry bands.
+- **Water:**
+  - a calmer mirror with faint lines, without bright glitter on every pixel;
+  - the far shore should show a thin line, not a pale strip.

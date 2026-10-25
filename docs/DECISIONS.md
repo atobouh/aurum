@@ -206,3 +206,15 @@ the forest scattering and water-depth findings.
   - Verified on a Seraphic reproduction: grass keeps its true colour.
 - **Cloud shadow default 65 → 40.** Under soft clouds, 65 % left most of the land dark and dull (user images 2
   and 3). Config v13 moves only an untouched 65.
+
+## 0.7.5: second round of user test fixes (2026-10-25)
+
+- **Snow edges** (blurry dark lines since 0.0.1): vanilla's per-vertex occlusion is linear across a full face,
+  and the AO boost deepened it. The occlusion amount is now squared (`occ² / 0.4`, never more than `occ`), so
+  corners keep full strength and the darkening falls off within a fraction of the face.
+- **Water "too strong":**
+  - texture-normal strength 0.45 → 0.25;
+  - line overlay 0.35 → 0.18;
+  - skin veil 0.10 → 0.07.
+- **Shore line:** its width is now about 1.5 px from `fwidth` of the vertical depth (was 0.07 + 0.003·distance).
+  The old width became a wide pale band along far shores at low angles.
