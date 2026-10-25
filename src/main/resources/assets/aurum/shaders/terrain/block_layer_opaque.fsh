@@ -12,6 +12,9 @@ uniform sampler2D u_BlockTex;
 #import <aurum:include/shadow.glsl>
 #import <aurum:include/sky_lut.glsl>
 #import <aurum:include/pbr.glsl>
+#import <aurum:include/voxel_light.glsl>
+#import <aurum:include/cloud_shadow.glsl>
+#import <aurum:include/surface_light.glsl>
 #import <aurum:include/lighting.glsl>
 #import <aurum:include/water.glsl>
 
@@ -37,8 +40,11 @@ void main() {
     // 3D blocks: move the texture lookup along the pack's height map (Aurum lighting only, opaque passes).
     vec2 uv = v_TexCoord;
     if (u_AurumMode == 1 && u_AurumPass == 0) uv = aurum_parallax(v_TexCoord, v_Position);
-    vec4 diffuseColor = uv == v_TexCoord ? texture(u_BlockTex, v_TexCoord, v_MaterialMipBias)
-                                         : textureGrad(u_BlockTex, uv, dFdx(v_TexCoord), dFdy(v_TexCoord));
+    // A modest close-range mip bias restores texel definition on solid blocks. Cutout foliage keeps Sodium's
+    // filtering to avoid shimmer while it moves; parallax uses the original UV derivatives to stay stable.
+    float detailBias = u_AurumMode == 1 && v_Material == 0 && dot(v_Position, v_Position) < 2304.0 ? -0.25 : 0.0;
+    vec4 diffuseColor = uv == v_TexCoord ? texture(u_BlockTex, v_TexCoord, v_MaterialMipBias + detailBias)
+                                         : textureGrad(u_BlockTex, uv, dFdx(v_TexCoord) * 0.84, dFdy(v_TexCoord) * 0.84);
 
 #ifdef USE_FRAGMENT_DISCARD
     if (diffuseColor.a < v_MaterialAlphaCutoff) {
@@ -63,11 +69,12 @@ void main() {
         // Translucent pass: water sprites get Aurum water; glass, ice and the rest keep the normal lighting.
         int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5) & 15;
         if (id == 9) {
+            if (u_LightingDebug > 0) { fragColor = vec4(0.8, 0.0, 0.8, 1.0); return; }
             fragColor = vec4(aurum_shadeWater(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord), 1.0);
             return;
         }
     }
 
-    vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, uv, v_MaterialMipBias, v_Material);
+    vec3 lit = aurum_shadeTerrain(diffuseColor, v_Color, v_LightCoord, v_Position, v_TexCoord, uv, v_MaterialMipBias + detailBias, v_Material);
     fragColor = vec4(lit, diffuseColor.a);
 }

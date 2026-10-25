@@ -5,6 +5,7 @@ uniform sampler2D u_SkyLut;
 uniform float u_SkyGrade;
 // Look-preset sky tone: x saturation offset (0 = as is), y lavender (+) / golden (-) tint. Unset = neutral.
 uniform vec4 u_SkyTone;
+uniform vec4 u_SkyAppearance; // x daylight clarity, y daytime sky temperature; lighting stays unchanged
 
 // The sky is viewed directly and through haze; with the linear tone curve it needs its own gain to read as the
 // bright, open Minecraft sky (terrain exposure is anchored on lit surfaces, not on sky radiance).
@@ -15,11 +16,22 @@ vec3 aurum_skyLut(float y, float cosA) {
     // as a painted stripe) and never filter into the below-horizon half.
     float v = 0.5 + 0.5 * sqrt(max(y, 0.0045));
     float u = sqrt(clamp(0.5 - 0.5 * cosA, 0.0, 1.0));
-    // Daytime sky grade, matched to the references' daylight skies (paler, lighter blue than single scattering
-    // gives): desaturation and lift. Faded out for golden hour, whose colours it washed out (look lab: warmth
-    // +0.06 -> -0.04). Also applies to fog and cloud light, which read the same table.
-    vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * SKY_GAIN;
-    c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.32) * 1.12, u_SkyGrade);
+    // A small daylight lift leaves room for the blue-to-white gradient from the atmosphere model. The former
+    // 32% desaturation and 12% lift made the open sky almost the same pale colour in every direction.
+    // Leave the open sky bright, but give the sun-facing sunset more headroom for the disc and cloud light.
+    // Compress the broad sun-facing sky, not just the disc's immediate pixels. The low sun should keep
+    // its amber gradient while the open sky away from it retains the full daytime gain.
+    float gain = mix(SKY_GAIN, 0.78, u_SkyTone.z * pow(max(cosA, 0.0), 1.5));
+    vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * gain;
+    // Long atmospheric paths and the camera shoulder made the low noon sky almost neutral white. Shape
+    // only displayed daylight radiance, over a broad elevation range, instead of warming/cooling blocks.
+    float clarity = u_SkyGrade * u_SkyAppearance.x;
+    float lowSky = 1.0 - smoothstep(0.0, 0.35, max(y, 0.0));
+    c *= mix(vec3(1.0), vec3(0.60, 0.77, 1.0), clarity * lowSky);
+    float grey = mix(0.12, 0.035, u_SkyAppearance.x);
+    c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), grey)
+                    * mix(1.035, 1.0, u_SkyAppearance.x), u_SkyGrade);
+    c *= vec3(1.0) + vec3(0.15, 0.015, -0.12) * u_SkyAppearance.y * u_SkyGrade;
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
     c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x), vec3(0.0));
     vec3 tone = u_SkyTone.y >= 0.0 ? u_SkyTone.y * vec3(0.07, -0.05, 0.09) : -u_SkyTone.y * vec3(0.12, 0.03, -0.38);

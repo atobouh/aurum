@@ -6,9 +6,12 @@ uniform int u_AurumMode;          // 0 = vanilla path (other dimensions, underwa
 uniform vec3 u_LightDir;          // direction towards the sun (day) or moon (night), world space
 uniform vec3 u_LightColor;        // direct light colour, linear HDR
 uniform vec3 u_SkyAmbient;        // light from the sky dome, linear HDR
+uniform vec3 u_SkySideToward;     // vertical sky irradiance toward the sun's azimuth
+uniform vec3 u_SkySideAway;       // vertical sky irradiance opposite the sun
 uniform vec3 u_GroundAmbient;     // light bounced up from the ground, linear HDR
 uniform vec3 u_BlockLightColor;   // torch colour at full block light, linear HDR
 uniform vec4 u_TerrainParams;     // x normal strength, y AO boost, z minimum light, w bounce strength
+                                // depth-only shadow mode: xyz map centre relative to light camera, w plant radius
 
 uniform sampler2D u_NormalTex;    // baked normal atlas: rg normal, b coating noise, a material id
 uniform sampler2D u_BounceTex;    // 1x1 average colour around the player (previous frame), linear
@@ -25,3 +28,6 @@ uniform sampler2D u_PbrTex;       // r smoothness, g F0 / metal, b emission, a h
 uniform vec4 u_PbrParams;         // x specular on, y parallax depth (blocks, 0 = off), z parallax distance, w emission strength
 uniform vec3 u_SunDirW;           // direction toward the sun, world space
 uniform float u_PbrScale;         // normal/PBR atlas texels per block-atlas texel (pack detail, 1-4)
+
+// Development contribution isolation; always zero outside the development client.
+uniform int u_LightingDebug;

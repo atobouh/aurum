@@ -25,7 +25,7 @@ import org.lwjgl.opengl.GL30C;
  * <ol>
  *   <li>Clouds, blocky or soft style, at 1/2 or full resolution (replace vanilla's clouds).</li>
  *   <li>God rays at 1/4 resolution: open-sky mask, then a radial blur toward the sun; and volumetric light, the
- *       sunlit share of the air along each ray from the shadow map (1/4 resolution).</li>
+ *       sunlit share of the air along each ray from the shadow map (1/3 resolution).</li>
  *   <li>Lens-flare occlusion into one texel, read directly by the composite (no CPU readback).</li>
  *   <li>Bloom: threshold to 1/4, dual-filter down to 1/32 and back up to 1/4.</li>
  * </ol>
@@ -42,8 +42,10 @@ public final class SkyExtras {
     private static boolean cloudFullRes;
     private static long lastDriftNanos;
     private static double drift;
+    /** Development capture harness only; normal clients always advance the wind. */
+    public static boolean freezeCloudMotion;
     private static int cloudTex, cloudFbo, cloudW, cloudH;
-    private static int maskTex, maskFbo, raysTex, raysFbo, vlTex, vlFbo, aoTex, aoFbo, quarterW, quarterH, halfW, halfH;
+    private static int maskTex, maskFbo, raysTex, raysFbo, vlTex, vlFbo, aoTex, aoFbo, quarterW, quarterH, thirdW, thirdH, halfW, halfH;
     private static final int[] flareTex = new int[2], flareFbo = new int[2];
     private static int flareIndex;
     private static final int[] bloomTex = new int[BLOOM_LEVELS], bloomFbo = new int[BLOOM_LEVELS];
@@ -144,7 +146,8 @@ public final class SkyExtras {
             ShaderProgram blur = ShaderManager.get("post/rays_blur");
             if (mask != null && blur != null) {
                 GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, maskFbo);
-                GlStateManager._viewport(0, 0, quarterW, quarterH);
+                // Keep close leaves and thin gaps in the mask before the radial blur downsamples the rays.
+                GlStateManager._viewport(0, 0, halfW, halfH);
                 mask.bind();
                 mask.set1i("u_Depth", UNIT_A);
                 mask.set1i("u_Clouds", UNIT_B);
@@ -153,6 +156,7 @@ public final class SkyExtras {
                 GlUtil.drawFullscreenTriangle();
 
                 GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, raysFbo);
+                GlStateManager._viewport(0, 0, quarterW, quarterH);
                 blur.bind();
                 blur.set1i("u_Mask", UNIT_A);
                 GL20C.glUniform2f(blur.uniform("u_SunUv"), sx, sy);
@@ -170,14 +174,38 @@ public final class SkyExtras {
         ShaderProgram vl = ShaderManager.get("post/volumetric");
         if (volumetricStrength > 0.002f && vl != null) {
             GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, vlFbo);
-            GlStateManager._viewport(0, 0, quarterW, quarterH);
+            GlStateManager._viewport(0, 0, thirdW, thirdH);
             vl.bind();
             vl.set1i("u_Depth", UNIT_A);
             vl.set1i("u_ShadowMap", UNIT_B);
+            vl.set3f("u_SunDirW", sun[0], sun[1], sun[2]);
+            vl.set4f("u_PixelLight", c.lightEdgeStyle == dev.impeccable.aurum.config.LightEdgeStyle.VOXEL_CRISP ? 1f : 0f,
+                    c.lightPixelGrid, 0f, 0f);
+            vl.set3f("u_RayWorldAnchor", dev.impeccable.aurum.render.terrain.TerrainUniforms.cameraMod[0],
+                    dev.impeccable.aurum.render.terrain.TerrainUniforms.cameraMod[1],
+                    dev.impeccable.aurum.render.terrain.TerrainUniforms.cameraMod[2]);
+            vl.set1i("u_CloudSdf", UNIT_C);
+            vl.set4f("u_CloudShadow", (float) (world.getDimensionEffects().getCloudsHeight() + c.cloudHeight
+                            - ShadowRenderer.cameraY + 7), cloudsActive && c.cloudShadowsEnabled ? c.cloudShadowStrength / 100f : 0f,
+                    cloudDrift(), c.cloudMotionVariation / 100f);
+            vl.set4f("u_CloudLayout", cloudOffsetX(ShadowRenderer.cameraX), cloudOffsetZ(ShadowRenderer.cameraZ),
+                    Math.max(-cloudCoverage(world, tickDelta), -0.8f * rain), c.cloudsPackShapes ? 1f : 0f);
+            GlUtil.bindTexture(UNIT_C, CloudBaker.texture());
+            int outdoorTaps = c.shadowResolution >= 2048 ? 16 : c.shadowResolution >= 1536 ? 12 : 10;
+            int openingTaps = c.shadowResolution >= 2048 ? 24 : c.shadowResolution >= 1536 ? 20 : 16;
+            int taps = FogDirector.enclosed > 0.5f ? openingTaps : outdoorTaps;
+            if (c.lightEdgeStyle == dev.impeccable.aurum.config.LightEdgeStyle.VOXEL_CRISP) {
+                taps = FogDirector.enclosed > 0.5f
+                        ? (c.shadowResolution >= 2048 ? 80 : c.shadowResolution >= 1536 ? 64 : 48)
+                        : (c.shadowResolution >= 2048 ? 48 : c.shadowResolution >= 1536 ? 40 : 32);
+            }
+            vl.set1i("u_SampleCount", taps);
             vl.setMatrix("u_ShadowMatrix", ShadowRenderer.samplingMatrix());
             vl.setMatrix("u_InvProj", invProj);
             vl.setMatrix("u_InvView", invView);
-            vl.set4f("u_Params", ShadowRenderer.DISTORTION, ShadowRenderer.range() * 0.95f, 0.0004f, 0f);
+            float airExtinction = 0.00020f + 0.0009f * haze;
+            vl.set1f("u_LocalDust", 0.0045f * FogDirector.enclosed);
+            vl.set4f("u_Params", ShadowRenderer.DISTORTION, ShadowRenderer.range() * 0.95f, 0.0004f, airExtinction);
             GlUtil.bindTexture(UNIT_A, depthTex);
             GlUtil.bindTexture(UNIT_B, ShadowRenderer.frontTexture());
             GlUtil.drawFullscreenTriangle();
@@ -239,6 +267,26 @@ public final class SkyExtras {
         GpuTimers.end(t);
     }
 
+    /** Advance once before terrain: visible clouds and their shadows share the same frozen frame state. */
+    public static void updateCloudMotion() {
+        AurumConfig c = AurumConfig.get();
+        // Drift: 100% is 3x vanilla's 0.03 blocks per tick (user: at vanilla speed the clouds looked still).
+        // Accumulated per frame so the speed slider never makes the clouds jump. Wrapped at 12288 blocks, a whole
+        // number of both the vanilla layout period (3072) and the shader's noise period (4096).
+        long now = System.nanoTime();
+        double dt = lastDriftNanos == 0 ? 0 : Math.min((now - lastDriftNanos) / 1e9, 0.25);
+        lastDriftNanos = now;
+        if (!freezeCloudMotion && !MinecraftClient.getInstance().isPaused()) drift = (drift + dt * 20.0 * 0.09 * c.cloudSpeed / 100.0) % 12288.0;
+    }
+
+    public static float cloudDrift() { return (float) mod(drift, 4096.0); }
+    public static float cloudOffsetX(double cameraX) { return (float) mod((cameraX + drift) / 12.0, CloudBaker.size()); }
+    public static float cloudOffsetZ(double cameraZ) { return (float) mod(cameraZ / 12.0 + 0.33, CloudBaker.size()); }
+    public static float cloudCoverage(ClientWorld world, float tickDelta) {
+        return (AurumConfig.get().cloudCoverage - 50) / 50f * 0.8f
+                + 0.8f * world.getRainGradient(tickDelta) + 0.3f * world.getThunderGradient(tickDelta);
+    }
+
     private static void drawClouds(ClientWorld world, Camera camera, Matrix4f invProj, Matrix4f invView,
                                    Matrix4f projection, float rain, float tickDelta, AurumConfig c) {
         ShaderProgram p = ShaderManager.get(program(c));
@@ -247,13 +295,6 @@ public final class SkyExtras {
         Vec3d cam = camera.getPos();
         int size = CloudBaker.size();
         double blocksPerTexel = 12.0 * 256.0 / size;
-        // Drift: 100% is 3x vanilla's 0.03 blocks per tick (user: at vanilla speed the clouds looked still).
-        // Accumulated per frame so the speed slider never makes the clouds jump. Wrapped at 12288 blocks, a whole
-        // number of both the vanilla layout period (3072) and the shader's noise period (4096).
-        long now = System.nanoTime();
-        double dt = lastDriftNanos == 0 ? 0 : Math.min((now - lastDriftNanos) / 1e9, 0.25);
-        lastDriftNanos = now;
-        if (!MinecraftClient.getInstance().isPaused()) drift = (drift + dt * 20.0 * 0.09 * c.cloudSpeed / 100.0) % 12288.0;
         float off1x = (float) mod((cam.x + drift) / blocksPerTexel, size);
         float off1y = (float) mod(cam.z / blocksPerTexel + 0.33, size);
 
@@ -275,6 +316,7 @@ public final class SkyExtras {
         p.set1i("u_Noise", UNIT_B);
         p.set1i("u_SkyLut", 10);
         p.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
+        p.set4f("u_SkyAppearance", Atmosphere.skyAppearance[0], Atmosphere.skyAppearance[1], 0f, 0f);
         p.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], dev.impeccable.aurum.director.Atmosphere.golden, 0f);
         p.setMatrix("u_InvProj", invProj);
         p.setMatrix("u_InvView", invView);
@@ -286,7 +328,7 @@ public final class SkyExtras {
         SkyLut lut = SkyState.current();
         p.set4f("u_SunGlow", lut.sunGlow[0], lut.sunGlow[1], lut.sunGlow[2], Atmosphere.golden);
         // Noise coordinates wrap at 4096 blocks (a whole number of tiles at every scale the shader uses).
-        p.set4f("u_Layers", base, maxDist, (float) mod(drift, 4096.0), 0f);
+        p.set4f("u_Layers", base, maxDist, cloudDrift(), c.cloudMotionVariation / 100f);
         GL20C.glUniform2f(p.uniform("u_NoiseCam"), (float) mod(cam.x + drift, 4096.0), (float) mod(cam.z, 4096.0));
         p.set4f("u_Offset", off1x, off1y, 0f, 0f);
         p.set1f("u_ShapeSet", c.cloudsPackShapes ? 1f : 0f);
@@ -384,15 +426,17 @@ public final class SkyExtras {
         cloudFbo = fbo(cloudTex);
         quarterW = Math.max(1, w / 4);
         quarterH = Math.max(1, h / 4);
-        maskTex = GlUtil.createTexture(GL30C.GL_R8, quarterW, quarterH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
+        halfW = Math.max(1, w / 2);
+        halfH = Math.max(1, h / 2);
+        thirdW = Math.max(1, w / 3);
+        thirdH = Math.max(1, h / 3);
+        maskTex = GlUtil.createTexture(GL30C.GL_R8, halfW, halfH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         maskFbo = fbo(maskTex);
         raysTex = GlUtil.createTexture(GL30C.GL_R8, quarterW, quarterH, GL11C.GL_RED, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         raysFbo = fbo(raysTex);
-        halfW = Math.max(1, w / 2);
-        halfH = Math.max(1, h / 2);
-        // Quarter resolution: with realistic density the beams are soft, and the edge-aware upscale keeps
-        // silhouettes clean; a quarter of the cost of 0.3.3-0.4.0's half resolution.
-        vlTex = GlUtil.createTexture(GL30C.GL_RG8, quarterW, quarterH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
+        // One-third resolution resolves nearby beams better than quarter resolution. Ten march steps below
+        // keep the total shadow taps about 1.5x the old pass, far below a full-resolution volumetric march.
+        vlTex = GlUtil.createTexture(GL30C.GL_RG8, thirdW, thirdH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         vlFbo = fbo(vlTex);
         aoTex = GlUtil.createTexture(GL30C.GL_RG8, halfW, halfH, GL30C.GL_RG, GL11C.GL_UNSIGNED_BYTE, GL11C.GL_LINEAR);
         aoFbo = fbo(aoTex);

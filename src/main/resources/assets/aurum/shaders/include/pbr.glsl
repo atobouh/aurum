@@ -15,6 +15,7 @@ int aurum_atlasFlags(vec2 uv) {
 // g_pomShadow (1 lit, 0 shadowed by the relief).
 vec3 g_pomWall = vec3(0.0);
 float g_pomShadow = 1.0;
+float g_pomCavity = 0.0;
 
 float aurum_pomDepthAt(ivec2 cell, ivec2 tmin, ivec2 tsize) {
     // GLSL's % is undefined for negative operands, which broke the relief on faces whose texture runs the other
@@ -30,9 +31,14 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
     vec2 duvx = dFdx(uv), duvy = dFdy(uv);
     g_pomWall = vec3(0.0);
     g_pomShadow = 1.0;
+    g_pomCavity = 0.0;
     if (u_PbrParams.y <= 0.0) return uv;
     float dist = length(pos);
     if (dist > u_PbrParams.z) return uv;
+    // Relief smaller than a screen pixel only adds aliasing and ray-march cost. Keep it for blocks whose texels
+    // can actually be seen; this naturally reaches farther at 1080p than in a small test window.
+    vec2 footprint = (abs(duvx) + abs(duvy)) * vec2(textureSize(u_PbrTex, 0));
+    if (max(footprint.x, footprint.y) > 0.90) return uv;
     int flags = aurum_atlasFlags(uv);
     // Aligned sprite with a height map (from the pack, or generated from the texture).
     if ((flags & 0x80) == 0) return uv;
@@ -81,7 +87,11 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
     if (sHit > 0.0 && wallAxis >= 0 && sHit == sEnter) {
         // A wall faces back along the step: -u or -v (world direction of increasing u is along gu).
         vec3 axis = wallAxis == 0 ? gu * float(stepDir.x) : gv * float(stepDir.y);
-        g_pomWall = -normalize(axis);
+        // Authored height maps can support crisp vertical walls. Luminance-derived heights cannot;
+        // soften their wall normal to retain a raised-pixel impression without black/white striping.
+        g_pomWall = (flags & 0x40) != 0 ? -normalize(axis) : normalize(mix(ng, -normalize(axis), 0.55));
+        // A deeper exposed pixel wall receives less open-sky light than the face at the top of the relief.
+        g_pomCavity = clamp(sHit, 0.0, 1.0);
     }
     vec2 pHit = p0 + dp * sHit;
     // Keep the lookup inside the hit cell (texel centre on the crossed axis) so walls show the cell's colour.
@@ -102,7 +112,10 @@ vec2 aurum_parallax(vec2 uv, vec3 pos) {
             q += lp * stepW;
             s -= ds;
             if (s <= 0.0) break;
-            if (aurum_pomDepthAt(ivec2(floor(q)), tmin, tsize) < s - 0.002) { g_pomShadow = 0.0; break; }
+            if (aurum_pomDepthAt(ivec2(floor(q)), tmin, tsize) < s - 0.002) {
+                g_pomShadow = (flags & 0x40) != 0 ? 0.0 : 0.68;
+                break;
+            }
         }
     } else {
         g_pomShadow = 1.0;

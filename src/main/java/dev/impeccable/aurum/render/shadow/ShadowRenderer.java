@@ -209,12 +209,12 @@ public final class ShadowRenderer {
     }
 
     /**
-     * The light direction used for the map: never lower than ~10 degrees. Real shadows keep stretching toward the
-     * horizon, but past ~6x an object's height they cross half the map and read as a glitch (user feedback), so
-     * they stop lengthening there and fade out as the sun goes lower.
+     * The light direction used for the map: never lower than ~7 degrees. Low-sun shadows must reach across
+     * multiple grass and path blocks to give terrain the depth seen in the matched references. The clamp still
+     * bounds their length to roughly 8x an object's height and avoids horizon-length artifacts.
      */
     private static float[] buildLightDir() {
-        float x = Atmosphere.lightDir[0], y = Math.max(Atmosphere.lightDir[1], 0.17f), z = Atmosphere.lightDir[2];
+        float x = Atmosphere.lightDir[0], y = Math.max(Atmosphere.lightDir[1], 0.12f), z = Atmosphere.lightDir[2];
         float len = (float) Math.sqrt(x * x + y * y + z * z);
         return new float[]{x / len, y / len, z / len};
     }
@@ -275,6 +275,9 @@ public final class ShadowRenderer {
 
         int previousMode = TerrainUniforms.mode;
         TerrainUniforms.mode = 2;
+        TerrainUniforms.shadowCentre[0] = (float) (m.originX - m.camX);
+        TerrainUniforms.shadowCentre[1] = (float) (m.originY - m.camY);
+        TerrainUniforms.shadowCentre[2] = (float) (m.originZ - m.camZ);
         RenderSystem.enablePolygonOffset();
         RenderSystem.polygonOffset(1.1f, 4.0f);
         RenderDevice.enterManagedCode();

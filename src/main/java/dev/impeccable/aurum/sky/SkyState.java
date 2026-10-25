@@ -34,6 +34,10 @@ public final class SkyState {
     private static CompletableFuture<SkyLut> pending;
     private static int texture;
     private static FloatBuffer upload;
+    private static final float[] displayed = new float[SkyLut.WIDTH * SkyLut.HEIGHT * 3];
+    private static final float[] blendFrom = new float[displayed.length];
+    private static long blendStarted;
+    private static boolean blending;
 
     private SkyState() {}
 
@@ -43,9 +47,27 @@ public final class SkyState {
             SkyLut built = pending.getNow(null);
             pending = null;
             if (built != null) {
+                SkyLut previous = current;
                 current = built;
-                uploadTexture(built);
+                if (previous != null && Math.abs(previous.sunY - built.sunY) < 0.05f
+                        && Math.abs(previous.rain - built.rain) < 0.2f) {
+                    System.arraycopy(displayed, 0, blendFrom, 0, displayed.length);
+                    blendStarted = System.nanoTime();
+                    blending = true;
+                } else {
+                    System.arraycopy(built.rgb, 0, displayed, 0, displayed.length);
+                    blending = false;
+                    uploadTexture(displayed);
+                }
             }
+        }
+        if (blending) {
+            // The CPU has already computed both LUTs. Blend the small texture for a quarter second so sky and
+            // terrain lighting ease together without adding a second sky fetch to every screen pixel.
+            float t = Math.min(1f, (System.nanoTime() - blendStarted) / 250_000_000f);
+            for (int i = 0; i < displayed.length; i++) displayed[i] = blendFrom[i] + (current.rgb[i] - blendFrom[i]) * t;
+            uploadTexture(displayed);
+            if (t >= 1f) blending = false;
         }
         if (pending != null) return;
 
@@ -66,7 +88,8 @@ public final class SkyState {
         if (cur == null) {
             // First frame: build synchronously once so there is never a frame without a sky.
             current = SkyLut.build(sunY, rain, thunder, si, hw, rd);
-            uploadTexture(current);
+            System.arraycopy(current.rgb, 0, displayed, 0, displayed.length);
+            uploadTexture(displayed);
         } else {
             pending = CompletableFuture.supplyAsync(() -> SkyLut.build(sunY, rain, thunder, si, hw, rd), WORKER)
                     .exceptionally(e -> {
@@ -84,7 +107,7 @@ public final class SkyState {
         return texture;
     }
 
-    private static void uploadTexture(SkyLut lut) {
+    private static void uploadTexture(float[] rgb) {
         dev.impeccable.aurum.render.GlUtil.resetUnpack();
         int prevBinding = GL11C.glGetInteger(GL11C.GL_TEXTURE_BINDING_2D);
         if (texture == 0) {
@@ -101,7 +124,7 @@ public final class SkyState {
             GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, texture);
         }
         upload.clear();
-        upload.put(lut.rgb).flip();
+        upload.put(rgb).flip();
         GL11C.glPixelStorei(GL11C.GL_UNPACK_ALIGNMENT, 4);
         GL11C.glTexSubImage2D(GL11C.GL_TEXTURE_2D, 0, 0, 0, SkyLut.WIDTH, SkyLut.HEIGHT, GL11C.GL_RGB, GL11C.GL_FLOAT, upload);
         GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, prevBinding);

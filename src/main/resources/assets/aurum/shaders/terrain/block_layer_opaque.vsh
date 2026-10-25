@@ -59,9 +59,13 @@ void main() {
         int id = int(textureLod(u_NormalTex, v_TexCoord, 0.0).a * 255.0 + 0.5) & 15; // low bits: material
         v_Material = id;
         if (u_AurumMode == 2 && id != 0 && id != MAT_LEAVES && id != MAT_VINE) {
-            // Shadow pass: grass, flowers and crops never cast shadows (cheap and they would only add noise).
-            gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-            return;
+            // Small plants give nearby ground its local cast-shadow structure. Keep far plants out of the
+            // cached map; u_TerrainParams carries map centre + caster radius only in this depth-only mode.
+            vec3 offset = position - u_TerrainParams.xyz;
+            if (dot(offset, offset) > u_TerrainParams.w * u_TerrainParams.w) {
+                gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+                return;
+            }
         }
         if (u_AurumMode == 1 && id != 0 && u_WindParams.z > 0.0) {
             float dist = length(position);

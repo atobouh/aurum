@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 8;
+    public int configVersion = 11;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -35,6 +35,9 @@ public final class AurumConfig {
     public int sunsetIntensity = 100;
     public int horizonWarmth = 100;
     public int rainDesaturation = 70;
+    /** Display sky only: does not retune the sun/moon or sky irradiance on blocks. */
+    public int skyClarity = 75;
+    public int skyTemperature = -10;
 
     // Lighting and colour
     public boolean lightingEnabled = true;
@@ -42,9 +45,14 @@ public final class AurumConfig {
     public int ambientStrength = 100;
     public int blockLightWarmth = 40;
     public int aoBoost = 50;
+    public int foliageDepth = 60;
     public boolean normalsEnabled = true;
     public int normalStrength = 50;
     public boolean labPbr = true;
+    public boolean voxelLightingEnabled = true;
+    public int voxelLightingStrength = 100;
+    /** Samples across each block face; 4 is the integrated-GPU default. */
+    public int voxelDetail = 4;
 
     // Waving plants
     public boolean wavingEnabled = true;
@@ -64,18 +72,24 @@ public final class AurumConfig {
     public int shadowResolution = 1024;
     public int shadowDistance = 4;
     public int shadowSoftness = 100;
+    public LightEdgeStyle lightEdgeStyle = LightEdgeStyle.NATURAL;
+    public int lightPixelGrid = 16;
     public boolean entityShadows = false;
     public boolean blobShadows = true;
 
     // Fog
     public boolean fogEnabled = true;
     public int fogStrength = 100;
+    public int biomeHaze = 40;
     public boolean heightFog = true;
     public boolean edgeFade = true;
 
     // Water and wet ground
     public boolean waterEnabled = true;
-    public boolean waterReflections = true;
+    public WaterStyle waterStyle = WaterStyle.CALM_LAKE;
+    /** 0 keeps Aurum's original surface; 100 applies the selected lake treatment fully. */
+    public int waterStyleBlend = 100;
+    public boolean waterReflections = false;
     public int waveStrength = 100;
     public boolean vertexWaves = false;
     public boolean foam = true;
@@ -93,23 +107,26 @@ public final class AurumConfig {
     public int cloudHeight = 24;
     public boolean cloudsPackShapes = false;
     public int cloudSpeed = 100;
+    public int cloudMotionVariation = 65;
+    public boolean cloudShadowsEnabled = true;
+    public int cloudShadowStrength = 65;
     public int cloudCoverage = 50;
     public int cloudShading = 100;
 
     // POM (High tier)
-    public boolean pomEnabled = false;
+    public boolean pomEnabled = true;
     /** 3D relief from the texture's own pixels where the resource pack has no height map. */
     public boolean pomGenerated = true;
     public int pomDepth = 100;
-    public int pomDistance = 24;
+    public int pomDistance = 16;
 
     // Colour grade
     public Tonemap tonemap = Tonemap.FILMIC;
     public int whiteBalance = 100;
     public int exposure = 100;
-    public int saturation = 92;
-    public int vibrance = 105;
-    public int contrast = 100;
+    public int saturation = 100;
+    public int vibrance = 108;
+    public int contrast = 105;
     public LookPreset look = LookPreset.AURUM;
     /** -50 cool .. +50 warm. */
     public int temperature = 0;
@@ -118,6 +135,8 @@ public final class AurumConfig {
     public int skySaturation = 100;
     /** -50 teal .. +50 lavender. */
     public int skyLavender = 0;
+    public boolean sharpnessEnabled = true;
+    public int sharpness = 65;
 
     // Debug
     public boolean showOverlay = false;
@@ -165,6 +184,7 @@ public final class AurumConfig {
         if (cloudStyle == null) cloudStyle = CloudStyle.BLOCKY;
         if (sunShape == null) sunShape = SunShape.ROUND;
         if (look == null) look = LookPreset.AURUM;
+        if (waterStyle == null) waterStyle = WaterStyle.CALM_LAKE;
         if (configVersion < 2) {
             // 0.1.0 shipped a grade that crushed blue (AgX + extra saturation). Move everyone to the new look.
             AurumConfig d = new AurumConfig();
@@ -205,10 +225,43 @@ public final class AurumConfig {
             configVersion = 7;
         }
         if (configVersion < 8) {
-            // 0.6.0 (water): one water look with terrain reflections on every preset.
-            waterReflections = true;
+            // Earlier fresh LOW configs retained the field initialiser (POM off, 24-block distance) even though
+            // applying the LOW preset enables nearby relief. Upgrade only that old default signature; edited
+            // distances and other presets keep their chosen state.
+            if (preset == Preset.LOW && !pomEnabled && pomGenerated && pomDepth == 100 && pomDistance == 24) {
+                pomEnabled = true;
+                pomDistance = 16;
+            }
             configVersion = 8;
         }
+        if (configVersion < 9) {
+            // Upgrade only the untouched Aurum grade. Keep custom and style-preset colours exactly as chosen.
+            if (look == LookPreset.AURUM && saturation == 92 && vibrance == 105 && contrast == 100) {
+                saturation = 100;
+                vibrance = 108;
+                contrast = 105;
+            }
+            configVersion = 9;
+        }
+        if (configVersion < 10) {
+            // New fields retain their initialisers when absent. Existing lighting and colour edits survive.
+            configVersion = 10;
+        }
+        if (configVersion < 11) {
+            // 0.7.0 (merged water): one water look with terrain reflections on every preset.
+            waterReflections = true;
+            configVersion = 11;
+        }
+        skyClarity = clamp(skyClarity, 0, 100);
+        skyTemperature = clamp(skyTemperature, -50, 50);
+        waterStyleBlend = clamp(waterStyleBlend, 0, 100);
+        sharpness = clamp(sharpness, 0, 100);
+        voxelLightingStrength = clamp(voxelLightingStrength, 0, 100);
+        voxelDetail = voxelDetail == 8 ? 8 : 4;
+        if (lightEdgeStyle == null) lightEdgeStyle = LightEdgeStyle.NATURAL;
+        lightPixelGrid = lightPixelGrid == 4 || lightPixelGrid == 8 ? lightPixelGrid : 16;
+        foliageDepth = clamp(foliageDepth, 0, 100);
+        biomeHaze = clamp(biomeHaze, 0, 100);
         shadowResolution = switch (shadowResolution) {
             case 1024, 1536, 2048, 3072 -> shadowResolution;
             default -> 1024;
@@ -217,6 +270,8 @@ public final class AurumConfig {
         pomDistance = clamp(pomDistance, 8, 48);
         cloudHeight = clamp(cloudHeight, 0, 160);
         cloudSpeed = clamp(cloudSpeed, 0, 300);
+        cloudMotionVariation = clamp(cloudMotionVariation, 0, 100);
+        cloudShadowStrength = clamp(cloudShadowStrength, 0, 100);
         return this;
     }
 

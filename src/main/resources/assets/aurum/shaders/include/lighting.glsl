@@ -1,15 +1,6 @@
 // Forward terrain lighting for the replacement Sodium fragment shader. Everything is linear HDR until the
 // final tonemap. Inputs come from terrain_uniforms.glsl.
 
-float aurum_lightLevel(float coord) {
-    // Sodium packs light as level * 16 + 8 out of 256.
-    return clamp((coord * 256.0 - 8.0) / 240.0, 0.0, 1.0);
-}
-
-bool aurum_isFoliage(int material) {
-    return material == 1 || material == 2 || material == 3 || material == 6 || material == 7 || material == 8;
-}
-
 // uv drives derivatives (tangent frame, mips); suv is where to sample (moved by parallax, else equal to uv).
 vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec2 uv, vec2 suv, float mipBias, int material) {
     vec3 albedo = pow(tex.rgb * vertexColor.rgb, vec3(2.2));
@@ -33,7 +24,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         // A wall of a parallax pixel-cube: shade it as its own block face.
         n = g_pomWall;
     } else if ((u_TerrainParams.x > 0.0 || packData) && !foliage) {
-        vec4 nt = suv == uv ? texture(u_NormalTex, uv, mipBias) : textureGrad(u_NormalTex, suv, dFdx(uv), dFdy(uv));
+        vec4 nt = suv == uv ? texture(u_NormalTex, uv, mipBias) : textureGrad(u_NormalTex, suv, dFdx(uv) * 0.84, dFdy(uv) * 0.84);
         // Resource-pack normals are authored detail: full strength (stored at half slope). Generated ones follow
         // the Normal strength setting.
         float strength = packData ? 2.0 : u_TerrainParams.x;
@@ -58,50 +49,15 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
         }
     }
 
-    float sky = aurum_lightLevel(lightCoord.y);
-    float blk = aurum_lightLevel(lightCoord.x);
-
-    float ndl;
-    if (foliage) {
-        // Thin plants: light them as soft, upward-facing, slightly translucent cards.
-        n = vec3(0.0, 1.0, 0.0);
-        ndl = (clamp(u_LightDir.y, 0.0, 1.0) * 0.45 + 0.35) * smoothstep(-0.05, 0.25, u_LightDir.y);
-    } else if (material == 4) {
-        n = normalize(n + vec3(0.0, 0.6, 0.0));
-        ndl = clamp(dot(n, u_LightDir) * 0.6 + 0.4, 0.0, 1.0) * smoothstep(-0.05, 0.2, u_LightDir.y);
-    } else {
-        ndl = max(dot(n, u_LightDir), 0.0);
-    }
-
-    float skyVis = sky * sky;
-    // Without a shadow map, sky light is the only hint of cover. Inside the shadow range the real shadow takes
-    // over; a weak sky-light gate stays so sealed caves never catch sunlight through thin ceilings.
-    float directVis = smoothstep(0.55, 0.95, sky);
-    if (ndl > 0.0) {
-        vec2 sh = aurum_shadow(pos, ng);
-        // Leaves let light through: a shaded leaf still glows a little (cheap subsurface stand-in).
-        float lit = material == 4 ? max(sh.x, 0.22) : sh.x;
-        directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
-    }
-    directVis *= g_pomShadow;
-    vec3 direct = u_LightColor * (ndl * directVis);
-
-    vec3 ambient = mix(u_GroundAmbient, u_SkyAmbient, n.y * 0.5 + 0.5) * skyVis;
-    // Bounce glow: tint the light that is not direct sun toward the colour of the surroundings.
-    vec3 bounce = texelFetch(u_BounceTex, ivec2(0), 0).rgb;
-    float bl = max(dot(bounce, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
-    vec3 bounceTint = clamp(bounce / bl, 0.0, 3.0);
-    ambient *= mix(vec3(1.0), bounceTint, u_TerrainParams.w * (1.0 - clamp(ndl * directVis, 0.0, 1.0)));
-
-    float blockBrightness = blk / (4.0 - 3.0 * blk); // vanilla's light curve
-    vec3 light = (direct + ambient) * ao + u_BlockLightColor * (blockBrightness * ao) + vec3(u_TerrainParams.z);
-
+    AurumLight illumination = aurum_evaluateLight(lightCoord, pos, ng, n, ao, material, g_pomShadow, g_pomCavity);
+    if (u_LightingDebug > 0) return aurum_lightDiagnostic(illumination, ng, ao);
+    vec3 light = aurum_diffuseLight(illumination, ao);
     vec3 color = albedo * light * (1.0 + coating * 0.08);
     if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {
-        vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv), dFdy(uv));
+        vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv) * 0.84, dFdy(uv) * 0.84);
         if (pbr.r > 0.004 || pbr.g > 0.05) {
             float diffuseScale = 1.0;
-            vec3 spec = aurum_pbrSpecular(albedo, pbr, n, pos, ndl > 0.0 ? directVis : 0.0, skyVis, blockBrightness, diffuseScale);
+            vec3 spec = aurum_pbrSpecular(albedo, pbr, n, pos, illumination.ndl > 0.0 ? illumination.directVis : 0.0, illumination.skyVis, illumination.blockBrightness, diffuseScale);
             color = color * diffuseScale + spec * ao;
         }
         // Emission (glowing ores, lamps): the texture glows in its own colour, picked up by bloom.

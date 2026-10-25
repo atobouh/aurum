@@ -23,54 +23,57 @@ public class AurumSettingsScreen extends Screen {
     protected void init() {
         AurumConfig c = AurumConfig.get();
         int center = this.width / 2;
-        int y = 40;
+        boolean compact = this.height < 280;
+        int buttonHeight = compact ? 16 : 20;
+        int step = compact ? 18 : 24;
+        int y = compact ? 24 : 40;
 
         this.addDrawableChild(CyclingButtonWidget.onOffBuilder(c.enabled)
                 .tooltip(v -> Tooltip.of(Text.translatable("aurum.option.enabled.tooltip")))
-                .build(center - 155, y, 310, 20, Text.translatable("aurum.option.enabled"), (button, v) -> {
+                .build(center - 155, y, 310, buttonHeight, Text.translatable("aurum.option.enabled"), (button, v) -> {
                     c.enabled = v;
                     AurumConfig.save();
                 }));
-        y += 24;
+        y += step;
 
         this.addDrawableChild(CyclingButtonWidget.<Preset>builder(p -> Text.translatable("aurum.preset." + p.name().toLowerCase()))
                 .values(Preset.LOW, Preset.MEDIUM, Preset.HIGH, Preset.CUSTOM)
                 .initially(c.preset)
                 .tooltip(p -> Tooltip.of(Text.translatable("aurum.preset.tooltip")))
-                .build(center - 155, y, 150, 20, Text.translatable("aurum.preset"), (button, preset) -> {
+                .build(center - 155, y, 150, buttonHeight, Text.translatable("aurum.preset"), (button, preset) -> {
                     preset.applyTo(c);
                     c.preset = preset;
                     AurumConfig.save();
                 }));
 
-        y += 24;
+        y += step;
         this.addDrawableChild(CyclingButtonWidget.<LookPreset>builder(l -> Text.translatable("aurum.look." + l.name().toLowerCase()))
                 .values(LookPreset.AURUM, LookPreset.AIRY, LookPreset.CLEAR, LookPreset.WARM, LookPreset.VIVID, LookPreset.CUSTOM)
                 .initially(c.look)
                 .tooltip(l -> Tooltip.of(Text.translatable("aurum.look." + l.name().toLowerCase() + ".tooltip")))
-                .build(center - 155, y, 310, 20, Text.translatable("aurum.look"), (button, look) -> {
+                .build(center - 155, y, 310, buttonHeight, Text.translatable("aurum.look"), (button, look) -> {
                     look.applyTo(c);
                     c.look = look;
                     AurumConfig.save();
                 }));
-        y -= 24;
+        y -= step;
 
         this.addDrawableChild(CyclingButtonWidget.onOffBuilder(c.showOverlay)
                 .tooltip(v -> Tooltip.of(Text.translatable("aurum.option.show_overlay.tooltip")))
-                .build(center + 5, y, 150, 20, Text.translatable("aurum.option.show_overlay"), (button, v) -> {
+                .build(center + 5, y, 150, buttonHeight, Text.translatable("aurum.option.show_overlay"), (button, v) -> {
                     c.showOverlay = v;
                     AurumConfig.save();
                 }));
 
-        y += 26 + 24;
+        y += compact ? 40 : 50;
         OptionCategory[] categories = OptionCategory.values();
         for (int i = 0; i < categories.length; i++) {
             OptionCategory category = categories[i];
             int x = (i % 2 == 0) ? center - 155 : center + 5;
-            int row = y + (i / 2) * 22;
+            int row = y + (i / 2) * (compact ? 18 : 22);
             this.addDrawableChild(ButtonWidget.builder(category.title(),
                             b -> this.client.setScreen(new AurumCategoryScreen(this, category)))
-                    .dimensions(x, row, 150, 20).build());
+                    .dimensions(x, row, 150, buttonHeight).build());
         }
 
         this.addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, b -> this.close())
@@ -80,7 +83,7 @@ public class AurumSettingsScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         SeeThrough.background(this, context);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height < 280 ? 6 : 15, 0xFFFFFF);
         context.drawCenteredTextWithShadow(this.textRenderer, Pipeline.statusLine(), this.width / 2, this.height - 52, 0xA0A0A0);
         context.drawCenteredTextWithShadow(this.textRenderer,
                 Text.translatable("aurum.settings.phase_note", AurumMod.VERSION), this.width / 2, this.height - 40, 0x707070);

@@ -27,6 +27,7 @@ public final class FrameDirector {
     private FrameDirector() {}
 
     public static void beginFrame(float tickDelta) {
+        dev.impeccable.aurum.render.surface.SurfaceLighting.endWorld();
         GpuTimers.beginFrame();
         MinecraftClient client = MinecraftClient.getInstance();
         ClientWorld world = client.world;
@@ -51,16 +52,21 @@ public final class FrameDirector {
         Camera camera = client.gameRenderer.getCamera();
         boolean special = camera.getSubmersionType() != CameraSubmersionType.NONE
                 || (client.player != null && (client.player.hasStatusEffect(StatusEffects.BLINDNESS)
-                || client.player.hasStatusEffect(StatusEffects.DARKNESS)));
+                || client.player.hasStatusEffect(StatusEffects.DARKNESS)
+                || client.player.hasStatusEffect(StatusEffects.NIGHT_VISION)));
         AurumConfig c = AurumConfig.get();
         TerrainUniforms.mode = haveSky && TerrainShaders.installed() && c.lightingEnabled && !special ? 1 : 0;
         SkyRenderer.active = haveSky && c.skyEnabled && !special;
         SkyExtras.cloudsActive = SkyExtras.wantsClouds(haveSky, special);
+        SkyExtras.updateCloudMotion();
         dev.impeccable.aurum.render.WaterPass.tick(client.isPaused());
+        dev.impeccable.aurum.render.VoxelLighting.update(world, camera.getPos(),
+                TerrainUniforms.mode == 1 && c.voxelLightingEnabled);
     }
 
     /** Called with the exact camera and matrices this frame's world is drawn with. */
     public static void beforeWorld(Camera camera, Matrix4f view, Matrix4f projection) {
+        dev.impeccable.aurum.render.surface.SurfaceLighting.beginWorld(view);
         Vec3d p = camera.getPos();
         ShadowRenderer.cameraX = p.x;
         ShadowRenderer.cameraY = p.y;

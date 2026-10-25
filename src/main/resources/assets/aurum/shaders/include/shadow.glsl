@@ -1,6 +1,16 @@
 // Sun/moon shadow map: radial distortion (more texels near the player), normal-offset bias, hardware-filtered
 // soft edges, and a fade at the edge of the shadow range. Technique after the shaderLABS shadow tutorial.
 
+uniform vec4 u_PixelLight; // x voxel-crisp mode, y world texels per block
+
+// Snap only in the receiver plane, anchored to the world rather than the moving screen.
+vec3 aurum_pixelReceiver(vec3 pos, vec3 normal) {
+    if (u_PixelLight.x < 0.5) return pos;
+    vec3 p = pos + u_CameraMod;
+    vec3 delta = (floor(p * u_PixelLight.y) + 0.5) / u_PixelLight.y - p;
+    return pos + delta - normal * dot(delta, normal);
+}
+
 uniform sampler2DShadow u_ShadowMap;
 uniform mat4 u_ShadowMatrix;   // camera-relative world position -> light clip space (front map)
 uniform vec4 u_ShadowParams;   // x distortion, y strength (0 = no map), z texel world size at the centre, w filter radius (texels)
@@ -19,7 +29,12 @@ float aurum_entityShadow(vec3 pos, vec3 normal) {
     if (abs(c.x) > 0.98 || abs(c.y) > 0.98) return 1.0;
     vec3 sc = c.xyz * 0.5 + 0.5;
     sc.z -= 0.0002;
-    float r = u_EntityShadowParams.y * 1.5;
+    float r = u_EntityShadowParams.y;
+    if (u_PixelLight.x > 0.5) {
+        sc.xy = (floor(sc.xy / r) + 0.5) * r;
+        return mix(step(0.5, texture(u_EntityShadowMap, sc)), 1.0,
+                smoothstep(0.85, 0.98, max(abs(c.x), abs(c.y))));
+    }
     float s = texture(u_EntityShadowMap, sc + vec3(-r, -r, 0.0))
             + texture(u_EntityShadowMap, sc + vec3( r, -r, 0.0))
             + texture(u_EntityShadowMap, sc + vec3(-r,  r, 0.0))
@@ -42,11 +57,20 @@ float aurum_shadowFilter(sampler2DShadow map, mat4 m, vec3 pos, vec3 normal, out
     // away from the centre with the distortion). Prevents acne without the floating look of a big depth bias.
     float df = r * u_ShadowParams.x + (1.0 - u_ShadowParams.x);
     float texelWorld = u_ShadowParams.z * df * df / (1.0 - u_ShadowParams.x);
-    c = m * vec4(pos + normal * texelWorld * 1.6, 1.0);
+    // Keep nearby block/plant contacts tight. Distant map texels still need more bias and filtering to
+    // remain stable; a fixed wide kernel made every contact look detached and soft at arm's length.
+    float detail = 1.0 - smoothstep(12.0, 48.0, length(pos));
+    c = m * vec4(pos + normal * texelWorld * mix(1.6, 1.1, detail), 1.0);
     vec3 sc = vec3(aurum_shadowDistort(c.xy), c.z) * 0.5 + 0.5;
     sc.z -= u_ShadowParams2.z;
 
-    float rad = u_ShadowParams.w * u_ShadowParams2.x;
+    if (u_PixelLight.x > 0.5) {
+        // A comparison at the exact map-texel centre avoids the hardware bilinear penumbra as well as PCF.
+        sc.xy = (floor(sc.xy / u_ShadowParams2.x) + 0.5) * u_ShadowParams2.x;
+        float hard = step(0.5, texture(map, sc));
+        return mix(hard, 1.0, smoothstep(0.78, 0.96, r));
+    }
+    float rad = u_ShadowParams.w * u_ShadowParams2.x * mix(1.0, 0.5, detail);
     float s;
     if (u_ShadowParams2.y < 6.0) {
         s  = texture(map, sc + vec3(-0.5, -0.5, 0.0) * rad);
@@ -72,6 +96,7 @@ float aurum_shadowFilter(sampler2DShadow map, mat4 m, vec3 pos, vec3 normal, out
 // Returns x = lit fraction (1 = fully lit), y = how much the map covers this point (0 outside the range).
 vec2 aurum_shadow(vec3 pos, vec3 normal) {
     if (u_ShadowParams.y <= 0.0) return vec2(1.0, 0.0);
+    pos = aurum_pixelReceiver(pos, normal);
     float r;
     float s = aurum_shadowFilter(u_ShadowMap, u_ShadowMatrix, pos, normal, r);
     if (u_ShadowParams2.w < 1.0) {
@@ -82,6 +107,7 @@ vec2 aurum_shadow(vec3 pos, vec3 normal) {
         s = mix(sp, s, t * t * (3.0 - 2.0 * t));
     }
     s = min(s, aurum_entityShadow(pos, normal));
+    if (u_PixelLight.x > 0.5) s = floor(s * 4.0 + 0.5) * 0.25;
     float coverage = (1.0 - smoothstep(0.78, 0.96, r)) * u_ShadowParams.y;
     return vec2(s, coverage);
 }

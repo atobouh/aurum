@@ -4,6 +4,7 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 
 | Date | Decision | Reason |
 | --- | --- | --- |
+| 2026-10-24 | 0.6.1: sky-occluded diffuse fill under cloud shadows and less compounded daytime canopy attenuation; night/specular sky visibility retained | User's actual 0.6.0 High / LabPBR-off footage exposed dark land beneath a bright sky; controlled forest and seasonal foliage checks narrow the cause |
 | 2026-10-21 | Loom **1.11.8** on Gradle **8.14.3**, not the newest Loom (1.19.2) | Loom 1.19 needs Gradle 9.8 and a Java 25 runtime; 1.11 runs on JDK 21, which is easier to install for local builds |
 | 2026-10-21 | Building needs **JDK 21**; the jar targets Java 17 | Loom 1.11 runs on 21; `options.release = 17` keeps the mod loadable on the game's Java 17 |
 | 2026-10-21 | Fabric Loader 0.20.1, Fabric API 0.92.12+1.20.1, Yarn 1.20.1+build.10 | Latest for 1.20.1 on fabricmc.net today |
@@ -103,6 +104,34 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
 | 2026-10-22 | Parallax tile wrap via floor division (GLSL % is undefined for negatives) | Relief missing on faces depending on orientation/position (user) |
 | 2026-10-22 | PBR reflections: roughness-aware Fresnel (exponent 4), sky + block-light reflections, x2, scaled by the Gloss (sheen) slider | Gloss invisible in 0.5.x (user) |
 | 2026-10-22 | Generated relief (height from texel brightness, 16 % range) for opaque textures without pack height maps; option "3D for all textures", on | User: wood and many textures had no effect (Seraphic for 1.20.1 covers ~150 textures; modded blocks none) |
+| 2026-10-23 | Direct Photon and Complementary source inspection for 0.5.9; original implementation of general lighting/scattering techniques | User explicitly requested reading both source trees, overriding the original spec's restriction on inspecting Complementary; no reference code or assets incorporated |
+| 2026-10-23 | Separate Iris reference client with copied world, options and saved cameras | The environment can run and capture Minecraft on Mesa llvmpipe, superseding the original text-only limitation; software results do not establish Intel UHD performance |
+| 2026-10-23 | Shadow fade completes at light Y=0.08, bounded low-sun direction Y=0.12, stronger direct/fill contrast | Matched reference scenes retain long, defined ground shadows at golden hour |
+| 2026-10-23 | Small plants cast within 8 blocks at 1024 shadow resolution, 16 blocks above that | User requested reference-level shadow depth; a bounded near field restores local cast shadows while skipping far plants, replacing the original never-cast rule |
+| 2026-10-23 | Ten volumetric samples weighted by represented segment and attenuation; fog and shafts share one display-linear composition | Equal weights biased quadratic sampling; independent gamma-space glow flattened shadows. Existing pass/sample counts remain, arithmetic and caster cost require UHD measurement |
+| 2026-10-23 | Add Rethinking Voxels official r0.1-beta9 and clearly labelled Derivative Main community fork; retain DERCODE separately | User explicitly requested both shader references, local source copies and screenshots; original Derivative repository was not verified |
+| 2026-10-23 | Quadratic 24/12 CPU sky integration, exact segment attenuation and height-baked diffuse second scattering | Numerical sky error and missing diffuse horizon light; preserve the existing GPU lookup and cloud style |
+| 2026-10-23 | Directional moon sky and lower airglow; smaller ambient compensation and horizon replacement | A flat blue night gradient and strong painted horizon obscured atmospheric structure |
+| 2026-10-23 | Nearby shadow filter radius halved; High volumetric samples increase from 10 to 16, Medium to 12 | User reports stable High performance on UHD and explicitly prioritizes shadow/light definition; Low retains 10 taps, candidate cost remains to be measured on target hardware |
+
+
+## 0.6.0: bounded local voxel light and selectable crisp edges
+
+The user explicitly requested coloured voxel block lighting and pixel-art shadows/rays. Local light
+therefore uses a sliced snapshot, a background collision-box traversal and a bounded, double-buffered
+surface atlas. It is local direct terrain light, not full GI. Natural shadows remain the default;
+Voxel Crisp is optional because nearest coverage and extra visibility taps trade smooth motion and
+ray cost for a deliberate pixel finish. No extra full-screen composite is added.
+
+A software OpenGL client and disposable Terralith world are now available, superseding the original
+specification's statement that the agent cannot run Minecraft or see its screen. Actual captures,
+source reviews and geometry/finite-output checks establish local correctness only. The user's explicit
+request to implement/build is the authority to deliver this candidate; Intel UHD frame-time acceptance
+remains outstanding. Software-renderer FPS cannot establish the target GPU's budget.
+
+See `research/LOCAL_LIGHT_CLOUD_REVIEW_060.md` for implementation limits, reference provenance and
+the forest scattering and water-depth findings.
+
 | 2026-10-25 | One water look, Complementary-style: vanilla texture lines drive normals and faint streaks, dark glassy mirror, terrain reflections on all presets; Photon glitter and caustics removed | User: "no two modes, just one mode"; done with overly realistic water (docs/research/WATER_ONE.md) |
 
 ## 0.5.3-water.2: shore line (2026-10-25)
@@ -114,3 +143,13 @@ Where Aurum differs from `AURUM_SPEC.md`, or where the spec left a choice open. 
   - Its width grows with distance, so it stays a few pixels wide.
   - Pixel-sized cells shimmer slowly, so the line reads as lapping water.
 - It shows only on top faces, and not over open drops.
+
+## 0.7.0: merged base (Claude water + Codex lighting), 2026-10-25
+
+- The user asked for both branches to be merged into one base branch, `main`.
+- Water uses the single Complementary-direction look (user decision). Codex's calm-lake style and its blend slider are removed from the settings. Their config fields stay so old configs still load, but nothing reads them.
+- Water keeps Codex's shared lighting hooks:
+  - local light comes from `aurum_localBlockLight`, the voxel field or its propagated fallback;
+  - sun visibility includes cloud shadows;
+  - reflected clouds come from the previous frame's cloud buffer.
+- Config version is now 11. Steps 8–10 are Codex's; step 11 turns terrain reflections on for every preset.

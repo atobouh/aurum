@@ -19,7 +19,6 @@ import org.lwjgl.opengl.GL30C;
  * <p>Per frame, after the hand is drawn:
  * <ol>
  *   <li>Copy the scene colour (the pass cannot read and write the same texture).</li>
- *   <li>Bounce gather at 32x16 and a 1x1 temporal blend (the Badlands glow colour, used next frame by terrain).</li>
  *   <li>Sky extras at reduced resolution: clouds, god rays, flare occlusion, bloom ({@link SkyExtras}).</li>
  *   <li>The composite: fog, edge fade, clouds, rays, bloom, flare and grade in one full-screen draw into the
  *       main framebuffer.</li>
@@ -28,16 +27,12 @@ import org.lwjgl.opengl.GL30C;
  * without a depth copy, and the hand is never fogged.
  */
 public final class PostPass {
-    private static final int GATHER_W = 32, GATHER_H = 16;
     private static final int UNIT_A = 6, UNIT_B = 7, UNIT_C = 8, UNIT_D = 9;
 
     private static int width, height;
     private static int sceneTex, sceneFbo;
     private static int handDepthTex;
     private static int depthAttachmentPoint = GL30C.GL_DEPTH_ATTACHMENT;
-    private static int gatherTex, gatherFbo, gatherLevels;
-    private static final int[] bounceTex = new int[2], bounceFbo = new int[2];
-    private static int bounceIndex;
 
     private static boolean handSwapped, handValid;
     private static boolean checkedHandFbo, handSwapBroken;
@@ -48,6 +43,12 @@ public final class PostPass {
     private static final Matrix4f worldView = new Matrix4f();
     private static final Matrix4f invProj = new Matrix4f();
     private static final Matrix4f invView = new Matrix4f();
+    // Water is drawn before this frame's cloud pass. Reproject the previous frame's cloud image into the
+    // reflected direction; this reuses the existing cloud march instead of drawing a second sky map.
+    private static final Matrix4f previousCloudViewProjection = new Matrix4f();
+    private static boolean previousCloudReady;
+    private static net.minecraft.client.world.ClientWorld previousCloudWorld;
+    private static net.minecraft.util.math.Vec3d previousCloudCamera;
 
     private PostPass() {}
 
@@ -55,6 +56,17 @@ public final class PostPass {
         worldView.set(view);
         worldProjection.set(projection);
         handValid = false;
+    }
+
+    public static boolean hasCloudReflection() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return previousCloudReady && SkyExtras.cloudsActive && SkyExtras.cloudTexture() != 0
+                && previousCloudWorld == client.world && previousCloudCamera != null
+                && previousCloudCamera.squaredDistanceTo(client.gameRenderer.getCamera().getPos()) < 24.0 * 24.0;
+    }
+
+    public static Matrix4f cloudViewProjection() {
+        return previousCloudViewProjection;
     }
 
     private static boolean enabled() {
@@ -111,39 +123,6 @@ public final class PostPass {
 
         boolean aurumWorld = TerrainUniforms.mode == 1;
 
-        // 2. Bounce: gather, mip down to one texel, ease toward it.
-        if (aurumWorld && c.bounceEnabled) {
-            ShaderProgram gather = ShaderManager.get("post/bounce_gather");
-            GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, gatherFbo);
-            GlStateManager._viewport(0, 0, GATHER_W, GATHER_H);
-            gather.bind();
-            gather.set1i("u_Scene", UNIT_A);
-            gather.set1i("u_Depth", UNIT_B);
-            gather.setMatrix("u_InvProj", invProj);
-            org.lwjgl.opengl.GL20C.glUniform2f(gather.uniform("u_TexelStep"), 0.5f / GATHER_W, 0.5f / GATHER_H);
-            GlUtil.bindTexture(UNIT_A, sceneTex);
-            GlUtil.bindTexture(UNIT_B, main.getDepthAttachment());
-            GlUtil.drawFullscreenTriangle();
-            GlUtil.bindTexture(UNIT_A, gatherTex);
-            GlStateManager._activeTexture(0x84C0 + UNIT_A);
-            GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
-            GlStateManager._activeTexture(0x84C0);
-
-            int prev = bounceIndex, next = 1 - bounceIndex;
-            ShaderProgram blend = ShaderManager.get("post/bounce_blend");
-            GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, bounceFbo[next]);
-            GlStateManager._viewport(0, 0, 1, 1);
-            blend.bind();
-            blend.set1i("u_Gather", UNIT_A);
-            blend.set1i("u_Previous", UNIT_C);
-            blend.set1f("u_GatherLod", gatherLevels);
-            blend.set1f("u_Blend", 0.04f);
-            GlUtil.bindTexture(UNIT_C, bounceTex[prev]);
-            GlUtil.drawFullscreenTriangle();
-            bounceIndex = next;
-            AurumTextures.setBounce(bounceTex[next]);
-        }
-
         // 3. Sky extras: clouds, god rays, flare occlusion, bloom.
         if (aurumWorld) {
             SkyExtras.run(sceneTex, main.getDepthAttachment(), worldView, worldProjection, invProj, invView);
@@ -158,11 +137,15 @@ public final class PostPass {
         GlStateManager._viewport(0, 0, width, height);
         comp.bind();
         comp.set1i("u_Scene", UNIT_A);
+        comp.set1i("u_LightingDebug", dev.impeccable.aurum.debug.LightingDebug.mode());
         comp.set1i("u_Depth", UNIT_B);
+        // Reuse the existing before-translucent copy to identify far transparent surfaces. No extra buffer.
+        comp.set1i("u_BeforeTranslucentDepth", 0);
+        GlUtil.bindTexture(0, WaterPass.captured ? WaterPass.depthTexture() : AurumTextures.clear());
         comp.set1i("u_HandDepth", UNIT_C);
-        comp.set1i("u_Bounce", UNIT_D);
         comp.set1i("u_SkyLut", 10);
         comp.set1f("u_SkyGrade", dev.impeccable.aurum.director.Atmosphere.skyGrade());
+        comp.set4f("u_SkyAppearance", Atmosphere.skyAppearance[0], Atmosphere.skyAppearance[1], 0f, 0f);
         comp.set4f("u_SkyTone", dev.impeccable.aurum.director.Atmosphere.skyTone[0], dev.impeccable.aurum.director.Atmosphere.skyTone[1], dev.impeccable.aurum.director.Atmosphere.golden, 0f);
         // GlStateManager tracks only 12 units; 1-5 are free here (vanilla and terrain rebind theirs before drawing).
         comp.set1i("u_Clouds", 11);
@@ -176,6 +159,8 @@ public final class PostPass {
         float[] ss = SkyExtras.sunScreen;
         comp.set4f("u_SunScreen", ss[0], ss[1], ss[2], ss[3]);
         comp.set4f("u_Extras", SkyExtras.rayStrength, SkyExtras.bloomStrength, SkyExtras.flareStrength, SkyExtras.volumetricStrength);
+        comp.set4f("u_PixelLight", c.lightEdgeStyle == dev.impeccable.aurum.config.LightEdgeStyle.VOXEL_CRISP ? 1f : 0f,
+                c.lightPixelGrid, 0f, 0f);
         comp.set4f("u_Volumetric2", dev.impeccable.aurum.render.shadow.ShadowRenderer.range() * 0.95f, FogDirector.enclosed,
                 Math.min(1f, FogDirector.distanceDensity / 0.0015f), 0f);
         comp.setMatrix("u_InvProj", invProj);
@@ -187,19 +172,26 @@ public final class PostPass {
         float cameraHeight = (float) Math.max(-8.0, MinecraftClient.getInstance().gameRenderer.getCamera().getPos().y - 63.0);
         comp.set4f("u_Fog", FogDirector.distanceDensity, FogDirector.heightDensity, 0.07f, cameraHeight);
         float far = MinecraftClient.getInstance().gameRenderer.getViewDistance();
-        float bounceFog = c.bounceEnabled ? 0.25f * c.bounceStrength / 100f : 0f;
-        comp.set4f("u_Fog2", FogDirector.cave, far * 0.80f, far * 0.98f, bounceFog);
+        float bounceFog = 0f; // Camera-screen tint is not a lighting source.
+        // Whole-section visibility and asynchronously arriving chunks make the nominal outer radius
+        // unreliable for a clean ocean horizon. Keep the clear foreground, then finish a broad fade
+        // inside that boundary; this also avoids preserving a clipped reflection at the last section.
+        float edgeEnd = far * 0.66f;
+        comp.set4f("u_Fog2", FogDirector.cave, edgeEnd * 0.78f, edgeEnd, bounceFog);
+        // Opaque trees/blocks keep the original range and contrast. Only far transparent surfaces need
+        // the broader boundary fade; query the copy only beyond its clear zone in the shader.
+        comp.set4f("u_SurfaceEdge", WaterPass.captured ? 1f : 0f, far * 0.80f, far * 0.98f, 0f);
         comp.set4f("u_Fog3", FogDirector.clearZone, 0.88f, 0.30f, 0f);
         boolean fog = aurumWorld && c.fogEnabled && SkyState.current() != null;
         boolean edge = aurumWorld && c.edgeFade && SkyState.current() != null;
         comp.set4f("u_Flags", fog ? 1f : 0f, edge ? 1f : 0f, handValid ? 1f : 0f, 1f);
-        comp.set4f("u_Grade", c.saturation / 100f, c.vibrance / 100f, c.contrast / 100f, 0f);
+        comp.set4f("u_Grade", c.saturation / 100f, c.vibrance / 100f, c.contrast / 100f,
+                c.sharpnessEnabled ? c.sharpness / 100f : 0f);
         comp.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);
         comp.set3f("u_WhiteBalance", Atmosphere.whiteBalance[0], Atmosphere.whiteBalance[1], Atmosphere.whiteBalance[2]);
         GlUtil.bindTexture(UNIT_A, sceneTex);
         GlUtil.bindTexture(UNIT_B, main.getDepthAttachment());
         GlUtil.bindTexture(UNIT_C, handDepthTex);
-        GlUtil.bindTexture(UNIT_D, AurumTextures.bounce());
         GlUtil.bindTexture(10, SkyState.texture());
         int clear = AurumTextures.clear();
         GlUtil.bindTexture(11, SkyExtras.cloudsDrawn ? SkyExtras.cloudTexture() : clear);
@@ -214,10 +206,14 @@ public final class PostPass {
         GL30C.glFramebufferTexture2D(GL30C.GL_FRAMEBUFFER, depthAttachmentPoint, GL11C.GL_TEXTURE_2D, main.getDepthAttachment(), 0);
 
         // Unbind our textures from the high units and restore the state vanilla expects next.
-        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 1, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
+        for (int unit : new int[]{UNIT_A, UNIT_B, UNIT_C, UNIT_D, 10, 11, 0, 1, 2, 3, 4, 5}) GlUtil.bindTexture(unit, 0);
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         main.beginWrite(true);
+        previousCloudViewProjection.set(worldProjection).mul(worldView);
+        previousCloudReady = SkyExtras.cloudsDrawn;
+        previousCloudWorld = MinecraftClient.getInstance().world;
+        previousCloudCamera = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
         GpuTimers.end(t);
     }
 
@@ -241,17 +237,6 @@ public final class PostPass {
                 stencil ? GL30C.GL_DEPTH_STENCIL : GL11C.GL_DEPTH_COMPONENT,
                 stencil ? GL30C.GL_UNSIGNED_INT_24_8 : GL11C.GL_FLOAT, GL11C.GL_NEAREST);
 
-        gatherTex = GlUtil.createTexture(GL30C.GL_RGBA16F, GATHER_W, GATHER_H, GL11C.GL_RGBA, GL11C.GL_FLOAT, GL11C.GL_LINEAR);
-        GlStateManager._texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER, GL11C.GL_LINEAR_MIPMAP_LINEAR);
-        GL30C.glGenerateMipmap(GL11C.GL_TEXTURE_2D);
-        gatherLevels = (int) Math.floor(Math.log(Math.max(GATHER_W, GATHER_H)) / Math.log(2));
-        gatherFbo = fbo(gatherTex);
-        for (int i = 0; i < 2; i++) {
-            bounceTex[i] = GlUtil.createTexture(GL30C.GL_RGBA16F, 1, 1, GL11C.GL_RGBA, GL11C.GL_FLOAT, GL11C.GL_NEAREST);
-            bounceFbo[i] = fbo(bounceTex[i]);
-            GL11C.glClearColor(0.2f, 0.2f, 0.2f, 1f);
-            GL11C.glClear(GL11C.GL_COLOR_BUFFER_BIT);
-        }
         GlStateManager._bindTexture(0);
         main.beginWrite(false);
     }
@@ -267,14 +252,7 @@ public final class PostPass {
         if (sceneTex == 0) return;
         GlStateManager._deleteTexture(sceneTex);
         GlStateManager._deleteTexture(handDepthTex);
-        GlStateManager._deleteTexture(gatherTex);
         GlStateManager._glDeleteFramebuffers(sceneFbo);
-        GlStateManager._glDeleteFramebuffers(gatherFbo);
-        for (int i = 0; i < 2; i++) {
-            GlStateManager._deleteTexture(bounceTex[i]);
-            GlStateManager._glDeleteFramebuffers(bounceFbo[i]);
-        }
-        AurumTextures.setBounce(0);
         sceneTex = 0;
     }
 }

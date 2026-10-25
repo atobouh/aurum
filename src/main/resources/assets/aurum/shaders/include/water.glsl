@@ -13,6 +13,9 @@ uniform vec4 u_WaterParams;        // xy 1 / framebuffer size, z screen-space re
 uniform vec4 u_WaterScroll;        // ripple layer offsets (tile units, wrapped)
 uniform mat4 u_ProjectionMatrix;
 uniform mat4 u_ModelViewMatrix;
+uniform sampler2D u_CloudReflection;
+uniform mat4 u_PrevCloudViewProj;
+uniform float u_CloudReflectionOn;
 
 // View-space depth (positive, blocks) from a depth-buffer value.
 float aurum_viewDepth(float d) {
@@ -119,12 +122,14 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
 
     float skyL = aurum_lightLevel(lightCoord.y);
     float skyVis = skyL * skyL;
-    float blockL = aurum_lightLevel(lightCoord.x);
+    // Local light comes from the shared source accounting (static voxel field or propagated fallback).
+    vec4 localCoverage;
+    vec3 localLight = aurum_localBlockLight(lightCoord, pos, ng, localCoverage);
     float sunUp = smoothstep(-0.05, 0.2, u_LightDir.y);
     float sunVisible = 0.0;
     if (sunUp > 0.0) {
         vec2 sh = aurum_shadow(pos, ng);
-        sunVisible = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y);
+        sunVisible = mix(smoothstep(0.55, 0.95, skyL), sh.x, sh.y) * aurum_cloudShadow(pos);
     }
 
     // ---- What lies under the surface (refracted a little along the pattern).
@@ -149,7 +154,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     vec3 trans = exp(-sigma * column);
     vec3 deepAlbedo = vec3(0.006, 0.016, 0.018) * tintN * 1.6;
     vec3 deepHdr = (u_SkyAmbient * skyVis * 1.6 + u_LightColor * sunUp * 0.4 * sunVisible) * deepAlbedo
-                   + u_BlockLightColor * deepAlbedo * blockL * 0.5;
+                   + localLight * deepAlbedo * 0.5;
     vec3 deep = aurum_toLinear(aurum_tonemap(deepHdr));
     vec3 under = behind * trans + deep * (1.0 - trans);
 
@@ -163,7 +168,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     vec3 skin = aurum_toLinear(tex.rgb) * tintN;
     float ndl = max(dot(n, u_LightDir), 0.0);
     vec3 skinHdr = skin * (u_SkyAmbient * skyVis * 1.2 + u_LightColor * ndl * sunVisible
-                           + u_BlockLightColor * (blockL / (4.0 - 3.0 * blockL)));
+                           + localLight);
     vec3 skinLit = aurum_toLinear(aurum_tonemap(skinHdr));
     under = mix(under, skinLit, 0.10);
 
@@ -171,6 +176,20 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     vec3 R = reflect(V, n);
     R.y = abs(R.y);
     vec3 refl = aurum_toLinear(aurum_tonemap(aurum_skyRadiance(R, u_SunDirW))) * mix(0.2, 1.0, skyVis);
+    // Clouds are drawn after translucent terrain: reproject last frame's premultiplied cloud colour into the
+    // reflected direction, with a feathered screen edge falling back to the sky.
+    if (u_CloudReflectionOn > 0.5 && ng.y > 0.3 && R.y > 0.02) {
+        vec4 clip = u_PrevCloudViewProj * vec4(R, 0.0);
+        if (clip.w > 0.001) {
+            vec2 cuvR = clip.xy / clip.w * 0.5 + 0.5;
+            if (all(greaterThan(cuvR, vec2(0.0))) && all(lessThan(cuvR, vec2(1.0)))) {
+                vec2 edgeR = smoothstep(vec2(0.02), vec2(0.12), cuvR) * (1.0 - smoothstep(vec2(0.88), vec2(0.98), cuvR));
+                vec4 cl = texture(u_CloudReflection, cuvR);
+                float coverage = cl.a * edgeR.x * edgeR.y;
+                refl = mix(refl, aurum_toLinear(cl.rgb / max(cl.a, 0.001)) * mix(0.2, 1.0, skyVis), coverage);
+            }
+        }
+    }
     if (u_WaterParams.z > 0.5 && ng.y > 0.3) {
         vec4 ssr = aurum_waterSSR(pos, R, dist);
         refl = mix(refl, aurum_toLinear(ssr.rgb), ssr.a);
@@ -205,7 +224,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
         float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
         float shimmer = 0.7 + 0.3 * sin(6.2831853 * (h + u_WaterScroll.x * 4.0));
         vec3 foamHdr = u_SkyAmbient * skyVis * 1.3 + u_LightColor * sunUp * sunVisible * 0.7
-                     + u_BlockLightColor * blockL * 0.4;
+                     + localLight * 0.4;
         vec3 foam = aurum_toLinear(aurum_tonemap(foamHdr));
         color = mix(color, foam, clamp(line0 * 0.95 * shimmer + halo * 0.16, 0.0, 0.92));
     }

@@ -1,0 +1,820 @@
+{
+  "name": "Aurum Regasm Scenery",
+  "aurum": "0.6.1",
+  "seed": -5138383364446607098,
+  "userSaveReference": "regasm",
+  "usesUserWorld": false,
+  "freshGeneration": true,
+  "renderDistance": 12,
+  "quality": "High / LabPBR off",
+  "renderer": "Mesa llvmpipe software OpenGL 3.3",
+  "downloads": [
+    {
+      "project": "oh-the-trees-youll-grow",
+      "projectId": "g8NOG5OR",
+      "version": "1.20.1-1.7.3-Fabric",
+      "versionId": "kcYZL6Gx",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "Oh-The-Trees-Youll-Grow-fabric-1.20.1-1.7.3.jar",
+      "url": "https://cdn.modrinth.com/data/g8NOG5OR/versions/kcYZL6Gx/Oh-The-Trees-Youll-Grow-fabric-1.20.1-1.7.3.jar",
+      "sha256": "efa7e380c67f3e8ab0f96db4f35796eb73ee3d3987e5b17d7f611c65d43a6de3",
+      "sha512": "cd4b0ea817cc885e09795a2d58a5e36aaf5ab8b331ed4b6f020d9680bbca8fb1c1c64abacd56470a25e3892374f35e57696a94c4541cf4574f37a5ccf39eef17",
+      "bytes": 174934
+    },
+    {
+      "project": "ct-overhaul-village",
+      "projectId": "fgmhI8kH",
+      "version": "3.4.14",
+      "versionId": "xaqkr8Ey",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "[fabric]ctov-3.4.14.jar",
+      "url": "https://cdn.modrinth.com/data/fgmhI8kH/versions/xaqkr8Ey/%5Bfabric%5Dctov-3.4.14.jar",
+      "sha256": "0d40c400db89eb5bdd8e4173707525e2e0301fd15d59073bd9b9712ffa7c37e4",
+      "sha512": "d5717ee8a7984cdfd3d839120fc62add33eb7ca755edc4ee828007e32fd8a44c7b91432a2df120dc5feff89802ce0dc7367dbe6f9441d214cb0ba6e22d557975",
+      "bytes": 6734661
+    },
+    {
+      "project": "lithostitched",
+      "projectId": "XaDC71GB",
+      "version": "1.4.11-fabric-1.20",
+      "versionId": "9bbVphAR",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "lithostitched-fabric-1.20.1-1.4.11.jar",
+      "url": "https://cdn.modrinth.com/data/XaDC71GB/versions/9bbVphAR/lithostitched-fabric-1.20.1-1.4.11.jar",
+      "sha256": "78c13369bd34be50faee673a0618871bb9314443fcd506d8bf5457c3f95d02c4",
+      "sha512": "d8e840907e3f7326c1e6605b65c46eb4e920e4790ab4074884ad21913f0c097dcacf4b813091239eb58bd65b7c75b96d04bb4df6eec830f89a21e217e3c0fdec",
+      "bytes": 487655
+    },
+    {
+      "project": "galosphere",
+      "projectId": "Kn7xyQ1v",
+      "version": "1.20.1-1.5.2",
+      "versionId": "Jqxb7gnx",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "Galosphere-1.20.1-1.5.2-Fabric.jar",
+      "url": "https://cdn.modrinth.com/data/Kn7xyQ1v/versions/Jqxb7gnx/Galosphere-1.20.1-1.5.2-Fabric.jar",
+      "sha256": "13ed98797d57d0c28b23b495322df54e1936070d82a0748b23e92615cedb6480",
+      "sha512": "31a44f05c9b468bfe73ad2468608d36c3ddb7f3afed0ea6529314abe5a16358550545be95cc6eb49bb7d49b39d0cb5d03b16927fb44467021f571155142bf466",
+      "bytes": 35715508
+    },
+    {
+      "project": "countereds-terrain-slabs",
+      "projectId": "SJu6sklj",
+      "version": "3.1.1",
+      "versionId": "NKcsJbv7",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "terrain_slabs-fabric-3.1.1.jar",
+      "url": "https://cdn.modrinth.com/data/SJu6sklj/versions/NKcsJbv7/terrain_slabs-fabric-3.1.1.jar",
+      "sha256": "3d4ec3874d626bd982f377ed5e076212c15cedecaf2ff9fcf66e11145be92972",
+      "sha512": "7fa40c3b645fc1b05d3db203c1153a5aa8a50ecb435dac7ccc48cbda2e10e6c6943029c1f50e4bbe4ff7fddadf0c07df1a1666cfd34fbfec87827fafab42e26d",
+      "bytes": 388105
+    },
+    {
+      "project": "unnamed-desert",
+      "projectId": "ThFWvdF1",
+      "version": "1.6.3",
+      "versionId": "ITNSCuzL",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "u_desert-1.6.3+mc1.19-1.21.8.jar",
+      "url": "https://cdn.modrinth.com/data/ThFWvdF1/versions/ITNSCuzL/u_desert-1.6.3%2Bmc1.19-1.21.8.jar",
+      "sha256": "3d74327b75c4ad6b0e6d9f257f6969feec4a9b93f5d995ae29609de317914aec",
+      "sha512": "7da7e225974872a49aaa47a52872d23ffb0c35d5869ba680186ca1a6fc70e949fc09836795f9bd5ea1fa8bcd6cb08cffb7b39a3f82febc642a9f1c35f2c3faf0",
+      "bytes": 422044
+    },
+    {
+      "project": "unnamed-sea",
+      "projectId": "2a8fg8M6",
+      "version": "1.2.5",
+      "versionId": "vEr4Tzbr",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "u_sea-1.2.5+mc1.19-1.21.11.jar",
+      "url": "https://cdn.modrinth.com/data/2a8fg8M6/versions/vEr4Tzbr/u_sea-1.2.5%2Bmc1.19-1.21.11.jar",
+      "sha256": "4388981774f844f7f42e712ae34406d90b2b2e2119e76c36dbff8a2e3a5ee923",
+      "sha512": "737f90071ce9d47187557f9215037d078f07fde9d02f5e0293f8abefc94224d89c7a21d060d72a9aefe0d46eebf54d1ac27a191d0b44189e4ed24b98f347178b",
+      "bytes": 556462
+    },
+    {
+      "project": "wet-sand",
+      "projectId": "aCchvKq6",
+      "version": "beta-0.0.4-1.20.1",
+      "versionId": "1GLK4Jot",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "wet-sand-beta-0.0.4-1.20.1.jar",
+      "url": "https://cdn.modrinth.com/data/aCchvKq6/versions/1GLK4Jot/wet-sand-beta-0.0.4-1.20.1.jar",
+      "sha256": "cf02684bfbdd03e3736f8e69066373da0afead2e2146a03f5fb530d52b2b8c4d",
+      "sha512": "4052ffa885bd8807276cb306d9bb10e744f6578f54cbc4e12a93f59167d8f7515444bc2cbc392023c76e5583938aab5c0ccd0927d0126c34182612ba83b8c2c8",
+      "bytes": 92077
+    },
+    {
+      "project": "wilder-flowers",
+      "projectId": "8lUQapTY",
+      "version": "1.0.3+1.20.1-fabric",
+      "versionId": "FKFRsvZF",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "wilderflowers-1.0.3+1.20.1-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/8lUQapTY/versions/FKFRsvZF/wilderflowers-1.0.3%2B1.20.1-fabric.jar",
+      "sha256": "c25387e28dacbc0d207518ad994ee1c957b2d72dd3c29c92a2f49e52656b7c98",
+      "sha512": "eec1970a051e57afd394852be745c7294c21aaee90616885875bc3c40e6a43f26ec9b5060a91b5af998cee25405d4b83fe7bda68d318d179d6c34a66f173a333",
+      "bytes": 3099408
+    },
+    {
+      "project": "world-alive",
+      "projectId": "YFkuYUFq",
+      "version": "1.2.1",
+      "versionId": "WMQlSDyH",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "world_alive-1.2.2+1.20.1-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/YFkuYUFq/versions/WMQlSDyH/world_alive-1.2.2%2B1.20.1-fabric.jar",
+      "sha256": "78e7bb6fe2b5b43310b40b78955e4e902b066f67a451aee6efc25fb5f150255b",
+      "sha512": "f4b37c2f75432f57969896287e9092031fcf59c332c8fb2dc28498397715e4eb170a6e85758ca7da4215583ef7fee9c802b8e9861f1c8aabeecf91d96a52082b",
+      "bytes": 4138545
+    },
+    {
+      "project": "fabric-seasons-extras",
+      "projectId": "64FYdx5z",
+      "version": "1.3.2-BETA+1.20",
+      "versionId": "RJ4U7Kz1",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "fabric-seasons-extras-1.3.2-BETA+1.20.jar",
+      "url": "https://cdn.modrinth.com/data/64FYdx5z/versions/RJ4U7Kz1/fabric-seasons-extras-1.3.2-BETA%2B1.20.jar",
+      "sha256": "c7ef6e49096d59c6a66502487bb93041d04de5522e4ff287887bbfb5176f76f8",
+      "sha512": "1301e77dd4c35306f4527dc1db9940045b733c0429b9be614e685c61d9fb4c005c3ee49fdbc198b79a05d9fb4af7099dd0de6d950f8097bfb1c1594d0438f5a0",
+      "bytes": 346936
+    },
+    {
+      "project": "weatherrefind",
+      "projectId": "Qyzsewil",
+      "version": "2.0",
+      "versionId": "1jINLdTr",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "WeatherRefind-fabric-1.20.1-v2.0.jar",
+      "url": "https://cdn.modrinth.com/data/Qyzsewil/versions/1jINLdTr/WeatherRefind-fabric-1.20.1-v2.0.jar",
+      "sha256": "e88ada7dd06bb4e98591ba6651ec8bcc6e7741b33c0a342192645533a55a0a7f",
+      "sha512": "5667ddab68409c4288f1b157ec9b10f6ee6aaa10a0b8c57bc9f315892dc6a381d810f60b2cd1a1a09b1e1917993d9f38b164fe069216be773bce7f435deaf5b8",
+      "bytes": 37937
+    },
+    {
+      "project": "structory",
+      "projectId": "aKCwCJlY",
+      "version": "1.3.5",
+      "versionId": "FkaSuQb0",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "Structory_1.20.x_v1.3.5.jar",
+      "url": "https://cdn.modrinth.com/data/aKCwCJlY/versions/FkaSuQb0/Structory_1.20.x_v1.3.5.jar",
+      "sha256": "f13e9f54fa5b7cdf09c3110bda9b79f8f60bd5bb0476fc5626c5e590dd46e6e1",
+      "sha512": "2239b6232b32b1358f56c8095b855b7ad3032cc872e2089359682b31dc16b7cad316ba601bfcfe314ab32a51f26cb5a4eb12d27d62a8c879eeda45a251d5839a",
+      "bytes": 1286462
+    },
+    {
+      "project": "explorify",
+      "projectId": "HSfsxuTo",
+      "version": "v1.6.5",
+      "versionId": "CuBdAr31",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "Explorify v1.6.5.mod.jar",
+      "url": "https://cdn.modrinth.com/data/HSfsxuTo/versions/CuBdAr31/Explorify%20v1.6.5.mod.jar",
+      "sha256": "2dc76398b48b2aae9b4024642da098b0880125572de160cb5ecf91d102890cad",
+      "sha512": "9b22adeb1952ec25856e160b93aaa41934fd41e8d1aef985317cb2c9d64aae1012e134e23f52ba39fac3a98b3309b60f0b55b98a4db4de1731960b998117c83e",
+      "bytes": 767884
+    },
+    {
+      "project": "dungeons-and-taverns",
+      "projectId": "tpehi7ww",
+      "version": "3.0.3.f+mod",
+      "versionId": "d1sY0JqV",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "dungeons-and-taverns-3.0.3.f.jar",
+      "url": "https://cdn.modrinth.com/data/tpehi7ww/versions/d1sY0JqV/dungeons-and-taverns-3.0.3.f.jar",
+      "sha256": "1da45baa734df73b1aa46f0b3f319b051c26507a911ec52bfcb1ccae6930e4f0",
+      "sha512": "73d56095b131f37c01ffde9ff5b495534e2ae0896eeec737e325dbea43644bb440fff5e48088cbf8809b226f1157125658bb68172cd7d4ab0aaf2afa72848146",
+      "bytes": 13161726
+    },
+    {
+      "project": "moogs-voyager-structures",
+      "projectId": "OQAgZMH1",
+      "version": "5.1.3",
+      "versionId": "dMwX4GPR",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "MoogsVoyagerStructures-universal-1.20-5.1.3.jar",
+      "url": "https://cdn.modrinth.com/data/OQAgZMH1/versions/dMwX4GPR/MoogsVoyagerStructures-universal-1.20-5.1.3.jar",
+      "sha256": "94cbcbea535729eab2f33bfb7fe27428cb18a3d294ad117a71c263857226f1ee",
+      "sha512": "eb1df849f0ba62c78b4629514b3b50fb9a686c5d648ab361ad1c3452f20db90be43c5fdee7c467b901e9581a3f83ad6ed484908076392dc52df48ed4c312a33a",
+      "bytes": 2432788
+    },
+    {
+      "project": "sparsestructures",
+      "projectId": "qwvI41y9",
+      "version": "3.0",
+      "versionId": "XcUzPH3Z",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "sparsestructures-fabric-1.20.1-3.0.jar",
+      "url": "https://cdn.modrinth.com/data/qwvI41y9/versions/XcUzPH3Z/sparsestructures-fabric-1.20.1-3.0.jar",
+      "sha256": "faf5a806fe2ce4438b9c0e5cc9d32b31a7bb4f66f8d6f6235a2e3b908e69262b",
+      "sha512": "b43fa67fb5fcac333bcdebd705e75b7fd5e80bc833e45ff6c0b40c4c09e2dbbea12115b14e35fddd4dcfc376d770b02b64cd1b3d06f0684e1976b8fee932079e",
+      "bytes": 123939
+    },
+    {
+      "project": "yungs-extras",
+      "projectId": "ZYgyPyfq",
+      "version": "1.20-Fabric-4.0.3",
+      "versionId": "pfVTUz1L",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "YungsExtras-1.20-Fabric-4.0.3.jar",
+      "url": "https://cdn.modrinth.com/data/ZYgyPyfq/versions/pfVTUz1L/YungsExtras-1.20-Fabric-4.0.3.jar",
+      "sha256": "1765d0885e8ebe530ae81f2b2ae3d6d93c842bb04e03bdbde00f2b45c918c97a",
+      "sha512": "9fb06e136b12548ca9cb82d5d1035d760b74c7acded4b0d01ea29fb1e47c4666e1f289e6ce3e0c77510bc4bd10a64946e17633f99f60b5424a535d8d88025412",
+      "bytes": 342639
+    },
+    {
+      "project": "aquamirae",
+      "projectId": "k23mNPhZ",
+      "version": "6.0.0",
+      "versionId": "ouUaC54p",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "Aquamirae-6.jar",
+      "url": "https://cdn.modrinth.com/data/k23mNPhZ/versions/ouUaC54p/Aquamirae-6.jar",
+      "sha256": "90154fe55679046be1736013b2a495641b18cf27d8c2e56e79ad5e736746c56f",
+      "sha512": "c047063fb7b54cf107554992a9341470c622c178a89a1135c9204b347034bf9dfc757f09f1f96fcc20852868c0c11fb18ca7151ec0e2b87556f516011b0f59b1",
+      "bytes": 16111383
+    },
+    {
+      "project": "geophilic",
+      "projectId": "hl5OLM95",
+      "version": "3.7",
+      "versionId": "SVRy1ecx",
+      "kind": "datapack",
+      "selection": "user version",
+      "filename": "Geophilic v3.7.dp.zip",
+      "url": "https://cdn.modrinth.com/data/hl5OLM95/versions/SVRy1ecx/Geophilic%20v3.7.dp.zip",
+      "sha256": "4834f8c098ba89aa443d22ad270cb8ff9303a3b165336c8d6e659bacbc473a85",
+      "sha512": "7a361ddcc8d82a3d7a50611a8eb548f88e781fb856097ace222304558ccf06efcf99814872f2af3a0747b105467839ef6c557557c01caece2678ef4cf060161b",
+      "bytes": 1114215
+    },
+    {
+      "project": "incendium",
+      "projectId": "ZVzW5oNS",
+      "version": "5.3.5",
+      "versionId": "b9pN4Twz",
+      "kind": "datapack",
+      "selection": "user version",
+      "filename": "Incendium_1.20_v5.3.5.zip",
+      "url": "https://cdn.modrinth.com/data/ZVzW5oNS/versions/b9pN4Twz/Incendium_1.20_v5.3.5.zip",
+      "sha256": "0680feedf9c8791d13330580709eff7df3183a47864c834610e94c6e27b6c2e2",
+      "sha512": "5d0d360a51b86f62354b5867f87d4f39ad78f2c91d6bcccc26235db029f2d93a63e9e63a19d07f48e59655a2bd6d394fc9c0172be6ae4dc32a68763054914350",
+      "bytes": 4475914
+    },
+    {
+      "project": "terralith",
+      "projectId": "8oi3bsk5",
+      "version": "2.5.4",
+      "versionId": "YFeeBgIL",
+      "kind": "datapack",
+      "selection": "user version",
+      "filename": "Terralith_1.20_v2.5.4.zip",
+      "url": "https://cdn.modrinth.com/data/8oi3bsk5/versions/YFeeBgIL/Terralith_1.20_v2.5.4.zip",
+      "sha256": "f6822d4dc50c7e8e4d3dc0a7700c623a6de9a9df723a1b6c23075a5b2df860cc",
+      "sha512": "0b2caddfb266d2a8eaf2a0eac3c8ad2213ad6ad940a1b9e97669bf7c618c5be6284d99c99b7b562a8daa0f5d48642884c8ee67c5091ccf4625b4ef5b3e8790cd",
+      "bytes": 3153604
+    },
+    {
+      "project": "tidal-towns",
+      "projectId": "EEIwvQVo",
+      "version": "2.0",
+      "versionId": "zUTMZpiw",
+      "kind": "datapack",
+      "selection": "user version",
+      "filename": "tidal_towns_2.0_1.20-26.3.zip",
+      "url": "https://cdn.modrinth.com/data/EEIwvQVo/versions/zUTMZpiw/tidal_towns_2.0_1.20-26.3.zip",
+      "sha256": "8d2e634f361104561941f1f48bbaf68cc7333d1bfc54d42dfc27483c49c3847e",
+      "sha512": "d96ee04a373294ebc91b38ca5dbeb6e9e83b2baecdb2c930e9975919a077c059d63e32d5fc8f233b71363a43326a144773b828bbf57b8d5615c44accbda47ada",
+      "bytes": 334026
+    },
+    {
+      "project": "more-mobs",
+      "projectId": "HJR6V0I2",
+      "version": "1.5.11",
+      "versionId": "pHn2kIU3",
+      "kind": "datapack",
+      "selection": "user version",
+      "filename": "more_mobs-v1.5.11-mc1.14-26.3.9-datapack.zip",
+      "url": "https://cdn.modrinth.com/data/HJR6V0I2/versions/pHn2kIU3/more_mobs-v1.5.11-mc1.14-26.3.9-datapack.zip",
+      "sha256": "39c99fc012517c314e40dc964c03c9dd9fffa6b98faa7c8786aa13dfba982d3c",
+      "sha512": "c5cbbf380cfa43e293fe484432754de21c8fe40bb8149a117c8366f771db1edb2bbce462f0ef2a076a655c5fab5ebda3a946cfea24d3e79280b43a759deabbaf",
+      "bytes": 350028
+    },
+    {
+      "project": "chunks-fade-in",
+      "projectId": "JaNmzvA8",
+      "version": "v3.0.25-1.20-fabric",
+      "versionId": "gFXm458F",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "chunksfadein-fabric-3.0.25-1.20.jar",
+      "url": "https://cdn.modrinth.com/data/JaNmzvA8/versions/gFXm458F/chunksfadein-fabric-3.0.25-1.20.jar",
+      "sha256": "720471de097c9ea6ca912c232d1dd073b55645cb51d6b8dbf009ed63c8ee4db8",
+      "sha512": "cd9ead741584d52d0f45449318090521d154007905e35173e07c58196b594ea258c5619927e65d70496c7e081d4062f98bd35e8035231a7c7d2190104950d661",
+      "bytes": 466915
+    },
+    {
+      "project": "immediatelyfast",
+      "projectId": "5ZwdcRci",
+      "version": "1.5.5+1.20.4-fabric",
+      "versionId": "iwYUrQJO",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "ImmediatelyFast-Fabric-1.5.5+1.20.4.jar",
+      "url": "https://cdn.modrinth.com/data/5ZwdcRci/versions/iwYUrQJO/ImmediatelyFast-Fabric-1.5.5%2B1.20.4.jar",
+      "sha256": "5eea426af467564618e017e8f3a62f1c5c4224ab32a0a1726313de130a2d783d",
+      "sha512": "8733e4f1fcd64581979f93f2580ae9f530e64ba21e90b2a46d4c1bdcb802e5a53a49a160e4dae06ec9e4d7829ea34715c9c9e1c2bfd7238b4de7fccfbc482ffd",
+      "bytes": 348818
+    },
+    {
+      "project": "lambdynamiclights",
+      "projectId": "yBW8D80W",
+      "version": "4.4.0+1.20.1",
+      "versionId": "AQfTnYyJ",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "lambdynamiclights-4.4.0+1.20.1.jar",
+      "url": "https://cdn.modrinth.com/data/yBW8D80W/versions/AQfTnYyJ/lambdynamiclights-4.4.0%2B1.20.1.jar",
+      "sha256": "074d6c79e002790b696ebcfdd4ff2a2d57ec55228f93b47e952eeebd5baf5301",
+      "sha512": "65f297e32ba3a72537b22730dfbe8dac9ce1ba33e62c2ddf85302b8a5131dd1fe92cca151673599c0b6adeb4ec5bd254f2cfdde66c3ca909f08e9319ebfacb56",
+      "bytes": 1114373
+    },
+    {
+      "project": "lithium",
+      "projectId": "gvQqBUqZ",
+      "version": "mc1.20.1-0.11.4-fabric",
+      "versionId": "iEcXOkz4",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "lithium-fabric-mc1.20.1-0.11.4.jar",
+      "url": "https://cdn.modrinth.com/data/gvQqBUqZ/versions/iEcXOkz4/lithium-fabric-mc1.20.1-0.11.4.jar",
+      "sha256": "76133efe92aea907cf75562d9e26517deb170e2580e1ecd4979da2c8902de782",
+      "sha512": "31938b7e849609892ffa1710e41f2e163d11876f824452540658c4b53cd13c666dbdad8d200989461932bd9952814c5943e64252530c72bdd5d8641775151500",
+      "bytes": 691483
+    },
+    {
+      "project": "ferrite-core",
+      "projectId": "uXXizFIs",
+      "version": "6.0.1",
+      "versionId": "unerR5MN",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "ferritecore-6.0.1-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/uXXizFIs/versions/unerR5MN/ferritecore-6.0.1-fabric.jar",
+      "sha256": "c7ba1118a05b2da900d1c369fbe1017a3e3ec3cafe5e51398b851279b9becf24",
+      "sha512": "9b7dc686bfa7937815d88c7bbc6908857cd6646b05e7a96ddbdcada328a385bd4ba056532cd1d7df9d2d7f4265fd48bd49ff683f217f6d4e817177b87f6bc457",
+      "bytes": 125197
+    },
+    {
+      "project": "modernfix",
+      "projectId": "nmDcB62a",
+      "version": "5.25.2+mc1.20.1",
+      "versionId": "rPmgLeZC",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "modernfix-fabric-5.25.2+mc1.20.1.jar",
+      "url": "https://cdn.modrinth.com/data/nmDcB62a/versions/rPmgLeZC/modernfix-fabric-5.25.2%2Bmc1.20.1.jar",
+      "sha256": "5c1f852046e62a17056bb6b571164e61644076c5eb9029c92b31e337cc62c0d9",
+      "sha512": "878e39d182767ffd08ad6a3539fae780739129db133abe02b9b73dc3df6e1ac9ddbe509620356b0aae5e7bfbed535d0e18741703334317a16fefef820269da2d",
+      "bytes": 545175
+    },
+    {
+      "project": "entityculling",
+      "projectId": "NNAgCjsB",
+      "version": "1.11.3",
+      "versionId": "xSrd3qsM",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "entityculling-fabric-1.11.3-mc1.20.1.jar",
+      "url": "https://cdn.modrinth.com/data/NNAgCjsB/versions/xSrd3qsM/entityculling-fabric-1.11.3-mc1.20.1.jar",
+      "sha256": "8944942832e93d717bac4639c27dbc7fb883453002982304393edad3b38cd171",
+      "sha512": "6bb4af050ec3bb5f4e2f76b33abc2bb6e0096c94849ba728979200beddeed8b2c3a5a962ecbec9cf79f11a99ba996a847814f1aabdb8ffad54105800fc0fed72",
+      "bytes": 1516696
+    },
+    {
+      "project": "entity-model-features",
+      "projectId": "4I1XuqiY",
+      "version": "3.3.12-fabric-1.20.1",
+      "versionId": "kIXaZJr8",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "entity_model_features-3.3.12-1.20.1-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/4I1XuqiY/versions/kIXaZJr8/entity_model_features-3.3.12-1.20.1-fabric.jar",
+      "sha256": "0a2e4cf5a1c15e4ff726d1ebee3ed4f177f00cb27a2aee687193a4a4dfc071d1",
+      "sha512": "5782ea103b3d6791564b3022760bae57aa2dc017b6f4d4a28e493bae1ea3fa1232c19a8a9614df604d3fe0a871540dd76d4f9150c2186047961ed520c9c041ce",
+      "bytes": 652640
+    },
+    {
+      "project": "entitytexturefeatures",
+      "projectId": "BVzZfTc1",
+      "version": "7.2.6-fabric-1.20.1",
+      "versionId": "kWWzrS7Z",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "entity_texture_features-7.2.6-1.20.1-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/BVzZfTc1/versions/kWWzrS7Z/entity_texture_features-7.2.6-1.20.1-fabric.jar",
+      "sha256": "839e95070dd232222b8a7782b57351f5a20e01c2b0e6c0c2b9bfaddb59fa96e4",
+      "sha512": "0070d561237b874d00c92e7907e594cba690c725fa8eea8b1f77c40de88af0f13f3dd4e6a22fd8aaf60dcef1f005fdb4c77cd7c601fd5c80cd13a1ed4d39f431",
+      "bytes": 808025
+    },
+    {
+      "project": "moogs-structure-lib",
+      "projectId": "1oUDhxuy",
+      "version": "3.4.2-fabric-1.20",
+      "versionId": "X0zJXYh5",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "MoogsStructureLib-fabric-1.20-3.4.2.jar",
+      "url": "https://cdn.modrinth.com/data/1oUDhxuy/versions/X0zJXYh5/MoogsStructureLib-fabric-1.20-3.4.2.jar",
+      "sha256": "a7b8b73dc96a76cedb1e0d46a3aa6918553465a27f90febe3374f07e38bc80e7",
+      "sha512": "e4a62cb03711094b222e6f8aa12c4db4738f9d85922ab19ad5bc169919e26fbd5d7a4d12d02cba82e4ea976d771eea597196bb5f874ad6a2da34a40112f08da2",
+      "bytes": 1086078
+    },
+    {
+      "project": "mmv-moogs-missing-villages",
+      "projectId": "spZb29SD",
+      "version": "2.2.0",
+      "versionId": "uwxEdo7J",
+      "kind": "mod",
+      "selection": "user version",
+      "filename": "MoogsMissingVillages-universal-1.20-2.2.0.jar",
+      "url": "https://cdn.modrinth.com/data/spZb29SD/versions/uwxEdo7J/MoogsMissingVillages-universal-1.20-2.2.0.jar",
+      "sha256": "959701aef8efacb980740a9d580c5626f6ff23aa0e66978efe11ac7e397d9fce",
+      "sha512": "74e7a14bd597e91e4848e6e3f52b2193b8bc52050cbeab4d3a086322145a6d13df03fbe95db4b0fd44cdf6dec62be6608ff0dc2e074d8b7dcfca163df7defbba",
+      "bytes": 982690
+    },
+    {
+      "project": "architectury-api",
+      "projectId": "lhGA9TYQ",
+      "version": "9.2.14+fabric",
+      "versionId": "WbL7MStR",
+      "kind": "mod",
+      "selection": "user-pinned dependency",
+      "filename": "architectury-9.2.14-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/WbL7MStR/architectury-9.2.14-fabric.jar",
+      "sha256": "bd7a7032bedb2ff96c6991a846a44c857336a51442a105f5859017e8ba9d1321",
+      "sha512": "4cb8f009fd522d68a795d2cf5a657bdbe248b32ba7c33cd968f5ab521e9d60e198f8a3f6c50e7d960a2b8f50375116be0db1fd44b5710ea758697d8ea70d15de",
+      "bytes": 585207
+    },
+    {
+      "project": "yungs-api",
+      "projectId": "Ua7DFN59",
+      "version": "1.20-Fabric-4.0.6",
+      "versionId": "lscV1N5k",
+      "kind": "mod",
+      "selection": "user-pinned dependency",
+      "filename": "YungsApi-1.20-Fabric-4.0.6.jar",
+      "url": "https://cdn.modrinth.com/data/Ua7DFN59/versions/lscV1N5k/YungsApi-1.20-Fabric-4.0.6.jar",
+      "sha256": "26b6dc81f876aabf3d53ead59e5908a8b0f5434d46c150cfd376c027ac54053e",
+      "sha512": "90fea70f21cd09bdeefe9cb6bd23677595b32156b1b8053611449504ba84a21ee1e13e5a620851299090ce989f41b97b9b4bdc98def1ccecb33115e19553c64e",
+      "bytes": 1396331
+    },
+    {
+      "project": "cloth-config",
+      "projectId": "9s6osm5g",
+      "version": "11.1.136+fabric",
+      "versionId": "2xQdCMyG",
+      "kind": "mod",
+      "selection": "user-pinned dependency",
+      "filename": "cloth-config-11.1.136-fabric.jar",
+      "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/2xQdCMyG/cloth-config-11.1.136-fabric.jar",
+      "sha256": "844f49c339c8f3144e167ab21b7d0059f0d571054e26285a0749348da25c49fa",
+      "sha512": "2da85c071c854223cc30c8e46794391b77e53f28ecdbbde59dc83b3dbbdfc74be9e68da9ed464e7f98b4361033899ba4f681ebff1f35edc2c60e599a59796f1c",
+      "bytes": 1172214
+    },
+    {
+      "project": "obscure-api",
+      "projectId": "fU7jbFHc",
+      "version": "16",
+      "versionId": "IWDYxZre",
+      "kind": "mod",
+      "selection": "user-pinned dependency",
+      "filename": "Obscure-API-16.jar",
+      "url": "https://cdn.modrinth.com/data/fU7jbFHc/versions/IWDYxZre/Obscure-API-16.jar",
+      "sha256": "019e625a4f515b4faa65ae74b0bc16bc59fcc7534640bc7f76ad0f6e688de0d9",
+      "sha512": "f0998d69174063420078fe96ff904665a33f3950475536c8ca8f0bda45417ef94a75598d417af4302e92d6a59ead1ea7e6721062b538f981f5f4dd16e8c1c5b1",
+      "bytes": 405700
+    }
+  ],
+  "priorPinnedMods": [
+    {
+      "filename": "naturespirit-2.2.5-1.20.1.jar",
+      "sha256": "93ce1637124377e9b41a8ddb5c065b0e3c2e55dd55b463acd130a771cb9ce3a3",
+      "id": "natures_spirit",
+      "version": "2.2.5-1.20.1"
+    },
+    {
+      "filename": "fabric-seasons-terralith-2.3.7-compat-1.0.jar",
+      "sha256": "c709416512c59958e4f00d2fa318a81436f14caa32554a8e5a97bfd13dfb9524",
+      "id": "seasonsterralithcompat",
+      "version": "1.0-2.3.7"
+    },
+    {
+      "filename": "fabric-seasons-2.4.2-BETA+1.20.jar",
+      "sha256": "20ae3bd1451c38688d15a81085f94d39731f2cd3b30b5aee1659dc6e2b49e0f5",
+      "id": "seasons",
+      "version": "2.4.2-BETA+1.20"
+    },
+    {
+      "filename": "TerraBlender-fabric-1.20.1-3.0.1.11.jar",
+      "sha256": "08a9be3e5657c4b9ad954d8b002c1b448284e745b8524468d45e62902dafbfc5",
+      "id": "terrablender",
+      "version": "3.0.1.11"
+    }
+  ],
+  "unmatchedUserPins": {
+    "mos": "2.0.3",
+    "mss": "2.0",
+    "mtr": "1.0.3",
+    "mmr": "2.2.5"
+  },
+  "full135ModInstallation": false,
+  "excludedAfterStartupTests": {
+    "modernfix": "5.25.2+mc1.20.1",
+    "lithium": "0.11.4"
+  },
+  "exclusionReason": "Local integrated-server startup stalled with both installed; not a diagnosis of the user installation.",
+  "hostRepair": "Installed matching OpenJDK 21 desktop native libraries; AWT and ImageIO probe passes.",
+  "externalCaptureMods": [
+    {
+      "filename": "Aquamirae-6.jar",
+      "id": "aquamirae",
+      "version": "6",
+      "sha256": "90154fe55679046be1736013b2a495641b18cf27d8c2e56e79ad5e736746c56f"
+    },
+    {
+      "filename": "Explorify v1.6.5.mod.jar",
+      "id": "explorify",
+      "version": "1.6.5",
+      "sha256": "2dc76398b48b2aae9b4024642da098b0880125572de160cb5ecf91d102890cad"
+    },
+    {
+      "filename": "Galosphere-1.20.1-1.5.2-Fabric.jar",
+      "id": "galosphere",
+      "version": "1.20.1-1.5.2",
+      "sha256": "13ed98797d57d0c28b23b495322df54e1936070d82a0748b23e92615cedb6480"
+    },
+    {
+      "filename": "ImmediatelyFast-Fabric-1.5.5+1.20.4.jar",
+      "id": "immediatelyfast",
+      "version": "1.5.5+1.20.4",
+      "sha256": "5eea426af467564618e017e8f3a62f1c5c4224ab32a0a1726313de130a2d783d"
+    },
+    {
+      "filename": "MoogsMissingVillages-universal-1.20-2.2.0.jar",
+      "id": "mmv",
+      "version": "2.2.0",
+      "sha256": "959701aef8efacb980740a9d580c5626f6ff23aa0e66978efe11ac7e397d9fce"
+    },
+    {
+      "filename": "MoogsStructureLib-fabric-1.20-3.4.2.jar",
+      "id": "moogs_structures",
+      "version": "3.4.2+fabric",
+      "sha256": "a7b8b73dc96a76cedb1e0d46a3aa6918553465a27f90febe3374f07e38bc80e7"
+    },
+    {
+      "filename": "MoogsVoyagerStructures-universal-1.20-5.1.3.jar",
+      "id": "mvs",
+      "version": "5.1.3",
+      "sha256": "94cbcbea535729eab2f33bfb7fe27428cb18a3d294ad117a71c263857226f1ee"
+    },
+    {
+      "filename": "Obscure-API-16.jar",
+      "id": "obscure_api",
+      "version": "16",
+      "sha256": "019e625a4f515b4faa65ae74b0bc16bc59fcc7534640bc7f76ad0f6e688de0d9"
+    },
+    {
+      "filename": "Oh-The-Trees-Youll-Grow-fabric-1.20.1-1.7.3.jar",
+      "id": "ohthetreesyoullgrow",
+      "version": "1.7.3",
+      "sha256": "efa7e380c67f3e8ab0f96db4f35796eb73ee3d3987e5b17d7f611c65d43a6de3"
+    },
+    {
+      "filename": "Structory_1.20.x_v1.3.5.jar",
+      "id": "structory",
+      "version": "1.3.5",
+      "sha256": "f13e9f54fa5b7cdf09c3110bda9b79f8f60bd5bb0476fc5626c5e590dd46e6e1"
+    },
+    {
+      "filename": "TerraBlender-fabric-1.20.1-3.0.1.11.jar",
+      "id": "terrablender",
+      "version": "3.0.1.11",
+      "sha256": "08a9be3e5657c4b9ad954d8b002c1b448284e745b8524468d45e62902dafbfc5"
+    },
+    {
+      "filename": "WeatherRefind-fabric-1.20.1-v2.0.jar",
+      "id": "weatherrefind",
+      "version": "2.0",
+      "sha256": "e88ada7dd06bb4e98591ba6651ec8bcc6e7741b33c0a342192645533a55a0a7f"
+    },
+    {
+      "filename": "YungsApi-1.20-Fabric-4.0.6.jar",
+      "id": "yungsapi",
+      "version": "1.20-Fabric-4.0.6",
+      "sha256": "26b6dc81f876aabf3d53ead59e5908a8b0f5434d46c150cfd376c027ac54053e"
+    },
+    {
+      "filename": "YungsExtras-1.20-Fabric-4.0.3.jar",
+      "id": "yungsextras",
+      "version": "1.20-Fabric-4.0.3",
+      "sha256": "1765d0885e8ebe530ae81f2b2ae3d6d93c842bb04e03bdbde00f2b45c918c97a"
+    },
+    {
+      "filename": "[fabric]ctov-3.4.14.jar",
+      "id": "ctov",
+      "version": "3.4.14",
+      "sha256": "0d40c400db89eb5bdd8e4173707525e2e0301fd15d59073bd9b9712ffa7c37e4"
+    },
+    {
+      "filename": "architectury-9.2.14-fabric.jar",
+      "id": "architectury",
+      "version": "9.2.14",
+      "sha256": "bd7a7032bedb2ff96c6991a846a44c857336a51442a105f5859017e8ba9d1321"
+    },
+    {
+      "filename": "chunksfadein-fabric-3.0.25-1.20.jar",
+      "id": "chunksfadein",
+      "version": "3.0.25-1.20",
+      "sha256": "720471de097c9ea6ca912c232d1dd073b55645cb51d6b8dbf009ed63c8ee4db8"
+    },
+    {
+      "filename": "cloth-config-11.1.136-fabric.jar",
+      "id": "cloth-config",
+      "version": "11.1.136",
+      "sha256": "844f49c339c8f3144e167ab21b7d0059f0d571054e26285a0749348da25c49fa"
+    },
+    {
+      "filename": "dungeons-and-taverns-3.0.3.f.jar",
+      "id": "mr_dungeons_andtaverns",
+      "version": "3.0.3.f",
+      "sha256": "1da45baa734df73b1aa46f0b3f319b051c26507a911ec52bfcb1ccae6930e4f0"
+    },
+    {
+      "filename": "entity_model_features-3.3.12-1.20.1-fabric.jar",
+      "id": "entity_model_features",
+      "version": "3.3.12",
+      "sha256": "0a2e4cf5a1c15e4ff726d1ebee3ed4f177f00cb27a2aee687193a4a4dfc071d1"
+    },
+    {
+      "filename": "entity_texture_features-7.2.6-1.20.1-fabric.jar",
+      "id": "entity_texture_features",
+      "version": "7.2.6",
+      "sha256": "839e95070dd232222b8a7782b57351f5a20e01c2b0e6c0c2b9bfaddb59fa96e4"
+    },
+    {
+      "filename": "entityculling-fabric-1.11.3-mc1.20.1.jar",
+      "id": "entityculling",
+      "version": "1.11.3",
+      "sha256": "8944942832e93d717bac4639c27dbc7fb883453002982304393edad3b38cd171"
+    },
+    {
+      "filename": "fabric-seasons-2.4.2-BETA+1.20.jar",
+      "id": "seasons",
+      "version": "2.4.2-BETA+1.20",
+      "sha256": "20ae3bd1451c38688d15a81085f94d39731f2cd3b30b5aee1659dc6e2b49e0f5"
+    },
+    {
+      "filename": "fabric-seasons-extras-1.3.2-BETA+1.20.jar",
+      "id": "seasonsextras",
+      "version": "1.3.2-BETA+1.20",
+      "sha256": "c7ef6e49096d59c6a66502487bb93041d04de5522e4ff287887bbfb5176f76f8"
+    },
+    {
+      "filename": "fabric-seasons-terralith-2.3.7-compat-1.0.jar",
+      "id": "seasonsterralithcompat",
+      "version": "1.0-2.3.7",
+      "sha256": "c709416512c59958e4f00d2fa318a81436f14caa32554a8e5a97bfd13dfb9524"
+    },
+    {
+      "filename": "ferritecore-6.0.1-fabric.jar",
+      "id": "ferritecore",
+      "version": "6.0.1",
+      "sha256": "c7ba1118a05b2da900d1c369fbe1017a3e3ec3cafe5e51398b851279b9becf24"
+    },
+    {
+      "filename": "lambdynamiclights-4.4.0+1.20.1.jar",
+      "id": "lambdynlights",
+      "version": "4.4.0+1.20.1",
+      "sha256": "074d6c79e002790b696ebcfdd4ff2a2d57ec55228f93b47e952eeebd5baf5301"
+    },
+    {
+      "filename": "lithostitched-fabric-1.20.1-1.4.11.jar",
+      "id": "lithostitched",
+      "version": "1.4.11",
+      "sha256": "78c13369bd34be50faee673a0618871bb9314443fcd506d8bf5457c3f95d02c4"
+    },
+    {
+      "filename": "naturespirit-2.2.5-1.20.1.jar",
+      "id": "natures_spirit",
+      "version": "2.2.5-1.20.1",
+      "sha256": "93ce1637124377e9b41a8ddb5c065b0e3c2e55dd55b463acd130a771cb9ce3a3"
+    },
+    {
+      "filename": "sparsestructures-fabric-1.20.1-3.0.jar",
+      "id": "sparsestructures",
+      "version": "3.0",
+      "sha256": "faf5a806fe2ce4438b9c0e5cc9d32b31a7bb4f66f8d6f6235a2e3b908e69262b"
+    },
+    {
+      "filename": "terrain_slabs-fabric-3.1.1.jar",
+      "id": "terrain_slabs",
+      "version": "3.1.1",
+      "sha256": "3d4ec3874d626bd982f377ed5e076212c15cedecaf2ff9fcf66e11145be92972"
+    },
+    {
+      "filename": "u_desert-1.6.3+mc1.19-1.21.8.jar",
+      "id": "u_desert",
+      "version": "1.6.3",
+      "sha256": "3d74327b75c4ad6b0e6d9f257f6969feec4a9b93f5d995ae29609de317914aec"
+    },
+    {
+      "filename": "u_sea-1.2.5+mc1.19-1.21.11.jar",
+      "id": "u_sea",
+      "version": "1.2.5",
+      "sha256": "4388981774f844f7f42e712ae34406d90b2b2e2119e76c36dbff8a2e3a5ee923"
+    },
+    {
+      "filename": "wet-sand-beta-0.0.4-1.20.1.jar",
+      "id": "wet-sand",
+      "version": "beta-0.0.4-1.20.1",
+      "sha256": "cf02684bfbdd03e3736f8e69066373da0afead2e2146a03f5fb530d52b2b8c4d"
+    },
+    {
+      "filename": "wilderflowers-1.0.3+1.20.1-fabric.jar",
+      "id": "wilderflowers",
+      "version": "1.0.3+1.20.1",
+      "sha256": "c25387e28dacbc0d207518ad994ee1c957b2d72dd3c29c92a2f49e52656b7c98"
+    },
+    {
+      "filename": "world_alive-1.2.2+1.20.1-fabric.jar",
+      "id": "worldalive",
+      "version": "1.2.1",
+      "sha256": "78e7bb6fe2b5b43310b40b78955e4e902b066f67a451aee6efc25fb5f150255b"
+    }
+  ],
+  "externalCaptureModCount": 36,
+  "aurumSourceCommit": "d10830d5d385a82b10e318d9582c99beb4615395",
+  "artifactSha256": "c90fcd0b6072452deddb64b0ea7d2c57a9ea80788e3621a1c3905e0d177105ee",
+  "captureMode": "Fabric development client from the unchanged 0.6.1 source; Aurum enabled/disabled controls use the same installed mods.",
+  "worldPackOrderLowToHigh": [
+    "vanilla",
+    "fabric and enabled built-in world-generation packs",
+    "file/Geophilic v3.7.dp.zip",
+    "file/Terralith_1.20_v2.5.4.zip",
+    "file/Incendium_1.20_v5.3.5.zip",
+    "file/tidal_towns_2.0_1.20-26.3.zip",
+    "file/more_mobs-v1.5.11-mc1.14-26.3.9-datapack.zip"
+  ],
+  "hostRepairDesktopDeb": {
+    "url": "https://deb.debian.org/debian/pool/main/o/openjdk-21/openjdk-21-jre_21.0.12.1+1-1~deb13u1_amd64.deb",
+    "sha256": "6530f359a77cd001b84eb742d373e618376c0cc5822c541f6949a92c18944144",
+    "bytes": 209200
+  },
+  "captureCountNote": "See the selected capture manifest; scouts and rejected frames are not counted as successful comparison scenes.",
+  "savedWorldEvidence": {
+    "name": "Aurum Regasm Scenery",
+    "seed": -5138383364446607098,
+    "enabledPacksLowToHigh": [
+      "vanilla",
+      "fabric",
+      "natures_spirit:modified_windswept_hills",
+      "lithostitched:breaks_seed_parity",
+      "natures_spirit:modified_swamp",
+      "natures_spirit:modified_badlands",
+      "natures_spirit:modified_birch_forest",
+      "natures_spirit:modified_dark_forest",
+      "natures_spirit:modified_savannas",
+      "natures_spirit:modified_desert",
+      "natures_spirit:modified_jungle",
+      "natures_spirit:modified_mountain_biomes",
+      "natures_spirit:modified_flower_forest",
+      "file/Geophilic v3.7.dp.zip",
+      "file/Terralith_1.20_v2.5.4.zip",
+      "file/Incendium_1.20_v5.3.5.zip",
+      "file/tidal_towns_2.0_1.20-26.3.zip",
+      "file/more_mobs-v1.5.11-mc1.14-26.3.9-datapack.zip"
+    ]
+  }
+}

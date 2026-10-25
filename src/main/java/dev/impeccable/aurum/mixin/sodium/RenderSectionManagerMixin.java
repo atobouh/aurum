@@ -17,6 +17,8 @@ public abstract class RenderSectionManagerMixin {
     private void aurum$markShadowDirty(ArrayList<ChunkBuildOutput> results, CallbackInfo ci) {
         for (ChunkBuildOutput result : results) {
             ShadowRenderer.onSectionRebuilt(result.render.getChunkX(), result.render.getChunkY(), result.render.getChunkZ());
+            dev.impeccable.aurum.render.VoxelLighting.onSectionRebuilt(
+                    result.render.getChunkX(), result.render.getChunkY(), result.render.getChunkZ());
         }
     }
 }

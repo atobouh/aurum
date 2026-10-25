@@ -232,7 +232,9 @@ public final class AtlasBaker {
     /**
      * Relief for textures the resource pack has no height map for (most modded blocks, and blocks a partial PBR
      * pack skips): each texel's height from its brightness within the texture, darker = deeper, over a shallow
-     * range like hand-made packs (Seraphic: about 15 %). Fully opaque textures only (no glass, leaves, plants).
+     * range. With the default 0.22-block parallax scale, 28 % becomes about one vanilla texture pixel of
+     * physical relief; the old 16 % was barely half a pixel and was difficult to see. Fully opaque textures
+     * only (no glass, leaves, plants).
      */
     private static void bakeGeneratedHeight(ByteBuffer src, ByteBuffer pbr, int atlasWidth, int k, int x0, int y0, int sw, int sh) {
         float[] lum = new float[sw * sh];
@@ -252,7 +254,9 @@ public final class AtlasBaker {
         for (int Y = 0; Y < sh * k; Y++) {
             for (int X = 0; X < sw * k; X++) {
                 float t = (lum[(Y / k) * sw + X / k] - lo) / (hi - lo);
-                int height = Math.round(255f * (1f - 0.16f * (1f - t)));
+                // Colour-derived relief has no authored shape information. Keep it shallower than real
+                // LabPBR height maps so noisy gravel and stone do not turn into harsh zebra stripes.
+                int height = Math.round(255f * (1f - 0.18f * (1f - t)));
                 pbr.put(((y0 * k + Y) * dw + (x0 * k + X)) * 4 + 3, (byte) height);
             }
         }

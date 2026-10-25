@@ -24,8 +24,6 @@ public final class ShaderManager {
     private static final String[][] PROGRAMS = {
             {"sky/sky", "post/fullscreen.vsh", "sky/sky.fsh"},
             {"post/composite", "post/fullscreen.vsh", "post/composite.fsh"},
-            {"post/bounce_gather", "post/fullscreen.vsh", "post/bounce_gather.fsh"},
-            {"post/bounce_blend", "post/fullscreen.vsh", "post/bounce_blend.fsh"},
             {"post/clouds_blocky", "post/fullscreen.vsh", "post/clouds.fsh"},
             {"post/clouds_soft", "post/fullscreen.vsh", "post/clouds.fsh", "CLOUD_SOFT"},
             {"post/rays_mask", "post/fullscreen.vsh", "post/rays_mask.fsh"},
@@ -116,7 +114,7 @@ public final class ShaderManager {
     }
 
     /** Inlines includes and inserts defines right after the {@code #version} line. */
-    static String preprocess(String path, Map<String, String> defines) throws ShaderException {
+    public static String preprocess(String path, Map<String, String> defines) throws ShaderException {
         String body = expandIncludes(path, new HashSet<>());
         int versionEnd = body.startsWith("#version") ? body.indexOf('\n') + 1 : 0;
         StringBuilder header = new StringBuilder();
