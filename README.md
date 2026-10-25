@@ -4,7 +4,13 @@ A Fabric 1.20.1 client mod with its own rendering pipeline on top of Sodium 0.5.
 light, shadows, atmospheric haze, clouds and reflective water. Its performance target is 60 FPS at 1080p on an
 Intel UHD 620; the current cloud environment cannot verify that target.
 
-Current build: **0.6.1**. It corrects excessive daytime canopy darkening and adds diffuse fill beneath cloud shadows,
+Experimental lighting build: **0.6.2-alpha.1**. Terrain and ten supported model shader variants share a surface-light evaluator. A bounded static visibility field supports up to 32 sources with exact receiver falloff, plus a neutral local bounce estimate. When LambDynamicLights is installed, static voxel replacement is paused for a consistent propagated-light compatibility path. This alpha does not complete dynamic voxel lighting, cave fog/AO or the full lighting plan.
+
+- [Download Aurum 0.6.2-alpha.1](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.6.2-alpha.1.jar)
+- [Lighting alpha: screenshots, motion footage and test results](docs/reports/aurum-0.6.2-alpha.1-lighting-review.html)
+- [Implementation and remaining gates](docs/research/LIGHTING_IMPLEMENTATION_062_ALPHA1.md)
+
+Stable build: **0.6.1**. It corrects excessive daytime canopy darkening and adds diffuse fill beneath cloud shadows,
 following the user's High / LabPBR-off footage. The 0.6.0 features include cached, occluded coloured block light, cloud shadows and varying wind, a selectable calm-lake water
 treatment, bounded sharpening, canopy depth and a Voxel Crisp shadow/ray option. Existing sky, relief,
 reflections, bloom and flare remain. Photon, Complementary, Rethinking Voxels and Derivative Main are the visual references;

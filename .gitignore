@@ -11,3 +11,6 @@ bin/
 classes/
 .DS_Store
 release/
+
+__pycache__/
+*.pyc

@@ -1,3 +1,17 @@
+# Shared lighting alpha — 0.6.2-alpha.1
+
+The current implementation and limits are documented in [the implementation notes](research/LIGHTING_IMPLEMENTATION_062_ALPHA1.md), [the illustrated HTML review](reports/aurum-0.6.2-alpha.1-lighting-review.html), and [the evidence JSON](research/lighting-062-alpha1-evidence.json). Stable 0.6.1 remains separately available.
+
+`./gradlew build` runs the ten-variant production shader adapter contract (145 assertions). Run `JAVA_HOME=/path/to/jdk21 python3 tools/check_incident_lighting.py` for the production Java/GLSL lighting controls and `python3 tools/check_surface_raster.py` for the perspective full-bright raster regression. The EGL checks need `moderngl` and `glcontext`.
+
+[Development integration replay instructions](../tools/lighting_integration/README.md) cover camera/receiver motion, source edits, mixed lamps, exact source counts 0/1/16/17/32/33, full-bright and night vision, the LambDynamicLights fallback, outdoor time changes and continuous dusk footage. Evidence was captured on llvmpipe; target Intel UHD frame-time and latency gates remain open.
+
+Supported models now use the shared evaluator and are marked cyan in `path`; explicit full-bright exceptions are orange. The static voxel replacement is paused when LambDynamicLights is installed. No voxel-occluded moving-source claim follows from the compatibility capture. Source-aware cave fog/AO and local moving-entity shadow casting remain open.
+
+---
+
+## Historical research candidate (before the alpha implementation)
+
 # Lighting unification — research and diagnostic candidate
 
 See [the source audit and engineering contract](research/LIGHTING_UNIFICATION.md) and
