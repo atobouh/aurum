@@ -63,9 +63,31 @@ vec3 aurum_filmic(vec3 color) {
     return pow(clamp(mapped, 0.0, 1.0), vec3(1.0 / 2.2));
 }
 
+// Lottes tonemap with Photon's parameters (Photon Shaders by SixthSurge, include/post_processing/tonemap_operators.glsl;
+// licence in assets/aurum/licenses/PHOTON_LICENSE.txt). Per channel with contrast 1.5: deeper shadows, bright
+// mid-tones and naturally saturated colour - the vibrance of Photon's frames (0.8.8). Then Photon's gentle output
+// S-curve (gain 1.05 in sqrt space).
+vec3 aurum_lottes(vec3 rgb) {
+    const vec3 a = vec3(1.5);
+    const vec3 d = vec3(0.91);
+    const vec3 hdrMax = vec3(8.0);
+    const vec3 midIn = vec3(0.26);
+    const vec3 midOut = vec3(0.32);
+    vec3 b = (-pow(midIn, a) + pow(hdrMax, a) * midOut) / ((pow(hdrMax, a * d) - pow(midIn, a * d)) * midOut);
+    vec3 c = (pow(hdrMax, a * d) * pow(midIn, a) - pow(hdrMax, a) * pow(midIn, a * d) * midOut)
+           / ((pow(hdrMax, a * d) - pow(midIn, a * d)) * midOut);
+    rgb = max(rgb, vec3(0.0));
+    vec3 x = clamp(pow(rgb, a) / (pow(rgb, a * d) * b + c), 0.0, 1.0);
+    vec3 s = sqrt(x);
+    vec3 g = 0.5 * pow(2.0 * mix(s, 1.0 - s, step(0.5, s)), vec3(1.05));
+    s = mix(g, 1.0 - g, step(0.5, s));
+    return pow(s * s, vec3(1.0 / 2.2));
+}
+
 vec3 aurum_tonemap(vec3 hdr) {
     hdr *= u_ToneParams.y * u_WhiteBalance;
     if (u_ToneParams.x < 0.5) return aurum_filmic(hdr);
     if (u_ToneParams.x < 1.5) return aurum_agx(hdr, 1.25);
+    if (u_ToneParams.x > 2.5) return aurum_lottes(hdr);
     return pow(clamp(hdr, 0.0, 1.0), vec3(1.0 / 2.2));
 }

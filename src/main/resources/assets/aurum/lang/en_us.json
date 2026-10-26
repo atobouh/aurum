@@ -137,6 +137,7 @@
   "aurum.option.waving_speed": "Wind speed",
   "aurum.option.waving_speed.tooltip": "How fast plants move and gusts travel.",
   "aurum.tonemap.filmic": "Aurum Filmic",
+  "aurum.tonemap.photon": "Photon (Lottes)",
   "aurum.option.white_balance": "White balance",
   "aurum.option.white_balance.tooltip": "Makes midday light neutral white, like a camera. Lower it for a warmer, more vintage look. Sunsets stay warm either way.",
   "aurum.option.cloud_style": "Cloud style",

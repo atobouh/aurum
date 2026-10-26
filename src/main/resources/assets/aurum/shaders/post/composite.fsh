@@ -314,7 +314,8 @@ void main() {
             // grows with distance faster than linearly - about 11 % at 64 blocks, 27 % at 100, 50 % at 150 at
             // ground level - so tree lines and villages step back into bright air in layers.
             float far = max(dist - 24.0, 0.0);
-            float od = far * sqrt(far) * u_Fog3.w * 0.32 * (0.80 * mist + 0.45 * thin);
+            // 0.8.8: much lighter - at the user's 23-chunk distance 0.8.7 turned trees at 60 blocks into grey ghosts.
+            float od = far * sqrt(far) * u_Fog3.w * 0.075 * (0.80 * mist + 0.45 * thin);
             float aerial = (1.0 - exp(-od)) * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
             if (aerial > 0.002) {
                 vec3 airRad = aurum_fogRadiance(dir, u_SunDir) / 0.75;

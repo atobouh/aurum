@@ -416,3 +416,21 @@ GPU, performance comes first.
   grey.
   - Photon's grass measured R:G:B 0.84 : 1 : 0.62; ours was 0.76 : 1 : 0.52.
   - Untinted blocks and pack-coloured foliage (autumn leaves) are unchanged.
+
+## 0.8.8: Photon's tone curve (2026-10-26)
+
+The user's 0.8.7 screenshots were washed out: trees at 60 blocks became grey ghosts, and colours were dull next to
+Photon and next to Aurum turned off.
+
+The root cause is the tone curve. Aurum Filmic is almost linear through the mid-tones and preserves hue, so it
+adds no contrast or saturation, and every desaturating step stacked on it washed the image out further.
+
+- **Tone curve:** ported Photon's Lottes operator (contrast 1.5, shoulder 0.91, white 8, mid 0.26 → 0.32,
+  applied per channel) and its output S-curve (gain 1.05 in sqrt space).
+  - Source: Photon Shaders by SixthSurge. Its licence allows modification and redistribution of portions, but
+    not on monetised platforms (Modrinth, CurseForge) without written permission and not for money. The licence
+    ships in `assets/aurum/licenses/PHOTON_LICENSE.txt`.
+  - New default: "Photon (Lottes)". Configs still on Aurum Filmic are moved to it (config v14).
+- **Neutral grade:** saturation 100 and contrast 100 for the Aurum look. The 0.8.7 foliage desaturation is off.
+- **Distance haze:** strength factor 0.32 → 0.075. At the user's 23-chunk render distance the 0.8.7 curve hid
+  trees at 60 blocks.

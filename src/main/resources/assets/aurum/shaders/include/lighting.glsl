@@ -8,7 +8,7 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     // and a touch warmer - Photon's grass in the user's same scene measured R:G:B 0.84:1:0.62 against our
     // 0.76:1:0.52. Untinted blocks (stone, wood, flowers, autumn leaves from packs) keep their colour.
     float tintAmt = max(vertexColor.r, max(vertexColor.g, vertexColor.b)) - min(vertexColor.r, min(vertexColor.g, vertexColor.b));
-    if (u_AurumMode == 1 && tintAmt > 0.05) {
+    if (false && u_AurumMode == 1 && tintAmt > 0.05) { // 0.8.8: off - Photon keeps texture colours
         float lumA = dot(albedo, vec3(0.2126, 0.7152, 0.0722));
         albedo = mix(albedo, vec3(lumA) * vec3(1.06, 1.0, 0.86), 0.30);
     }

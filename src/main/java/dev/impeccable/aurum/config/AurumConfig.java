@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 13;
+    public int configVersion = 14;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -123,12 +123,12 @@ public final class AurumConfig {
     public int pomDistance = 16;
 
     // Colour grade
-    public Tonemap tonemap = Tonemap.FILMIC;
+    public Tonemap tonemap = Tonemap.PHOTON;
     public int whiteBalance = 100;
     public int exposure = 110;
-    public int saturation = 88;
+    public int saturation = 100;
     public int vibrance = 100;
-    public int contrast = 110;
+    public int contrast = 100;
     public LookPreset look = LookPreset.AURUM;
     /** -50 cool .. +50 warm. */
     public int temperature = 12;
@@ -281,6 +281,15 @@ public final class AurumConfig {
             // 0.7.4: at 65 % cloud shadows left most of the land dark and dull under soft clouds (user screenshots).
             if (cloudShadowStrength == 65) cloudShadowStrength = 40;
             configVersion = 13;
+        }
+        if (configVersion < 14) {
+            // 0.8.8: Photon's tone curve, neutral grade on top (the old desaturating grade washed the image out).
+            if (tonemap == Tonemap.FILMIC) tonemap = Tonemap.PHOTON;
+            if (look == LookPreset.AURUM) {
+                if (saturation == 88) saturation = 100;
+                if (contrast == 110) contrast = 100;
+            }
+            configVersion = 14;
         }
         skyClarity = clamp(skyClarity, 0, 100);
         skyTemperature = clamp(skyTemperature, -50, 50);
