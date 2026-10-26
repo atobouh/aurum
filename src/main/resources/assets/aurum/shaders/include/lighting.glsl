@@ -4,6 +4,14 @@
 // uv drives derivatives (tangent frame, mips); suv is where to sample (moved by parallax, else equal to uv).
 vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec2 uv, vec2 suv, float mipBias, int material) {
     vec3 albedo = pow(tex.rgb * vertexColor.rgb, vec3(2.2));
+    // Foliage colour (0.8.7, Photon reference): biome-tinted blocks (grass, leaves, plants, vines) are calmer
+    // and a touch warmer - Photon's grass in the user's same scene measured R:G:B 0.84:1:0.62 against our
+    // 0.76:1:0.52. Untinted blocks (stone, wood, flowers, autumn leaves from packs) keep their colour.
+    float tintAmt = max(vertexColor.r, max(vertexColor.g, vertexColor.b)) - min(vertexColor.r, min(vertexColor.g, vertexColor.b));
+    if (u_AurumMode == 1 && tintAmt > 0.05) {
+        float lumA = dot(albedo, vec3(0.2126, 0.7152, 0.0722));
+        albedo = mix(albedo, vec3(lumA) * vec3(1.06, 1.0, 0.86), 0.30);
+    }
 
     // Face normal from screen-space derivatives (Sodium has no vertex normals). Flip to face the camera.
     vec3 dpdx = dFdx(pos);

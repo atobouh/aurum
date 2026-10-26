@@ -310,13 +310,18 @@ void main() {
             // 0.8.3: from 64 blocks and much thinner. Starting at 16 with a dense ground layer laid a milky veil
             // over the whole scene (A/B in the user's view: saturation 0.19 with it, 0.28 without; darks 0.31 vs
             // 0.18). Near and middle distance now stay crisp; only far land hazes.
-            float od = max(dist - 64.0, 0.0) * u_Fog3.w * (0.80 * mist + 0.25 * thin);
+            // 0.8.7, Photon's aerial perspective (user's same-scene shots): the foreground stays crisp, haze
+            // grows with distance faster than linearly - about 11 % at 64 blocks, 27 % at 100, 50 % at 150 at
+            // ground level - so tree lines and villages step back into bright air in layers.
+            float far = max(dist - 24.0, 0.0);
+            float od = far * sqrt(far) * u_Fog3.w * 0.32 * (0.80 * mist + 0.45 * thin);
             float aerial = (1.0 - exp(-od)) * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
             if (aerial > 0.002) {
                 vec3 airRad = aurum_fogRadiance(dir, u_SunDir) / 0.75;
                 float lum = luminance(airRad);
                 // Near-neutral, slightly warm white: 85 % grey of the horizon's brightness, 15 % of its colour.
-                airRad = mix(vec3(lum) * vec3(1.02, 1.0, 0.97), airRad, 0.15);
+                // Photon's haze: bright, a soft grey-blue of the low sky (30 % of its colour).
+                airRad = mix(vec3(lum) * vec3(1.0, 1.0, 1.02), airRad, 0.30);
                 float toSunA = dot(dir, u_SunDir);
                 vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.25 + 0.75 * u_SunGlow.a) * 0.45;
                 vec3 airLit = airRad + glow;

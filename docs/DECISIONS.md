@@ -403,3 +403,16 @@ GPU, performance comes first.
 - **Sky:** horizon calming relaxed to 0.70–1.0 (was 0.52–0.86).
 - **Test harness:** the driver now focuses the window before the first command. A lost '/' had been typing the
   command's letters as keys, which opened the inventory.
+
+## 0.8.7: Photon atmosphere and foliage colour (2026-10-26)
+
+- **Aerial perspective:** optical depth = (d − 24)^1.5 × strength × 0.32 × (0.80 · ground mist + 0.45 · thin
+  layer).
+  - Growth is super-linear, so the foreground stays crisp and haze builds with distance.
+  - At ground level that is about 15 % at 64 blocks, 35 % at 100 and 55 % at 150, read from Photon's
+    same-scene shot.
+  - Haze colour: 30 % of the low sky's colour over a bright neutral.
+- **Foliage:** biome-tinted albedo (grass, leaves, plants, vines) is desaturated 30 % toward a slightly warm
+  grey.
+  - Photon's grass measured R:G:B 0.84 : 1 : 0.62; ours was 0.76 : 1 : 0.52.
+  - Untinted blocks and pack-coloured foliage (autumn leaves) are unchanged.
