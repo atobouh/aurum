@@ -22,6 +22,9 @@ vec3 aurum_skyLut(float y, float cosA) {
     // Compress the broad sun-facing sky, not just the disc's immediate pixels. The low sun should keep
     // its amber gradient while the open sky away from it retains the full daytime gain.
     float gain = mix(SKY_GAIN, 0.78, u_SkyTone.z * pow(max(cosA, 0.0), 1.5));
+    // 0.7.7: at golden hour the whole low sky read near-white (220-255) where the references keep a darker
+    // lavender-grey (130-170) and only the sun's surroundings glow. Dim the sky away from the sun.
+    gain *= 1.0 - 0.42 * u_SkyTone.z * (1.0 - pow(max(cosA, 0.0), 6.0));
     vec3 c = texture(u_SkyLut, vec2(u, v)).rgb * gain;
     // Long atmospheric paths and the camera shoulder made the low noon sky almost neutral white. Shape
     // only displayed daylight radiance, over a broad elevation range, instead of warming/cooling blocks.

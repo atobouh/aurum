@@ -224,3 +224,17 @@ the forest scattering and water-depth findings.
 - The user found 0.7.4 "pretty strong" and 0.7.5 "the effect is just gone".
 - New values: texture-normal strength 0.36, line overlay 0.28, skin veil 0.09.
 - The thin shore line from 0.7.5 stays.
+
+## 0.7.7: sun and golden-hour sky (2026-10-26)
+
+A matched golden-hour comparison against Nostalgia and the Photon golden meadow found that the low sun blew out
+about a third of the sky, and the land toward the sun washed white.
+
+| Cause | Fix |
+| --- | --- |
+| Bloom threshold 0.77 (0.7.1) spread the sun into a white blob | back to 0.88 / 0.10 |
+| Distance-haze forward glow at full strength whitened land toward the sun | glow × 0.35; cap 0.6 by day, 0.30 at golden hour |
+| Sky aureole too wide and hazy | Mie g 0.78 → 0.85; scattering 3.996e-6 → 3.0e-6 (extinction 4.40e-6 → 3.30e-6) |
+| Whole low sky near-white at golden hour (sampled 220–255 vs the reference's 130–170 away from the sun) | sky gain × (1 − 0.42 · golden · (1 − cos⁶ to sun)) |
+
+The sunset now reads warm and cinematic. Clouds at golden hour (flat pink slabs) are the next stage.

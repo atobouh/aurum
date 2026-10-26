@@ -15,10 +15,10 @@ public final class SkyModel {
 
     static final double[] BETA_R = {5.802e-6, 13.558e-6, 33.1e-6};
     static final double H_R = 8000.0;
-    static final double BETA_M_SCATTER = 3.996e-6;
-    static final double BETA_M_EXT = 4.40e-6;
+    static final double BETA_M_SCATTER = 3.0e-6;
+    static final double BETA_M_EXT = 3.30e-6;
     static final double H_M = 1200.0;
-    static final double MIE_G = 0.78;
+    static final double MIE_G = 0.85;
     static final double[] BETA_OZONE = {0.650e-6, 1.881e-6, 0.085e-6};
 
     /** Sun irradiance at the top of the atmosphere. */

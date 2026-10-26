@@ -291,11 +291,12 @@ void main() {
                 // Daylight haze is a slightly greyed horizon; at golden hour it keeps the sky's warmth.
                 airRad = mix(airRad, vec3(luminance(airRad)), 0.25 * (1.0 - u_SunGlow.a));
                 float toSunA = dot(dir, u_SunDir);
-                vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.15 + 0.85 * u_SunGlow.a);
+                // Gentle: at full strength the forward glow turned land toward a low sun white (0.7.7).
+                vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.15 + 0.85 * u_SunGlow.a) * 0.35;
                 if (u_Extras.w > 0.0) glow *= vl.r;
                 vec3 airColor = aurum_tonemap(airRad + glow);
                 scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
-                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.7, 0.45, u_SunGlow.a))), vec3(1.0 / 2.2));
+                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.6, 0.30, u_SunGlow.a))), vec3(1.0 / 2.2));
             }
         }
 
