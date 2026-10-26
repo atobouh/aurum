@@ -161,13 +161,13 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     // bellies, each side brightening toward the top). Ours were one uniform light grey.
     vec3 top = skyL * 1.30 + u_LightColor * 0.62 * ndl * up;
     float drift = noise(p.xz, vec2(1.0), 256.0, vec2(0.0));
-    // Bluish undersides, lit by the blue sky rather than the sun (Nostalgia).
-    vec3 belly = (skyL * vec3(0.72, 0.82, 1.10) + u_LightColor * 0.06 * up) * (0.92 + 0.14 * drift);
+    // Light lavender undersides (Nostalgia); 0.7.9's darker blue read as grey overcast in the user's game.
+    vec3 belly = (skyL * vec3(0.88, 0.90, 1.06) + u_LightColor * 0.10 * up) * (0.94 + 0.12 * drift);
     vec3 side = (skyL * 1.22 + u_LightColor * 0.50 * ndl * up) * mix(0.72, 1.06, h * h * (3.0 - 2.0 * h));
     // Blend by facing: flat faces get their own tone, the rounded edges blend smoothly between them.
     float topW = smoothstep(0.35, 0.9, n.y), botW = smoothstep(0.35, 0.9, -n.y);
     // Bellies darken gently toward the middle of a cloud (light reaches the edges more easily): volume.
-    belly *= mix(1.0, 0.80, smoothstep(0.0, u_Shape.x * 1.5, -d2));
+    belly *= mix(1.0, 0.88, smoothstep(0.0, u_Shape.x * 1.5, -d2));
     vec3 c = side * (1.0 - topW - botW) + top * topW + belly * botW;
     // Soft glow along the silhouette, where the view grazes the rounded edge: the pillowy rims of the references.
     float graze = 1.0 - saturate(dot(n, -dir));

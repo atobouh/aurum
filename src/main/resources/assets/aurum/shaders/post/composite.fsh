@@ -372,10 +372,12 @@ void main() {
         // Bright sky and the sun spread a soft haze of light over what is around them; dark areas stay dark.
         vec3 b = texture(u_Bloom, v_Uv).rgb * 0.25; // four summed levels
         float l = max(scene.r, max(scene.g, scene.b));
-        vec3 e = scene * ((1.0 / (1.0 - 0.92 * min(l, 0.999))));
-        e = mix(e, b, saturate(u_Extras.y * 0.45));
+        // 0.8.0: 0.7.9 blended 11 % of a 12x-expanded blur and lifted every dark silhouette next to the sky into
+        // milky grey (user screenshots). Now about 3 % of a 5x-expanded blur: a glow around bright areas only.
+        vec3 e = scene * ((1.0 / (1.0 - 0.80 * min(l, 0.999))));
+        e = mix(e, b, saturate(u_Extras.y * 0.12));
         float le = max(e.r, max(e.g, e.b));
-        scene = e * (1.0 / (1.0 + 0.92 * le));
+        scene = e * (1.0 / (1.0 + 0.80 * le));
     }
     if (u_Extras.z > 0.0) {
         float vis = texelFetch(u_Flare, ivec2(0), 0).r;

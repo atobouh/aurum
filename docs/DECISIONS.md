@@ -282,3 +282,22 @@ Photon + AVPBR on an RTX 3050.
     0.35 · toward-sun³));
   - bellies are bluish (sky × (0.72, 0.82, 1.10));
   - the upper tier fades 22 % toward the sky colour.
+
+## 0.8.0: sky gradient, and undoing the washed look (2026-10-26)
+
+The user said "our sky transition is bad, washed out" and, with screenshots, "our bloom, our sky, everything is
+washed".
+
+- **Sky gradient.** Measured row by row, the clear daytime sky was one flat grey-blue from 80° to the horizon,
+  because three desaturations stacked (sky saturation 70, 12 % greying, grade 88).
+  - Colour and brightness now follow elevation: saturation 0.62 → 1.12 and brightness 0.58 → 0.86 from the
+    horizon to overhead.
+  - The 12 % greying applies only low down.
+  - The sky-saturation setting scales the curve (70 = the default curve).
+- **White horizon band.** It survives with haze, edge fade and fog all off: it is the brightest row of the sky
+  table, spread by bloom. The horizon calming above covers it, by day and at golden hour away from the sun.
+- **Bloom.** In 0.7.9 the diffusion lifted every dark silhouette next to the sky into milky grey.
+  - Expansion lowered from 0.92 to 0.80 (about 5×, was 12×).
+  - Blend lowered from 45 % to 12 % × strength (about 3 % at the default).
+- **Cloud undersides.** 0.7.9's darker blue read as grey overcast. They are now light lavender (sky × (0.88,
+  0.90, 1.06) plus 0.10 sun) and darken only to 0.88 toward the middle.

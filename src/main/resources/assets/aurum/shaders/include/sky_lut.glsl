@@ -31,14 +31,28 @@ vec3 aurum_skyLut(float y, float cosA) {
     float clarity = u_SkyGrade * u_SkyAppearance.x;
     float lowSky = 1.0 - smoothstep(0.0, 0.35, max(y, 0.0));
     c *= mix(vec3(1.0), vec3(0.60, 0.77, 1.0), clarity * lowSky);
-    float grey = mix(0.12, 0.035, u_SkyAppearance.x);
+    // Greying only toward the horizon (0.8.0): applied to the whole sky it left the zenith a flat, milky lavender.
+    float grey = mix(0.12, 0.035, u_SkyAppearance.x) * lowSky;
     c = mix(c, mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), grey)
                     * mix(1.035, 1.0, u_SkyAppearance.x), u_SkyGrade);
     c *= vec3(1.0) + vec3(0.15, 0.015, -0.12) * u_SkyAppearance.y * u_SkyGrade;
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
     // The sky-saturation setting shapes the daytime sky; at golden hour it gave way to a +30% boost (0.7.9: the
     // 70% default had been muting every sunset to grey-peach, unlike Photon's orange-to-lavender skies).
-    c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x * (1.0 - u_SkyTone.z) + 0.30 * u_SkyTone.z), vec3(0.0));
+    // Daytime gradient (0.8.0, user: "our sky transition is bad, washed out"): measured row by row, our clear sky
+    // was one flat grey-blue from 80 degrees down to the horizon, (105,128,164) -> (114,140,177), where
+    // Nostalgia runs from a deep (62,96,144) overhead to (101,118,158) low, and Photon from a clear blue to pale
+    // grey at the horizon. Colour and depth now follow elevation: deep, saturated and a little darker overhead,
+    // pale low down. The sky-saturation setting scales the whole curve (70 = the default curve).
+    float elev = smoothstep(0.0, 0.65, max(y, 0.0));
+    float userSat = (1.0 + u_SkyTone.x) / 0.7;
+    float daySat = mix(0.62, 1.12, elev) * userSat;
+    float sat = mix(1.0 + u_SkyTone.x, daySat, u_SkyGrade) * (1.0 - u_SkyTone.z) + 1.30 * u_SkyTone.z;
+    c = max(mix(vec3(l), c, sat), vec3(0.0));
+    // Brightness: our horizon was twice as bright as the zenith (a wide, flat white band), the references only a
+    // little brighter. Calm the low sky by day and at golden hour (away from the sun's glow).
+    float horizonCalm = max(u_SkyGrade, u_SkyTone.z * (1.0 - pow(max(cosA, 0.0), 4.0)));
+    c *= mix(1.0, mix(0.58, 0.86, elev), horizonCalm);
     vec3 tone = u_SkyTone.y >= 0.0 ? u_SkyTone.y * vec3(0.07, -0.05, 0.09) : -u_SkyTone.y * vec3(0.12, 0.03, -0.38);
     // The tint matters most at sunrise and sunset (z = golden-hour amount), where the packs differ most.
     return c * max(vec3(1.0) + tone * (1.0 + 2.5 * u_SkyTone.z), vec3(0.2));
