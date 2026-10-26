@@ -254,7 +254,7 @@ public final class SkyExtras {
             GlUtil.bindTexture(UNIT_A, depthTex);
             GlUtil.drawFullscreenTriangle();
             aoDrawn = true;
-            aoStrength = Math.min(1f, c.aoBoost / 50f) * 0.6f;
+            aoStrength = Math.min(1f, c.aoBoost / 50f) * 0.8f;
         }
 
         // 4. Bloom.

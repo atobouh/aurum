@@ -56,6 +56,7 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
     bool thin = material == 4 || foliage;
     float leafSun = directVis;   // sunlight reaching this leaf, without the backlight floor
     float leafBack = 0.0;
+    float shadowOcc = 1.0;
     if ((ndl > 0.0 || thin) && sky > 0.05) {
         vec2 sh = aurum_shadow(pos, ng);
         // Thin leaves pass a little backlight, while front-facing leaves in shadow stay dark.
@@ -64,6 +65,7 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
         float leafTransmit = 0.03 + 0.06 * leafBack * leafBack;
         float lit = material == 4 ? max(sh.x, leafTransmit) : sh.x;
         leafSun = mix(leafSun, sh.x * smoothstep(0.05, 0.3, sky), sh.y);
+        shadowOcc = mix(1.0, sh.x, sh.y);
         directVis = mix(directVis, lit * smoothstep(0.05, 0.3, sky), sh.y);
     }
     float cloudVisibility = aurum_cloudShadow(pos);
@@ -75,7 +77,8 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
     vec3 transmit = vec3(0.0);
     if (thin) {
         float sunUpT = smoothstep(-0.05, 0.2, u_LightDir.y);
-        float through = material == 4 ? 0.30 + 0.70 * leafBack * leafBack : 0.35;
+        // 0.8.5: the glow is for leaves lit from behind; front-lit crowns glowing too read neon and flat.
+        float through = material == 4 ? 0.06 + 0.64 * leafBack * leafBack : 0.20;
         transmit = u_LightColor * sunUpT * (leafSun * through * aurum_cloudShadow(pos) * pomShadow
                  + 0.03 * smoothstep(0.3, 0.9, sky));
     }
@@ -97,11 +100,16 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
     if (material == 4) {
         // Vanilla leaf AO distinguishes the interior of a crown. Keep that local occlusion in the sky fill
         // instead of letting the broad ambient term turn every cube the same shade of green.
-        ambient *= mix(mix(0.60, 0.94, ao), mix(0.75, 1.0, ao), daylightFill);
-        float canopyFloor = mix(0.62, 0.82, daylightFill);
+        // 0.8.5: deeper crown interiors by day (the references' crowns have near-dark gaps between leaves).
+        ambient *= mix(mix(0.60, 0.94, ao), mix(0.45, 1.0, ao), daylightFill);
+        float canopyFloor = mix(0.55, 0.68, daylightFill);
         ambient *= mix(1.0, mix(canopyFloor, 1.0, smoothstep(0.60, 1.0, sky)), u_FoliageDepth);
     }
     ambient *= 1.0 - 0.18 * pomCavity;
+    // Depth (0.8.5): whatever casts a sun shadow also hides much of the sky above (a crown, a roof, an
+    // overhang), but vanilla sky light passes almost unchanged through leaves, so tree shade kept nearly the
+    // full sky fill and read flat next to the references. Shadowed receivers lose part of the sky fill by day.
+    ambient *= mix(1.0, mix(0.58, 1.0, shadowOcc), daylightFill);
     vec4 voxel;
     vec3 blockLight = aurum_localBlockLight(lightCoord, pos, ng, voxel);
     float blockBrightness;

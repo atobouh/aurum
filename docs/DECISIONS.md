@@ -363,3 +363,22 @@ An A/B in the user-like views measured each effect:
 - The horizon hue target is now linear (0.55, 0.78, 1.0) (was lavender (0.66, 0.69, 1.0)), and the horizon
   brightness 0.52 (was 0.58).
 - Result: (139,160,177).
+
+## 0.8.5: shading depth and light in the air (2026-10-26)
+
+Tested on the user's setup: High, PBR off.
+
+- **Shade under cover.**
+  - Vanilla sky light passes almost unchanged through leaves, so tree shade kept nearly the full sky fill.
+  - Shadowed receivers (shadow map) now lose up to 42 % of the sky fill by day.
+  - SSAO strength 0.6 → 0.8.
+- **Leaves.**
+  - The 0.7.2 glow on front-lit leaves made crowns neon and flat. The glow is now mostly for backlit leaves
+    (0.06 + 0.64 · back²; plants 0.20), with tint albedo × hue^1.5.
+  - Crown interiors are darker by day: ambient × mix(0.45, 1, ao), canopy floor 0.55–0.68.
+  - Morning forest light-to-shade ratio: 29 → 36.
+- **Light shafts.** Sunlit air along the view (volumetric pass: sunlit share × distance) now adds the sun's
+  forward-scattered light:
+  - `1 − exp(−len × 0.0022 × strength)`, screen-blended in display-linear light;
+  - beams through gaps and a glow toward the sun;
+  - no grey mixing, so no veil, and no change looking away from the sun.

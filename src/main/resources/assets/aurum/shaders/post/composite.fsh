@@ -284,6 +284,18 @@ void main() {
             }
         }
 
+        if (u_Extras.w > 0.0 && u_Flags.x > 0.5) {
+            // Light shafts (0.8.5). Sunlit air along the view adds the sun's forward-scattered light: beams between
+            // trees and through gaps, a luminous glow toward the sun, nothing at all in shadowed air. Added as light
+            // (in-scattering), never mixed in as grey air, so it cannot veil the scene (0.8.3's lesson).
+            float sunlitLen = vl.r * vl.g * u_Volumetric2.x;
+            float toSunB = dot(dir, u_SunDir);
+            vec3 beamCol = pow(max(aurum_tonemap(u_SunGlow.rgb * airPhase(toSunB) * 1.6), vec3(0.0)), vec3(2.2));
+            float amount = (1.0 - exp(-sunlitLen * 0.0022 * u_Extras.w)) * (1.0 - u_Fog2.x);
+            vec3 sl = pow(max(scene, vec3(0.0)), vec3(2.2));
+            scene = pow(sl + beamCol * amount * (1.0 - sl), vec3(1.0 / 2.2));
+        }
+
         if (u_Fog3.w > 0.0) {
             // Distance mist (0.8.1, replaces 0.7.1's uniform pale-blue tint, which the user rightly called a washed
             // filter). Two layers of air averaged along the ray: a dense ground mist (16-block height scale) that
