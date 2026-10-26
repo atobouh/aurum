@@ -355,3 +355,11 @@ An A/B in the user-like views measured each effect:
 - The ground layer is ×0.80 (was ×2.4) and the thin layer ×0.25.
 - The cap is 0.55 by day and 0.40 at golden hour.
 - Result: near and middle distance stay crisp (saturation 0.26, p5 0.22); only far land hazes.
+
+## 0.8.4: Nostalgia's pale-blue horizon (2026-10-26)
+
+- The user wants Nostalgia's pale blue at the edge of the sky, not white.
+- Nostalgia's horizon measures (136,160,178); ours was (155,164,187).
+- The horizon hue target is now linear (0.55, 0.78, 1.0) (was lavender (0.66, 0.69, 1.0)), and the horizon
+  brightness 0.52 (was 0.58).
+- Result: (139,160,177).
