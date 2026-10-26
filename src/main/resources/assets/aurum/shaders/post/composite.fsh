@@ -285,28 +285,31 @@ void main() {
         }
 
         if (u_Fog3.w > 0.0) {
-            // Aerial perspective: distant land fades into the bright horizon air (the references' depth:
-            // hills 150 blocks away read pale blue-white, layers separate). Thicker low down, thinner over
-            // mountains; off in caves and under cover. Warm toward a low sun through the same scattering.
-            // Mean air density along the ray (density falls off with height above sea level, scale 50 blocks):
-            // looking down from a hill crosses thin air, so the near valley stays clear; a level view through
-            // low air hazes most.
+            // Distance mist (0.8.1, replaces 0.7.1's uniform pale-blue tint, which the user rightly called a washed
+            // filter). Two layers of air averaged along the ray: a dense ground mist (16-block height scale) that
+            // pools in valleys, between tree layers and over water, and a thin upper haze (60 blocks). Hilltops and
+            // treetops rise out of the mist, so distance reads as layers of volume, as in Photon's forest shot.
+            // The mist is a sunlit, near-neutral white (not the sky's blue), glowing warm toward the sun, and darker
+            // in shadowed air where the volumetric light knows it.
             float h0 = max(u_Fog.w, 0.0), h1 = max(u_Fog.w + dir.y * dist, 0.0);
-            float lowAir = abs(h1 - h0) > 0.5 ? 50.0 * (exp(-h0 / 50.0) - exp(-h1 / 50.0)) / (h1 - h0)
-                                              : exp(-h0 / 50.0);
-            float aerial = (1.0 - exp(-max(dist - 32.0, 0.0) * u_Fog3.w)) * lowAir
-                         * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
+            float dh = h1 - h0;
+            float mist = abs(dh) > 0.5 ? 16.0 * (exp(-h0 / 16.0) - exp(-h1 / 16.0)) / dh : exp(-h0 / 16.0);
+            float thin = abs(dh) > 0.5 ? 60.0 * (exp(-h0 / 60.0) - exp(-h1 / 60.0)) / dh : exp(-h0 / 60.0);
+            float od = max(dist - 16.0, 0.0) * u_Fog3.w * (2.4 * mist + 0.30 * thin);
+            float aerial = (1.0 - exp(-od)) * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
             if (aerial > 0.002) {
                 vec3 airRad = aurum_fogRadiance(dir, u_SunDir) / 0.75;
-                // Daylight haze is a slightly greyed horizon; at golden hour it keeps the sky's warmth.
-                airRad = mix(airRad, vec3(luminance(airRad)), 0.25 * (1.0 - u_SunGlow.a));
+                float lum = luminance(airRad);
+                // Near-neutral, slightly warm white: 85 % grey of the horizon's brightness, 15 % of its colour.
+                airRad = mix(vec3(lum) * vec3(1.02, 1.0, 0.97), airRad, 0.15);
                 float toSunA = dot(dir, u_SunDir);
-                // Gentle: at full strength the forward glow turned land toward a low sun white (0.7.7).
-                vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.15 + 0.85 * u_SunGlow.a) * 0.35;
-                if (u_Extras.w > 0.0) glow *= vl.r;
-                vec3 airColor = aurum_tonemap(airRad + glow);
+                vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.25 + 0.75 * u_SunGlow.a) * 0.45;
+                vec3 airLit = airRad + glow;
+                // Shadowed air (behind hills and trees, per the volumetric pass) is visibly darker: volume.
+                if (u_Extras.w > 0.0) airLit *= mix(0.62, 1.0, vl.r);
+                vec3 airColor = aurum_tonemap(airLit);
                 scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
-                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.6, 0.30, u_SunGlow.a))), vec3(1.0 / 2.2));
+                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.75, 0.45, u_SunGlow.a))), vec3(1.0 / 2.2));
             }
         }
 

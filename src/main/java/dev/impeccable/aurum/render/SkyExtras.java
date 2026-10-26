@@ -324,7 +324,8 @@ public final class SkyExtras {
         p.set3f("u_SunDir", sun[0], sun[1], sun[2]);
         p.set3f("u_LightDir", Atmosphere.lightDir[0], Atmosphere.lightDir[1], Atmosphere.lightDir[2]);
         p.set3f("u_LightColor", Atmosphere.lightColor[0], Atmosphere.lightColor[1], Atmosphere.lightColor[2]);
-        p.set3f("u_SkyAmbient", Atmosphere.skyAmbient[0], Atmosphere.skyAmbient[1], Atmosphere.skyAmbient[2]);
+        float ca = Atmosphere.cloudAmbientScale;
+        p.set3f("u_SkyAmbient", Atmosphere.skyAmbient[0] * ca, Atmosphere.skyAmbient[1] * ca, Atmosphere.skyAmbient[2] * ca);
         SkyLut lut = SkyState.current();
         p.set4f("u_SunGlow", lut.sunGlow[0], lut.sunGlow[1], lut.sunGlow[2], Atmosphere.golden);
         // Noise coordinates wrap at 4096 blocks (a whole number of tiles at every scale the shader uses).

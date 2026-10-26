@@ -301,3 +301,23 @@ washed".
   - Blend lowered from 45 % to 12 % × strength (about 3 % at the default).
 - **Cloud undersides.** 0.7.9's darker blue read as grey overcast. They are now light lavender (sky × (0.88,
   0.90, 1.06) plus 0.10 sun) and darken only to 0.88 toward the middle.
+
+## 0.8.1: sun presence, crisp clouds again, distance mist (2026-10-26)
+
+- **"No sun"** (user, 0.8.0 screenshot). Lit-to-shade was about 3:1 by day; a clear day is 5–8:1.
+  - By day the sun is ×1.5 and the sky fill ×0.7, scaled by elevation and off at golden hour. Exposure adapts,
+    so this moves contrast toward the sun.
+  - The daytime sun is a touch warmer: (1.10, 1.03, 0.93).
+  - Clouds keep their full sky light (`cloudAmbientScale`).
+- **Blurry clouds** (user screenshot). This was a regression from 0.7.8.
+  - Edge radius back to 4 / 3 blocks (was 7 / 5).
+  - The see-through rims are removed.
+  - Rim glow back to 0.30.
+  - Bellies are lighter (sky × (0.96, 0.97, 1.06)).
+- **Distance** (user: "not blue or pale, more like a fog… right now it's a washed filter"). The uniform tint by
+  distance is replaced by layered mist:
+  - a dense ground layer with a 16-block height scale, pooling in valleys, between tree layers and over water;
+  - a thin upper layer at 60 blocks;
+  - both averaged along the ray, so hill and tree tops rise out of it;
+  - the colour is a near-neutral warm white (15 % of the horizon's colour), glowing warm toward the sun;
+  - shadowed air is 38 % darker, using the volumetric pass.

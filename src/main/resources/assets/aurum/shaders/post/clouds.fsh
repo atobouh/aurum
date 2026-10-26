@@ -83,8 +83,9 @@ const int STEPS = 40;
 // Layer 2: the second tier, a smaller box standing on the biggest clouds (overlapping layer 1 so they read as
 // one stepped cloud, like blocky cumulus).
 // 0.7.8: thicker and rounder (side by side with Nostalgia: ours read as thin, flat slabs, about 1:6).
-const float L1_CENTRE = 10.0, L1_HALF = 10.0, L1_ROUND = 7.0;
-const float L2_CENTRE = 24.0, L2_HALF = 6.5, L2_ROUND = 5.0;
+// 0.8.1: edge radius back near the crisp pre-0.7.8 value (user: blurry clouds); thickness kept.
+const float L1_CENTRE = 10.0, L1_HALF = 10.0, L1_ROUND = 4.0;
+const float L2_CENTRE = 24.0, L2_HALF = 6.5, L2_ROUND = 3.0;
 
 float layer2d(vec2 xz, int layer) {
     return cloud2d(xz, u_Offset.xy, u_Shape.x, layer);
@@ -162,7 +163,7 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     vec3 top = skyL * 1.30 + u_LightColor * 0.62 * ndl * up;
     float drift = noise(p.xz, vec2(1.0), 256.0, vec2(0.0));
     // Light lavender undersides (Nostalgia); 0.7.9's darker blue read as grey overcast in the user's game.
-    vec3 belly = (skyL * vec3(0.88, 0.90, 1.06) + u_LightColor * 0.10 * up) * (0.94 + 0.12 * drift);
+    vec3 belly = (skyL * vec3(0.96, 0.97, 1.06) + u_LightColor * 0.12 * up) * (0.94 + 0.12 * drift);
     vec3 side = (skyL * 1.22 + u_LightColor * 0.50 * ndl * up) * mix(0.72, 1.06, h * h * (3.0 - 2.0 * h));
     // Blend by facing: flat faces get their own tone, the rounded edges blend smoothly between them.
     float topW = smoothstep(0.35, 0.9, n.y), botW = smoothstep(0.35, 0.9, -n.y);
@@ -171,7 +172,7 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     vec3 c = side * (1.0 - topW - botW) + top * topW + belly * botW;
     // Soft glow along the silhouette, where the view grazes the rounded edge: the pillowy rims of the references.
     float graze = 1.0 - saturate(dot(n, -dir));
-    c += skyL * 0.40 * graze * graze * graze;
+    c += skyL * 0.30 * graze * graze * graze;
     c = mix(u_SkyAmbient * 1.1 + u_LightColor * 0.35 * up, c, u_Look.x);
     if (layer == 1) c *= vec3(1.03, 1.05, 1.10);
     float toSun = saturate(dot(dir, u_SunDir));
@@ -221,10 +222,7 @@ vec4 clouds(vec3 dir, vec3 sky) {
     float d2hit = layer2d(p.xz, bestLayer);
     vec3 n = normalAt(p, bestLayer, d2hit);
     vec3 c = shade(p, n, dir, bestLayer, d2hit);
-    // 0.7.8: soft, slightly see-through rims where the view grazes the rounded edge, and a faint overall
-    // translucency: Nostalgia's clouds read fluffy because the sky shows through their silhouettes.
-    float grazeA = 1.0 - saturate(dot(n, -dir));
-    alpha *= 0.96 * (1.0 - 0.50 * pow(grazeA, 2.5));
+    // (0.7.8's see-through rims removed in 0.8.1: they blurred the crisp blocky outline.)
     alpha *= 1.0 - smoothstep(0.75 * u_Layers.y, u_Layers.y, bestT);
     vec3 lit = aerial(c, sky, bestT);
     // The higher tier sits further into the sky: fade it a little toward the sky colour (depth, Nostalgia).

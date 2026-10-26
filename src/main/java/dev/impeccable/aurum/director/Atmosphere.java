@@ -25,6 +25,8 @@ public final class Atmosphere {
     public static final float[] blockLight = new float[3];
     /** Per-channel gains that make midday sun + sky read as neutral white (camera white balance). */
     public static final float[] whiteBalance = {1f, 1f, 1f};
+    /** Undoes the daytime sky-fill reduction for clouds (0.8.1). */
+    public static float cloudAmbientScale = 1f;
     /** Look-preset sky tone for the shaders: saturation offset, lavender/teal tint. */
     public static final float[] skyTone = {0f, 0f};
     /** Display-sky clarity / temperature; intentionally independent of surface irradiance. */
@@ -73,10 +75,19 @@ public final class Atmosphere {
         // The reference sunset scenes keep a bright gold strip on sun-facing grass while deep silhouettes
         // stay dark. A little more low-angle direct light raises that contrast without adding shader work.
         sun *= 1f + 0.30f * g;
+        // 0.8.1 (user: "I feel like there is no sun"): by day the sky fill was too strong against the sun (lit to
+        // shade about 3:1; a clear day is 5-8:1), so scenes read overcast under a blue sky. Exposure adapts to the
+        // total, so this shifts contrast toward the sun rather than brightening the frame.
+        float dayAmt = Math.max(0f, Math.min(1f, (sy - 0.15f) / 0.25f)) * (1f - golden);
+        sun *= 1f + 0.50f * dayAmt;
+        amb *= 1f - 0.30f * dayAmt;
+        // Clouds are lit by the open sky, not shaded ground: keep their sky light where it was.
+        cloudAmbientScale = 1f / (1f - 0.30f * dayAmt);
         // Strong enough that lit foliage turns gold (references: foliage red/green ~1.0 at golden hour).
         // A slightly warm sun at every hour: the references' daylight frames are neutral-to-warm (+0.00 to +0.08
         // red over blue), ours read cold blue (-0.12 to -0.21).
-        float[] sunTint = {1.08f, 1.02f - 0.30f * g, 0.98f - 0.60f * g};
+        // 0.8.1: a little warmer by day, so sunlit grass and leaves read sunny (yellow-green), not grey-green.
+        float[] sunTint = {1.10f, 1.03f - 0.30f * g, 0.93f - 0.55f * g};
         // Keep the shade readable but cooler than the low sun. Warming both equally flattens the scene.
         float[] ambTint = {1f + 0.12f * g, 1f + 0.04f * g, 1f - 0.08f * g};
         // Look presets: warmer or cooler shade.
