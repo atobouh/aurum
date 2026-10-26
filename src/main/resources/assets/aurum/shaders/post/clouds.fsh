@@ -82,8 +82,9 @@ const int STEPS = 40;
 // Layer 1: the base layer, 14 blocks thick with pillow-round edges (Nostalgia's clouds are thick, rounded boxes).
 // Layer 2: the second tier, a smaller box standing on the biggest clouds (overlapping layer 1 so they read as
 // one stepped cloud, like blocky cumulus).
-const float L1_CENTRE = 7.0, L1_HALF = 7.0, L1_ROUND = 4.5;
-const float L2_CENTRE = 17.0, L2_HALF = 4.5, L2_ROUND = 3.5;
+// 0.7.8: thicker and rounder (side by side with Nostalgia: ours read as thin, flat slabs, about 1:6).
+const float L1_CENTRE = 10.0, L1_HALF = 10.0, L1_ROUND = 7.0;
+const float L2_CENTRE = 24.0, L2_HALF = 6.5, L2_ROUND = 5.0;
 
 float layer2d(vec2 xz, int layer) {
     return cloud2d(xz, u_Offset.xy, u_Shape.x, layer);
@@ -156,18 +157,20 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     // cloud turns blue-grey (the references are near-white with a lavender tint in shade).
     vec3 skyL = mix(u_SkyAmbient, vec3(luminance(u_SkyAmbient)), 0.55) * vec3(1.04, 1.0, 1.06);
 
-    vec3 top = skyL * 1.30 + u_LightColor * 0.55 * ndl * up;
+    // 0.7.8: real light-to-shade contrast (Nostalgia: bright white sides and tops, clearly darker lavender-blue
+    // bellies, each side brightening toward the top). Ours were one uniform light grey.
+    vec3 top = skyL * 1.30 + u_LightColor * 0.62 * ndl * up;
     float drift = noise(p.xz, vec2(1.0), 256.0, vec2(0.0));
-    vec3 belly = (skyL * vec3(0.98, 0.96, 1.08) + u_LightColor * 0.14 * up) * (0.93 + 0.14 * drift);
-    vec3 side = (skyL * 1.20 + u_LightColor * 0.45 * ndl * up) * mix(0.90, 1.02, h);
+    vec3 belly = (skyL * vec3(0.80, 0.84, 1.02) + u_LightColor * 0.07 * up) * (0.92 + 0.14 * drift);
+    vec3 side = (skyL * 1.22 + u_LightColor * 0.50 * ndl * up) * mix(0.72, 1.06, h * h * (3.0 - 2.0 * h));
     // Blend by facing: flat faces get their own tone, the rounded edges blend smoothly between them.
     float topW = smoothstep(0.35, 0.9, n.y), botW = smoothstep(0.35, 0.9, -n.y);
     // Bellies darken gently toward the middle of a cloud (light reaches the edges more easily): volume.
-    belly *= mix(1.0, 0.86, smoothstep(0.0, u_Shape.x * 1.5, -d2));
+    belly *= mix(1.0, 0.80, smoothstep(0.0, u_Shape.x * 1.5, -d2));
     vec3 c = side * (1.0 - topW - botW) + top * topW + belly * botW;
     // Soft glow along the silhouette, where the view grazes the rounded edge: the pillowy rims of the references.
     float graze = 1.0 - saturate(dot(n, -dir));
-    c += skyL * 0.30 * graze * graze * graze;
+    c += skyL * 0.40 * graze * graze * graze;
     c = mix(u_SkyAmbient * 1.1 + u_LightColor * 0.35 * up, c, u_Look.x);
     if (layer == 1) c *= vec3(1.03, 1.05, 1.10);
     float toSun = saturate(dot(dir, u_SunDir));
@@ -213,6 +216,10 @@ vec4 clouds(vec3 dir, vec3 sky) {
     float d2hit = layer2d(p.xz, bestLayer);
     vec3 n = normalAt(p, bestLayer, d2hit);
     vec3 c = shade(p, n, dir, bestLayer, d2hit);
+    // 0.7.8: soft, slightly see-through rims where the view grazes the rounded edge, and a faint overall
+    // translucency: Nostalgia's clouds read fluffy because the sky shows through their silhouettes.
+    float grazeA = 1.0 - saturate(dot(n, -dir));
+    alpha *= 0.96 * (1.0 - 0.50 * pow(grazeA, 2.5));
     alpha *= 1.0 - smoothstep(0.75 * u_Layers.y, u_Layers.y, bestT);
     return vec4(aurum_tonemap(aerial(c, sky, bestT)) * alpha, alpha);
 }

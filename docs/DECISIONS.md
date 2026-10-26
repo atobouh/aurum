@@ -238,3 +238,22 @@ about a third of the sky, and the land toward the sun washed white.
 | Whole low sky near-white at golden hour (sampled 220–255 vs the reference's 130–170 away from the sun) | sky gain × (1 − 0.42 · golden · (1 − cos⁶ to sun)) |
 
 The sunset now reads warm and cinematic. Clouds at golden hour (flat pink slabs) are the next stage.
+
+## 0.7.8: blocky clouds, round 1 toward Nostalgia (2026-10-26)
+
+Side by side with Nostalgia's cloud shots, ours read as thin, flat, opaque slabs of uniform grey.
+
+- **Thicker and rounder:**
+  - base layer 20 blocks thick with a 7-block edge radius (was 14 / 4.5);
+  - second tier 13 thick with a 5-block radius (was 9 / 3.5).
+  - The cloud volume top on the CPU side rose from base + 22 to base + 31.
+- **Shading contrast:**
+  - sides brighten toward the top (0.72 → 1.06);
+  - bellies are darker and cooler (sky × (0.80, 0.84, 1.02), sun 0.07), darkening to 0.80 toward the middle;
+  - tops are a little brighter.
+- **Fluffy rims:**
+  - alpha is 0.96 overall, and up to 50 % lower where the view grazes the rounded edge, so the sky shows
+    through the silhouette;
+  - the rim glow rises from 0.30 to 0.40.
+- **Not changed:** the layout and distribution, which the user approved earlier. Nostalgia's outlines are
+  simpler rectangles; ours keep their stepped notches.
