@@ -321,3 +321,21 @@ washed".
   - both averaged along the ray, so hill and tree tops rise out of it;
   - the colour is a near-neutral warm white (15 % of the horizon's colour), glowing warm toward the sun;
   - shadowed air is 38 % darker, using the volumetric pass.
+
+## 0.8.2: daytime sky colour path (2026-10-26)
+
+The user asked to compare "the sky colour… their sky horizon transition… their attention to tone details".
+Clear sky sampled from the top of the frame to the horizon in 6 bands:
+
+| | Top | Horizon |
+| --- | --- | --- |
+| Nostalgia | (56,88,135) | (127,127,156) lavender |
+| Photon | (125,150,173) | (143,150,157) grey-blue |
+| Aurum 0.8.1 | (67,115,171) | (158,176,180), cyan in the middle and mint-white at the horizon |
+| Aurum 0.8.2 | (78,114,163) | (153,164,175) |
+
+- By day, 80 % of the sky's hue now follows the references' path: in linear light, (0.66, 0.69, 1) at the
+  horizon to (0.16, 0.40, 1) overhead.
+- The atmosphere model's brightness is kept.
+- Near the sun the model's own warm glow is kept.
+- The distance mist takes its colour from this sky, so it is lavender-grey rather than mint.

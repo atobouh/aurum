@@ -53,6 +53,17 @@ vec3 aurum_skyLut(float y, float cosA) {
     // little brighter. Calm the low sky by day and at golden hour (away from the sun's glow).
     float horizonCalm = max(u_SkyGrade, u_SkyTone.z * (1.0 - pow(max(cosA, 0.0), 4.0)));
     c *= mix(1.0, mix(0.58, 0.86, elev), horizonCalm);
+    // Daytime hue path (0.8.2). Measured from the clear sky, top to horizon (R:G:B relative to blue):
+    //   Nostalgia (0.41,0.65,1) overhead -> (0.81,0.81,1) lavender at the horizon; Photon -> (0.91,0.95,1)
+    //   neutral grey-blue. Ours ran cyan in the middle and mint-white (0.88,0.98,1) at the horizon. The
+    //   atmosphere model keeps the brightness; the colour follows the references' path, except near the sun,
+    //   whose warm glow stays as the model computes it.
+    // Display ratios converted to linear light (^2.2): the sky is still tone-mapped and graded after this.
+    vec3 hue = mix(vec3(0.66, 0.69, 1.0), vec3(0.16, 0.40, 1.0), pow(elev, 0.8));
+    float Lc = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    vec3 target = hue * (Lc / dot(hue, vec3(0.2126, 0.7152, 0.0722)));
+    float nearSun = pow(max(cosA, 0.0), 8.0) * smoothstep(0.6, 0.0, y);
+    c = mix(c, target, 0.80 * u_SkyGrade * (1.0 - nearSun));
     vec3 tone = u_SkyTone.y >= 0.0 ? u_SkyTone.y * vec3(0.07, -0.05, 0.09) : -u_SkyTone.y * vec3(0.12, 0.03, -0.38);
     // The tint matters most at sunrise and sunset (z = golden-hour amount), where the packs differ most.
     return c * max(vec3(1.0) + tone * (1.0 + 2.5 * u_SkyTone.z), vec3(0.2));
