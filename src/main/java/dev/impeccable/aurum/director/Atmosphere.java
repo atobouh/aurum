@@ -87,7 +87,9 @@ public final class Atmosphere {
         // A slightly warm sun at every hour: the references' daylight frames are neutral-to-warm (+0.00 to +0.08
         // red over blue), ours read cold blue (-0.12 to -0.21).
         // 0.8.1: a little warmer by day, so sunlit grass and leaves read sunny (yellow-green), not grey-green.
-        float[] sunTint = {1.10f, 1.03f - 0.30f * g, 0.93f - 0.55f * g};
+        // 0.9.0: Photon's morning/evening sun tint (1.05, 0.84, 0.93) instead of pulling blue out of an already
+        // red low sun - with the per-channel Photon curve that turned whole sunset scenes blood red (user).
+        float[] sunTint = {1.10f + (1.05f - 1.10f) * g, 1.03f + (0.84f - 1.03f) * g, 0.93f + (0.93f - 0.93f) * g};
         // Keep the shade readable but cooler than the low sun. Warming both equally flattens the scene.
         float[] ambTint = {1f + 0.12f * g, 1f + 0.04f * g, 1f - 0.08f * g};
         // Look presets: warmer or cooler shade.

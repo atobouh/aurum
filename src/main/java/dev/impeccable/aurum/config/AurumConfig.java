@@ -24,7 +24,7 @@ public final class AurumConfig {
 
     private static AurumConfig instance = new AurumConfig();
 
-    public int configVersion = 14;
+    public int configVersion = 15;
     public Preset preset = Preset.LOW;
     /** Master switch: off shows plain vanilla (Sodium) visuals, with no Aurum cost. */
     public boolean enabled = true;
@@ -104,7 +104,7 @@ public final class AurumConfig {
     public boolean godRaysEnabled = true;
     public int godRayStrength = 100;
     public boolean cloudsEnabled = true;
-    public CloudStyle cloudStyle = CloudStyle.BLOCKY;
+    public CloudStyle cloudStyle = CloudStyle.SOFT;
     public boolean cloudsFullRes = false;
     public int cloudHeight = 24;
     public boolean cloudsPackShapes = false;
@@ -290,6 +290,11 @@ public final class AurumConfig {
                 if (contrast == 110) contrast = 100;
             }
             configVersion = 14;
+        }
+        if (configVersion < 15) {
+            // 0.9.0: Photon-style soft cumulus is the default cloud look (user: "skip the blocky, go full Photon").
+            cloudStyle = CloudStyle.SOFT;
+            configVersion = 15;
         }
         skyClarity = clamp(skyClarity, 0, 100);
         skyTemperature = clamp(skyTemperature, -50, 50);

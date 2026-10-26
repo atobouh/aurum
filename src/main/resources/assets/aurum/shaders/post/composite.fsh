@@ -78,8 +78,9 @@ vec3 grade(vec3 c) {
     // colours deepen and shadows sink into silhouettes, instead of a thin orange band over a grey-blue world.
     float g = u_SunGlow.a * u_Grade2.x;
     if (g > 0.0) {
-        lab.yz *= 1.0 + 0.30 * g;
-        lab.yz += vec2(0.030, 0.045) * g * smoothstep(0.15, 0.75, lab.x);
+        // 0.9.0: gentler - the Photon curve already saturates (was +30 % chroma and a strong orange shift).
+        lab.yz *= 1.0 + 0.08 * g;
+        lab.yz += vec2(0.010, 0.018) * g * smoothstep(0.15, 0.75, lab.x);
         float l2 = saturate(lab.x);
         lab.x = mix(l2, l2 * l2 * (3.0 - 2.0 * l2), 0.35 * g);
     }

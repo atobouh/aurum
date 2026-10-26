@@ -438,3 +438,25 @@ adds no contrast or saturation, and every desaturating step stacked on it washed
 ## 0.8.9: Photon pass (2026-10-26)
 
 See docs/research/PHOTON_PASS.md.
+
+## 0.9.0: sunset colour and Photon-style clouds (2026-10-26)
+
+From the user's 0.8.9 test: sunsets turned the world blood red, they want Photon's clouds rather than blocky ones,
+and noon "felt Photonic". Their frame rate: 30 FPS at 23 chunks, 60 FPS at 11.
+
+- **Red sunsets.** At the horizon moment (time 12700) the deep-red low sun was tinted warmer still, the
+  golden-hour grade added orange, and the per-channel curve saturated the result.
+  - The sun now uses Photon's evening tint (1.05, 0.84, 0.93).
+  - The golden-hour grade is reduced: chroma +8 % (was +30 %), and a smaller warm shift.
+  - Cloud golden glow reduced to 0.28 / 0.20 (was 0.55 / 0.35).
+  - Verified at 12300, 12700 and 12850: the scene now reads amber instead of red.
+- **Clouds.** Soft cumulus is the default (config v15). It is tuned toward Photon:
+  - taller (top at base + 46);
+  - denser (σ 0.24);
+  - Beer self-shadowing 0.075 per block;
+  - Photon's powder term;
+  - grey-blue bases (sky × (0.50, 0.56, 0.70)), bright tops, sun ×1.25.
+  - Soft clouds always render at half resolution for performance.
+  - The blocky style is still in settings.
+- **Rain.** The user's rain frame showed vanilla clouds and water. A rain render with 0.8.9 has Aurum fully
+  active, so Aurum was probably switched off (F6) there.

@@ -182,7 +182,7 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     // At golden hour the sun-facing sides and bellies catch the low sun and glow orange-pink (Photon's sunsets),
     // instead of dull pink-brown slabs lit only by the dimming sky.
     float faceSun = saturate(dot(n, normalize(vec3(u_SunDir.x, 0.0, u_SunDir.z) + vec3(0.0, -0.15, 0.0))) * 0.7 + 0.3);
-    c += u_SunGlow.rgb * u_SunGlow.a * (0.55 * faceSun + 0.35 * pow(toSun, 3.0));
+    c += u_SunGlow.rgb * u_SunGlow.a * (0.28 * faceSun + 0.20 * pow(toSun, 3.0)); // 0.9.0: was 0.55/0.35 (blood-red clouds)
     // 0.8.6: clouds are white, not warm grey (same-scene comparison: ours (138,149,151) mid-tone with yellowish
     // tops vs Complementary (195,201,216)). By day the colour is pulled to a cool neutral and lifted; golden
     // hour keeps its warm and pink light.
@@ -241,7 +241,7 @@ vec4 clouds(vec3 dir, vec3 sky) {
 // ------------------------------------------------------------------------------------------------ SOFT
 
 const int STEPS = 18;
-const float BOTTOM = -2.0, TOP = 30.0;   // volume, relative to the cloud base
+const float BOTTOM = -2.0, TOP = 46.0;   // 0.9.0: taller, billowing cumulus (Photon)   // volume, relative to the cloud base
 // Density at a point, plus how deep below the local cloud top it is (for self-shadowing).
 float density(vec3 p, out float belowTop, out float height) {
     belowTop = 0.0;
@@ -256,7 +256,7 @@ float density(vec3 p, out float belowTop, out float height) {
     float cover = smoothstep(1.6, -0.7, d2);
     if (cover <= 0.0) return 0.0;
     float n = noise(p.xz, vec2(1.0, 1.5), 64.0, vec2(y * 2.5, u_Layers.z * 0.25));
-    float top = mix(5.0, TOP - 2.0, cover * cover) * (0.65 + 0.7 * n);
+    float top = mix(6.0, TOP - 2.0, cover * cover) * (0.55 + 0.9 * n);
     float bottom = 2.0 + 3.0 * (1.0 - n) * (1.0 - cover);
     float dens = smoothstep(bottom, bottom + 3.0, y) * smoothstep(top, top - max(top * 0.45, 2.0), y) * cover;
     dens = saturate(dens * 1.9 - (1.0 - n) * 0.4);
@@ -288,20 +288,24 @@ vec4 clouds(vec3 dir, vec3 sky) {
         float toSun = saturate(dot(dir, u_SunDir));
         // Mostly even scattering plus a forward lobe: silver linings toward the sun.
         float phase = 0.8 + 1.6 * pow(toSun, 8.0) * (0.4 + 0.6 * u_SunGlow.a);
-        vec3 belly = u_SkyAmbient * vec3(0.92, 0.92, 1.02) + u_LightColor * 0.10 * up;
-        vec3 topAmb = u_SkyAmbient * 1.2;
+        // 0.9.0, Photon-like cumulus: cool grey-blue shaded bases, bright sky-lit tops.
+        vec3 belly = u_SkyAmbient * vec3(0.50, 0.56, 0.70) + u_LightColor * 0.05 * up;
+        vec3 topAmb = u_SkyAmbient * 1.25;
         for (int i = 0; i < STEPS; i++) {
             float belowTop, height;
             float d = density(dir * t, belowTop, height);
             if (d > 0.0) {
-                float sigma = d * 0.16;
+                float sigma = d * 0.24;
                 float a = 1.0 - exp(-sigma * dt);
                 // Light reaching this point through the cloud above it (Beer), with a multiple-scattering floor.
                 // Depth below the top stands in for the path to the sun; it is not stretched for a low sun,
                 // because then the light enters through the cloud's side, not its top.
-                float od = belowTop * 0.05 + u_Shape.z * 0.6;
+                float od = belowTop * 0.075 + u_Shape.z * 0.6;
                 float sunT = exp(-od) * 0.75 + 0.25 * exp(-od * 0.2);
-                vec3 light = u_LightColor * sunT * phase * up + mix(belly, topAmb, height);
+                // Powder (Photon's blocky_clouds_scattering): thin, wispy parts scatter less of the sun back to the
+                // eye than the dense body, which gives cumulus their sculpted, defined look.
+                sunT *= 0.45 + 0.55 * (1.0 - exp(-6.0 * d));
+                vec3 light = u_LightColor * sunT * phase * up * 1.25 + mix(belly, topAmb, height * height);
                 col += trans * a * light;
                 tSum += t * trans * a;
                 wSum += trans * a;

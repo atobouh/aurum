@@ -302,7 +302,7 @@ public final class SkyExtras {
         float maxDist = 1400f;
         // Vertical extent of everything the style draws, for the composite's "is the cloud in front" test.
         float lo = soft ? base - 2f : base;
-        float hi = soft ? base + 30f : base + 31f; // blocky: tier 2 top at 24 + 6.5 (0.7.8)
+        float hi = soft ? base + 46f : base + 31f; // blocky: tier 2 top at 24 + 6.5 (0.7.8)
         float plane = soft ? base + 230f : hi;
         float thunder = world.getThunderGradient(tickDelta);
         // Measured: Nostalgia's clouds fill ~28% of the upper frame. Slightly fuller shapes than vanilla, broken up
@@ -416,7 +416,8 @@ public final class SkyExtras {
     }
 
     private static void ensureTargets(int w, int h) {
-        boolean fullRes = AurumConfig.get().cloudsFullRes;
+        // Soft clouds are always half resolution (smooth by nature; full-res marching would cost the frame rate).
+        boolean fullRes = AurumConfig.get().cloudsFullRes && AurumConfig.get().cloudStyle != CloudStyle.SOFT;
         if (cloudTex != 0 && width == w && height == h && cloudFullRes == fullRes) return;
         cloudFullRes = fullRes;
         delete();
