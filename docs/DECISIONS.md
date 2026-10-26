@@ -382,3 +382,24 @@ Tested on the user's setup: High, PBR off.
   - `1 − exp(−len × 0.0022 × strength)`, screen-blended in display-linear light;
   - beams through gaps and a glow toward the sun;
   - no grey mixing, so no veil, and no change looking away from the sun.
+
+## 0.8.6: same-scene comparison against four shader packs; Photon is now the reference (2026-10-26)
+
+The user rendered one scene in Aurum, Complementary, Dreamlight, Photon and Mellow. From now on Photon is the
+reference for everything except water, which keeps Aurum's own look. Where Photon is too expensive for the target
+GPU, performance comes first.
+
+| Measured in the same scene | Aurum 0.8.5 | Complementary | Photon |
+| --- | --- | --- | --- |
+| Cloud mid-tone | (138,149,151) grey | (195,201,216) | (164,164,174) |
+| Open sky | (100,133,156) | (155,177,206) | (127,144,171) |
+
+- **Distant leaves turned into see-through speckle** (the user's "serious render issue").
+  - Mipmaps average leaf and hole pixels to about 50 % alpha, and the 0.5 cutoff discarded them. Shader packs
+    test alpha at about 0.1.
+  - Foliage materials 1–8 now use cutoff 0.12, with colour un-premultiplied for partly covered texels.
+  - Up close, leaf alpha is 0 or 1, so nothing changes there.
+- **Clouds:** by day 65 % pulled to a cool neutral, ×1.22. Measured result (193,195,202).
+- **Sky:** horizon calming relaxed to 0.70–1.0 (was 0.52–0.86).
+- **Test harness:** the driver now focuses the window before the first command. A lost '/' had been typing the
+  command's letters as keys, which opened the inventory.

@@ -182,6 +182,11 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     // instead of dull pink-brown slabs lit only by the dimming sky.
     float faceSun = saturate(dot(n, normalize(vec3(u_SunDir.x, 0.0, u_SunDir.z) + vec3(0.0, -0.15, 0.0))) * 0.7 + 0.3);
     c += u_SunGlow.rgb * u_SunGlow.a * (0.55 * faceSun + 0.35 * pow(toSun, 3.0));
+    // 0.8.6: clouds are white, not warm grey (same-scene comparison: ours (138,149,151) mid-tone with yellowish
+    // tops vs Complementary (195,201,216)). By day the colour is pulled to a cool neutral and lifted; golden
+    // hour keeps its warm and pink light.
+    float dayW = 1.0 - u_SunGlow.a;
+    c = mix(c, vec3(luminance(c)) * vec3(0.97, 0.99, 1.05), 0.65 * dayW) * mix(1.0, 1.22, dayW);
     return c * u_Tint * u_Look.y * (1.0 - 0.45 * u_Shape.z);
 }
 

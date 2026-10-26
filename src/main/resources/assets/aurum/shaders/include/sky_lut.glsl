@@ -52,7 +52,9 @@ vec3 aurum_skyLut(float y, float cosA) {
     // Brightness: our horizon was twice as bright as the zenith (a wide, flat white band), the references only a
     // little brighter. Calm the low sky by day and at golden hour (away from the sun's glow).
     float horizonCalm = max(u_SkyGrade, u_SkyTone.z * (1.0 - pow(max(cosA, 0.0), 4.0)));
-    c *= mix(1.0, mix(0.52, 0.86, elev), horizonCalm);
+    // 0.8.6: brighter again (user's five-shader comparison: our open sky (100,133,156) vs Complementary
+    // (155,177,206) and Photon (127,144,171) in the same scene).
+    c *= mix(1.0, mix(0.70, 1.0, elev), horizonCalm);
     // Daytime hue path (0.8.2). Measured from the clear sky, top to horizon (R:G:B relative to blue):
     //   Nostalgia (0.41,0.65,1) overhead -> (0.81,0.81,1) lavender at the horizon; Photon -> (0.91,0.95,1)
     //   neutral grey-blue. Ours ran cyan in the middle and mint-white (0.88,0.98,1) at the horizon. The

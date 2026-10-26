@@ -47,9 +47,16 @@ void main() {
                                          : textureGrad(u_BlockTex, uv, dFdx(v_TexCoord) * 0.84, dFdy(v_TexCoord) * 0.84);
 
 #ifdef USE_FRAGMENT_DISCARD
-    if (diffuseColor.a < v_MaterialAlphaCutoff) {
+    // Leaves and plants (0.8.6): their mipmaps average leaf and hole pixels to ~50 % alpha, and a 0.5 cutoff
+    // turned distant crowns into see-through speckle (user's five-shader comparison: Photon and Complementary
+    // keep them solid, as shader packs test alpha at ~0.1). Up close their alpha is 0 or 1, so nothing changes.
+    float cutoff = (u_AurumMode == 1 && v_Material >= 1 && v_Material <= 8) ? min(v_MaterialAlphaCutoff, 0.12) : v_MaterialAlphaCutoff;
+    if (diffuseColor.a < cutoff) {
         discard;
     }
+    // Partly covered texels at distance are leaf colour mixed with the transparent pixels' (often dark) colour;
+    // restore the leaf's own brightness.
+    if (cutoff < v_MaterialAlphaCutoff) diffuseColor.rgb /= max(diffuseColor.a, 0.5);
 #endif
 
     if (u_AurumMode == 2) {
