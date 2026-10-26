@@ -24,6 +24,14 @@ void main() {
     vec3 c = tap(vec2(-1.0, -1.0), w0) + tap(vec2(1.0, -1.0), w1) + tap(vec2(-1.0, 1.0), w2) + tap(vec2(1.0, 1.0), w3);
     c /= w0 + w1 + w2 + w3;
     float l = max(c.r, max(c.g, c.b));
+    if (u_Threshold.x < 0.0) {
+        // Diffusion (0.7.9, Photon-style glow): no threshold. The display image is expanded back toward scene
+        // brightness first (x / (1 - 0.92x): white sky and the sun weigh ~12x a mid-tone), so the wide blur
+        // glows strongly around bright areas and barely touches dark ones.
+        float e = l / (1.0 - 0.92 * min(l, 0.999));
+        fragColor = vec4(c * (e / max(l, 1e-4)), 1.0);
+        return;
+    }
     float t = u_Threshold.x, k = u_Threshold.y;
     float soft = clamp(l - t + k, 0.0, 2.0 * k);
     soft = soft * soft / (4.0 * k + 1e-4);

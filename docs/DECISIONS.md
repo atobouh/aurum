@@ -257,3 +257,28 @@ Side by side with Nostalgia's cloud shots, ours read as thin, flat, opaque slabs
   - the rim glow rises from 0.30 to 0.40.
 - **Not changed:** the layout and distribution, which the user approved earlier. Nostalgia's outlines are
   simpler rectangles; ours keep their stepped notches.
+
+## 0.7.9: Photon-style tone and bloom, golden-hour grade, cloud depth (2026-10-26)
+
+The user wanted "our sky and tone and golden hour" to match Photon's sunsets (orange-to-lavender skies, glowing
+clouds, a soft bloom), plus Nostalgia's bluish cloud undersides and its faded upper clouds. Reference video:
+Photon + AVPBR on an RTX 3050.
+
+- **Diffusion bloom** replaces threshold bloom.
+  - The prefilter expands the display image (`x / (1 − 0.92x)`), so white sky and the sun weigh about 12×
+    a mid-tone.
+  - The four-level chain blurs it wide.
+  - The composite blends 45 % × strength (11 % at the default) energy-conserving, then compresses.
+  - Bright areas spread a soft haze of light and dark areas stay dark.
+- **Sky saturation:** the setting now shapes only the daytime sky. At golden hour it gives way to +30 %.
+  The 0.7.1 default of 70 had muted every sunset to grey-peach.
+- **Golden-hour grade** in the composite, scaled by golden × the sunset-intensity setting:
+  - chroma +30 %;
+  - an orange-gold shift on mid and bright tones;
+  - extra S-contrast (35 %).
+- **Sun:** the disc grows from about 2.5° by day to 4° at the horizon.
+- **Clouds:**
+  - at golden hour the sun-facing sides and bellies catch the low sun (sun glow × (0.55 · facing +
+    0.35 · toward-sun³));
+  - bellies are bluish (sky × (0.72, 0.82, 1.10));
+  - the upper tier fades 22 % toward the sky colour.

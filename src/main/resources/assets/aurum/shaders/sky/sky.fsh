@@ -24,8 +24,10 @@ void main() {
     float c = dot(dir, u_SunDir);
     if (u_SunShape < 0.5) {
         // A larger, legible disc with a narrow anti-aliased limb. The atmosphere supplies the broad halo.
-        float disc = smoothstep(0.99895, 0.99912, c);
-        float limb = 0.6 + 0.4 * smoothstep(0.99912, 0.99970, c);
+        // A low sun reads larger (Photon's sunsets: a broad glowing disc), about 2.5 degrees by day, 4 at the horizon.
+        float d0 = mix(0.99895, 0.99760, u_SunGlow.a), d1 = mix(0.99912, 0.99790, u_SunGlow.a);
+        float disc = smoothstep(d0, d1, c);
+        float limb = 0.6 + 0.4 * smoothstep(d1, mix(0.99970, 0.99930, u_SunGlow.a), c);
         float halo = pow(max(c, 0.0), 1500.0) * 0.045 + pow(max(c, 0.0), 240.0) * 0.010;
         color += u_SunDisc * (disc * limb + halo);
     } else if (c > 0.95) {

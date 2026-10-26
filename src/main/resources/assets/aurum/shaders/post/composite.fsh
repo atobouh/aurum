@@ -33,6 +33,7 @@ uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end
 uniform vec4 u_PixelLight; // x crisp light reconstruction, y world grid (used by the producer)
 uniform vec4 u_Flags;       // x fog on, y edge fade on, z hand depth valid, w grade on
 uniform vec4 u_Grade;       // x saturation, y vibrance, z contrast, w detail sharpening
+uniform vec4 u_Grade2;      // x golden-hour grade strength
 uniform vec4 u_CloudSlab;   // x cloud volume bottom, y top, z high layer height (relative to camera),
                             // w 0 off, 1 on, 2 on + sharpen edges, 3 on + smooth
 uniform vec4 u_SunScreen;   // xy sun position (uv), z width / height, w sun in front of the camera (0..1)
@@ -71,6 +72,15 @@ vec3 grade(vec3 c) {
     // Contrast as a gentle S on perceptual lightness around the middle.
     float l = saturate(lab.x);
     lab.x = mix(l, l * l * (3.0 - 2.0 * l), u_Grade.z - 1.0);
+    // Golden-hour grade (0.7.9, the film look of Photon's sunsets): the whole frame warms toward orange-gold,
+    // colours deepen and shadows sink into silhouettes, instead of a thin orange band over a grey-blue world.
+    float g = u_SunGlow.a * u_Grade2.x;
+    if (g > 0.0) {
+        lab.yz *= 1.0 + 0.30 * g;
+        lab.yz += vec2(0.030, 0.045) * g * smoothstep(0.15, 0.75, lab.x);
+        float l2 = saturate(lab.x);
+        lab.x = mix(l2, l2 * l2 * (3.0 - 2.0 * l2), 0.35 * g);
+    }
     return pow(saturate(fromOklab(lab)), vec3(1.0 / 2.2));
 }
 
@@ -357,7 +367,16 @@ void main() {
                    * smoothstep(0.02, 0.14, r) * openSky * u_Extras.x;
         }
     }
-    if (u_Extras.y > 0.0) scene += texture(u_Bloom, v_Uv).rgb * u_Extras.y;
+    if (u_Extras.y > 0.0) {
+        // Photon-style glow: blend a wide blur of the expanded image back in (energy-conserving), then compress.
+        // Bright sky and the sun spread a soft haze of light over what is around them; dark areas stay dark.
+        vec3 b = texture(u_Bloom, v_Uv).rgb * 0.25; // four summed levels
+        float l = max(scene.r, max(scene.g, scene.b));
+        vec3 e = scene * ((1.0 / (1.0 - 0.92 * min(l, 0.999))));
+        e = mix(e, b, saturate(u_Extras.y * 0.45));
+        float le = max(e.r, max(e.g, e.b));
+        scene = e * (1.0 / (1.0 + 0.92 * le));
+    }
     if (u_Extras.z > 0.0) {
         float vis = texelFetch(u_Flare, ivec2(0), 0).r;
         if (vis > 0.002) scene += flare(v_Uv, vis) * u_Extras.z;

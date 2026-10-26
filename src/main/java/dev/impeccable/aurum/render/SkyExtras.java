@@ -367,9 +367,8 @@ public final class SkyExtras {
         pre.bind();
         pre.set1i("u_Scene", UNIT_A);
         GL20C.glUniform2f(pre.uniform("u_Texel"), 1f / width, 1f / height);
-        // 0.7.7: 0.77 spread the low sun into a white blob over a third of the sky (golden-hour comparison);
-        // only the sun, glints and light sources bloom.
-        GL20C.glUniform2f(pre.uniform("u_Threshold"), 0.88f, 0.10f);
+        // 0.7.9: diffusion bloom (no threshold, expanded highlights; composite blends it energy-conserving).
+        GL20C.glUniform2f(pre.uniform("u_Threshold"), -1f, 0f);
         GlUtil.bindTexture(UNIT_A, sceneTex);
         GlUtil.drawFullscreenTriangle();
 

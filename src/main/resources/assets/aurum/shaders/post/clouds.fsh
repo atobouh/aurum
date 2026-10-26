@@ -161,7 +161,8 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     // bellies, each side brightening toward the top). Ours were one uniform light grey.
     vec3 top = skyL * 1.30 + u_LightColor * 0.62 * ndl * up;
     float drift = noise(p.xz, vec2(1.0), 256.0, vec2(0.0));
-    vec3 belly = (skyL * vec3(0.80, 0.84, 1.02) + u_LightColor * 0.07 * up) * (0.92 + 0.14 * drift);
+    // Bluish undersides, lit by the blue sky rather than the sun (Nostalgia).
+    vec3 belly = (skyL * vec3(0.72, 0.82, 1.10) + u_LightColor * 0.06 * up) * (0.92 + 0.14 * drift);
     vec3 side = (skyL * 1.22 + u_LightColor * 0.50 * ndl * up) * mix(0.72, 1.06, h * h * (3.0 - 2.0 * h));
     // Blend by facing: flat faces get their own tone, the rounded edges blend smoothly between them.
     float topW = smoothstep(0.35, 0.9, n.y), botW = smoothstep(0.35, 0.9, -n.y);
@@ -176,6 +177,10 @@ vec3 shade(vec3 p, vec3 n, vec3 dir, int layer, float d2) {
     float toSun = saturate(dot(dir, u_SunDir));
     float rim = (1.0 - abs(n.y)) * saturate(dot(n, u_LightDir));
     c += u_SunGlow.rgb * (pow(toSun, 6.0) * (1.0 - abs(n.y)) + rim * 0.25) * (0.3 + 0.7 * u_SunGlow.a);
+    // At golden hour the sun-facing sides and bellies catch the low sun and glow orange-pink (Photon's sunsets),
+    // instead of dull pink-brown slabs lit only by the dimming sky.
+    float faceSun = saturate(dot(n, normalize(vec3(u_SunDir.x, 0.0, u_SunDir.z) + vec3(0.0, -0.15, 0.0))) * 0.7 + 0.3);
+    c += u_SunGlow.rgb * u_SunGlow.a * (0.55 * faceSun + 0.35 * pow(toSun, 3.0));
     return c * u_Tint * u_Look.y * (1.0 - 0.45 * u_Shape.z);
 }
 
@@ -221,7 +226,10 @@ vec4 clouds(vec3 dir, vec3 sky) {
     float grazeA = 1.0 - saturate(dot(n, -dir));
     alpha *= 0.96 * (1.0 - 0.50 * pow(grazeA, 2.5));
     alpha *= 1.0 - smoothstep(0.75 * u_Layers.y, u_Layers.y, bestT);
-    return vec4(aurum_tonemap(aerial(c, sky, bestT)) * alpha, alpha);
+    vec3 lit = aerial(c, sky, bestT);
+    // The higher tier sits further into the sky: fade it a little toward the sky colour (depth, Nostalgia).
+    if (bestLayer == 1) lit = mix(lit, sky, 0.22);
+    return vec4(aurum_tonemap(lit) * alpha, alpha);
 }
 
 #else

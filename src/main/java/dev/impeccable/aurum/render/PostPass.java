@@ -185,6 +185,7 @@ public final class PostPass {
         boolean fog = aurumWorld && c.fogEnabled && SkyState.current() != null;
         boolean edge = aurumWorld && c.edgeFade && SkyState.current() != null;
         comp.set4f("u_Flags", fog ? 1f : 0f, edge ? 1f : 0f, handValid ? 1f : 0f, 1f);
+        comp.set4f("u_Grade2", c.sunsetIntensity / 100f, 0f, 0f, 0f);
         comp.set4f("u_Grade", c.saturation / 100f, c.vibrance / 100f, c.contrast / 100f,
                 c.sharpnessEnabled ? c.sharpness / 100f : 0f);
         comp.set4f("u_ToneParams", c.tonemap.ordinal(), Atmosphere.exposure, 0f, 0f);

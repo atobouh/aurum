@@ -36,7 +36,9 @@ vec3 aurum_skyLut(float y, float cosA) {
                     * mix(1.035, 1.0, u_SkyAppearance.x), u_SkyGrade);
     c *= vec3(1.0) + vec3(0.15, 0.015, -0.12) * u_SkyAppearance.y * u_SkyGrade;
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x), vec3(0.0));
+    // The sky-saturation setting shapes the daytime sky; at golden hour it gave way to a +30% boost (0.7.9: the
+    // 70% default had been muting every sunset to grey-peach, unlike Photon's orange-to-lavender skies).
+    c = max(mix(vec3(l), c, 1.0 + u_SkyTone.x * (1.0 - u_SkyTone.z) + 0.30 * u_SkyTone.z), vec3(0.0));
     vec3 tone = u_SkyTone.y >= 0.0 ? u_SkyTone.y * vec3(0.07, -0.05, 0.09) : -u_SkyTone.y * vec3(0.12, 0.03, -0.38);
     // The tint matters most at sunrise and sunset (z = golden-hour amount), where the packs differ most.
     return c * max(vec3(1.0) + tone * (1.0 + 2.5 * u_SkyTone.z), vec3(0.2));
