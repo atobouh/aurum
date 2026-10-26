@@ -68,7 +68,8 @@ vec3 aurum_shadeTerrain(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, v
     vec3 color = albedo * light * (1.0 + coating * 0.08);
     // Transmitted light picks up the leaf's colour twice (in and out of the leaf): albedo times its own hue.
     vec3 hue = albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-4);
-    color += albedo * hue * sqrt(hue) * illumination.transmit * mix(1.0, ao, 0.5);
+    // Photon-style translucency: light through leaves takes the leaf colour once (sss_approx), not squared.
+    color += albedo * illumination.transmit * mix(1.0, ao, 0.5);
     if (u_PbrParams.x > 0.0 || u_PbrParams.w > 0.0) {
         vec4 pbr = suv == uv ? texture(u_PbrTex, uv, mipBias) : textureGrad(u_PbrTex, suv, dFdx(uv) * 0.84, dFdy(uv) * 0.84);
         if (pbr.r > 0.004 || pbr.g > 0.05) {

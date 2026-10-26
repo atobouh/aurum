@@ -69,7 +69,8 @@ float lightUp() {
 vec3 aerial(vec3 c, vec3 sky, float t) {
     float maxD = u_Layers.y;
     // Starts close so every step of distance reads as a step back in tone: depth through colour.
-    float f = pow(smoothstep(0.04 * maxD, maxD, t), 0.75) * 0.88;
+    // 0.8.9: distant clouds keep more of their own contrast (they read faded and soft).
+    float f = pow(smoothstep(0.10 * maxD, maxD, t), 1.1) * 0.70;
     f = 1.0 - (1.0 - f) * exp(-t * u_Look.w);
     return mix(c, sky, f);
 }
@@ -221,7 +222,8 @@ vec4 clouds(vec3 dir, vec3 sky) {
     }
     // Inside: opaque. A ray that only grazed an edge gets partial coverage (one pixel of soft edge).
     // Edges soften over about two pixels: the luminous, pillowy rims of the references, still crisp up close.
-    float alpha = hit ? 1.0 : saturate((2.0 - bestRatio) / 1.65);
+    // 0.8.9: about one pixel of anti-aliased edge (was two: soft, blurry outlines, worst in motion - user).
+    float alpha = hit ? 1.0 : saturate((1.0 - bestRatio) / 0.65);
     if (alpha <= 0.0) return vec4(0.0);
     vec3 p = dir * bestT;
     float d2hit = layer2d(p.xz, bestLayer);

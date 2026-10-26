@@ -41,6 +41,8 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
         // fill, unlike the gold-lit ground and distinct silhouettes in the matched reference captures.
         float wrap = 0.14 * u_SkyTone.z;
         ndl = max((dot(n, u_LightDir) + wrap) / (1.0 + wrap), 0.0);
+        // Photon's lift(NoL, 0.25): faces at a grazing sun angle keep a little more light.
+        ndl = (ndl * 1.25) / (1.0 + ndl * 0.25);
     }
 
     float skyVis = sky * sky;
@@ -101,15 +103,20 @@ AurumLight aurum_evaluateLight(vec2 lightCoord, vec3 pos, vec3 ng, inout vec3 n,
         // Vanilla leaf AO distinguishes the interior of a crown. Keep that local occlusion in the sky fill
         // instead of letting the broad ambient term turn every cube the same shade of green.
         // 0.8.5: deeper crown interiors by day (the references' crowns have near-dark gaps between leaves).
-        ambient *= mix(mix(0.60, 0.94, ao), mix(0.45, 1.0, ao), daylightFill);
-        float canopyFloor = mix(0.55, 0.68, daylightFill);
+        ambient *= mix(mix(0.60, 0.94, ao), mix(0.75, 1.0, ao), daylightFill);
+        float canopyFloor = mix(0.62, 0.82, daylightFill);
         ambient *= mix(1.0, mix(canopyFloor, 1.0, smoothstep(0.60, 1.0, sky)), u_FoliageDepth);
     }
     ambient *= 1.0 - 0.18 * pomCavity;
     // Depth (0.8.5): whatever casts a sun shadow also hides much of the sky above (a crown, a roof, an
     // overhang), but vanilla sky light passes almost unchanged through leaves, so tree shade kept nearly the
     // full sky fill and read flat next to the references. Shadowed receivers lose part of the sky fill by day.
-    ambient *= mix(1.0, mix(0.58, 1.0, shadowOcc), daylightFill);
+    // 0.8.9 (Photon pass): Photon keeps the full sky fill in shade (sky light falloff = skylight squared only)
+    // and adds sunlight bounced off the surroundings into shadowed areas (diffuse_lighting.glsl: 0.033 x
+    // (1 - shadow) x ao^1.5 x sky^4). 0.8.5's extra shade darkening made trees black up close (user).
+    vec3 bounced = u_LightColor * (0.033 * 3.14159 * (1.0 - shadowOcc) * (1.0 - 0.1 * max(n.y, 0.0))
+                 * pow(sky, 4.0) * smoothstep(-0.05, 0.2, u_LightDir.y));
+    ambient += bounced;
     vec4 voxel;
     vec3 blockLight = aurum_localBlockLight(lightCoord, pos, ng, voxel);
     float blockBrightness;

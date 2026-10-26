@@ -434,3 +434,7 @@ adds no contrast or saturation, and every desaturating step stacked on it washed
 - **Neutral grade:** saturation 100 and contrast 100 for the Aurum look. The 0.8.7 foliage desaturation is off.
 - **Distance haze:** strength factor 0.32 → 0.075. At the user's 23-chunk render distance the 0.8.7 curve hid
   trees at 60 blocks.
+
+## 0.8.9: Photon pass (2026-10-26)
+
+See docs/research/PHOTON_PASS.md.

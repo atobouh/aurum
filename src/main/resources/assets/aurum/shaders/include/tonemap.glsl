@@ -76,12 +76,19 @@ vec3 aurum_lottes(vec3 rgb) {
     vec3 b = (-pow(midIn, a) + pow(hdrMax, a) * midOut) / ((pow(hdrMax, a * d) - pow(midIn, a * d)) * midOut);
     vec3 c = (pow(hdrMax, a * d) * pow(midIn, a) - pow(hdrMax, a) * pow(midIn, a * d) * midOut)
            / ((pow(hdrMax, a * d) - pow(midIn, a * d)) * midOut);
+    // Photon works in Rec. 2020: the per-channel curve then saturates real-world colours far less than it
+    // would in Rec. 709 (vivid, but jungle greens do not turn neon). Convert in, map, convert back.
     rgb = max(rgb, vec3(0.0));
+    rgb = vec3(dot(rgb, vec3(0.6274, 0.3293, 0.0433)), dot(rgb, vec3(0.0691, 0.9195, 0.0114)),
+               dot(rgb, vec3(0.0164, 0.0880, 0.8956)));
     vec3 x = clamp(pow(rgb, a) / (pow(rgb, a * d) * b + c), 0.0, 1.0);
     vec3 s = sqrt(x);
     vec3 g = 0.5 * pow(2.0 * mix(s, 1.0 - s, step(0.5, s)), vec3(1.05));
     s = mix(g, 1.0 - g, step(0.5, s));
-    return pow(s * s, vec3(1.0 / 2.2));
+    x = s * s;
+    x = vec3(dot(x, vec3(1.6605, -0.5876, -0.0728)), dot(x, vec3(-0.1246, 1.1329, -0.0083)),
+             dot(x, vec3(-0.0182, -0.1006, 1.1187)));
+    return pow(clamp(x, 0.0, 1.0), vec3(1.0 / 2.2));
 }
 
 vec3 aurum_tonemap(vec3 hdr) {

@@ -21,7 +21,9 @@ vec3 aurum_skyLut(float y, float cosA) {
     // Leave the open sky bright, but give the sun-facing sunset more headroom for the disc and cloud light.
     // Compress the broad sun-facing sky, not just the disc's immediate pixels. The low sun should keep
     // its amber gradient while the open sky away from it retains the full daytime gain.
-    float gain = mix(SKY_GAIN, 0.78, u_SkyTone.z * pow(max(cosA, 0.0), 1.5));
+    // 0.8.9: with Photon's per-channel curve, a bright orange sunset sky runs into the shoulder and turns
+    // peach-white. Keep the low golden sky darker so it stays saturated orange (Photon's sunsets).
+    float gain = mix(SKY_GAIN, 0.42, u_SkyTone.z * pow(max(cosA, 0.0), 0.8));
     // 0.7.7: at golden hour the whole low sky read near-white (220-255) where the references keep a darker
     // lavender-grey (130-170) and only the sun's surroundings glow. Dim the sky away from the sun.
     gain *= 1.0 - 0.42 * u_SkyTone.z * (1.0 - pow(max(cosA, 0.0), 6.0));

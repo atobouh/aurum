@@ -28,6 +28,8 @@ uniform mat4 u_InvView;     // rotation only, view -> world
 uniform vec3 u_SunDir;
 uniform vec4 u_SunGlow;     // rgb warm scattered sunlight, a = golden-hour amount
 uniform vec4 u_Fog;         // x distance density, y height density, z height falloff, w camera height above sea level
+uniform vec3 u_FogLight;    // sun/moon light colour (linear HDR), for the Photon air fog
+uniform vec3 u_FogAmbient;  // sky light colour (linear HDR)
 uniform vec4 u_Fog3;        // x clear zone (blocks), y most the fog may cover, z fog desaturation, w aerial haze density
 uniform vec4 u_Fog2;        // x cave amount, y edge fade start, z edge fade end, w bounce tint amount
 uniform vec4 u_PixelLight; // x crisp light reconstruction, y world grid (used by the producer)
@@ -172,6 +174,11 @@ float contactShadow(vec2 uv, float dist) {
 
 // Forward scattering, normalized around a broad aerosol lobe. This is shared by fog and shadow-map shafts
 // so they describe one volume of air rather than independent overlays with different colour and falloff.
+float hgPhase(float mu, float g) {
+    float gg = g * g;
+    return 0.0795775 * (1.0 - gg) / pow(max(1.0 + gg - 2.0 * g * mu, 1e-4), 1.5);
+}
+
 float airPhase(float cosTheta) {
     const float g = 0.65;
     float d = max(1.0 + g * g - 2.0 * g * cosTheta, 0.02);
@@ -297,41 +304,41 @@ void main() {
         }
 
         if (u_Fog3.w > 0.0) {
-            // Distance mist (0.8.1, replaces 0.7.1's uniform pale-blue tint, which the user rightly called a washed
-            // filter). Two layers of air averaged along the ray: a dense ground mist (16-block height scale) that
-            // pools in valleys, between tree layers and over water, and a thin upper haze (60 blocks). Hilltops and
-            // treetops rise out of the mist, so distance reads as layers of volume, as in Photon's forest shot.
-            // The mist is a sunlit, near-neutral white (not the sky's blue), glowing warm toward the sun, and darker
-            // in shadowed air where the volumetric light knows it.
-            float h0 = max(u_Fog.w, 0.0), h1 = max(u_Fog.w + dir.y * dist, 0.0);
-            float dh = h1 - h0;
-            float mist = abs(dh) > 0.5 ? 16.0 * (exp(-h0 / 16.0) - exp(-h1 / 16.0)) / dh : exp(-h0 / 16.0);
-            float thin = abs(dh) > 0.5 ? 60.0 * (exp(-h0 / 60.0) - exp(-h1 / 60.0)) / dh : exp(-h0 / 60.0);
-            // 0.8.3: from 64 blocks and much thinner. Starting at 16 with a dense ground layer laid a milky veil
-            // over the whole scene (A/B in the user's view: saturation 0.19 with it, 0.28 without; darks 0.31 vs
-            // 0.18). Near and middle distance now stay crisp; only far land hazes.
-            // 0.8.7, Photon's aerial perspective (user's same-scene shots): the foreground stays crisp, haze
-            // grows with distance faster than linearly - about 11 % at 64 blocks, 27 % at 100, 50 % at 150 at
-            // ground level - so tree lines and villages step back into bright air in layers.
-            float far = max(dist - 24.0, 0.0);
-            // 0.8.8: much lighter - at the user's 23-chunk distance 0.8.7 turned trees at 60 blocks into grey ghosts.
-            float od = far * sqrt(far) * u_Fog3.w * 0.075 * (0.80 * mist + 0.45 * thin);
-            float aerial = (1.0 - exp(-od)) * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
-            if (aerial > 0.002) {
-                vec3 airRad = aurum_fogRadiance(dir, u_SunDir) / 0.75;
-                float lum = luminance(airRad);
-                // Near-neutral, slightly warm white: 85 % grey of the horizon's brightness, 15 % of its colour.
-                // Photon's haze: bright, a soft grey-blue of the low sky (30 % of its colour).
-                airRad = mix(vec3(lum) * vec3(1.0, 1.0, 1.02), airRad, 0.30);
-                float toSunA = dot(dir, u_SunDir);
-                vec3 glow = u_SunGlow.rgb * airPhase(toSunA) * (0.25 + 0.75 * u_SunGlow.a) * 0.45;
-                vec3 airLit = airRad + glow;
-                // Shadowed air (behind hills and trees, per the volumetric pass) is visibly darker: volume.
-                if (u_Extras.w > 0.0) airLit *= mix(0.62, 1.0, vl.r);
-                vec3 airColor = aurum_tonemap(airLit);
-                scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
-                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.55, 0.40, u_SunGlow.a))), vec3(1.0 / 2.2));
+            // Air fog after Photon (Photon Shaders by SixthSurge, include/fog/overworld/analytic.glsl and
+            // include/weather/fog.glsl; licence in assets/aurum/licenses). Two analytic height-falloff media:
+            // Rayleigh (blue-tinted, thin, 30-block half-life above sea+30) is always there and only cools the far
+            // distance; Mie (white, 7-block half-life above sea+7) is almost absent at noon and thick at sunrise
+            // and sunset - crisp days, misty golden mornings. The scene is attenuated and the scattered light added,
+            // never blended toward grey. u_Fog3.w scales both (Distance haze setting).
+            float strength = u_Fog3.w / 0.0026;
+            vec2 halfLife = vec2(30.0, 7.0);
+            vec2 start = vec2(30.0, 7.0);
+            vec2 mulH = -1.0 / halfLife;
+            vec2 a = u_Fog.w * mulH - mulH * start;
+            float rayLen = dist;
+            float dy = abs(dir.y) > 1e-4 ? dir.y : 1e-4;
+            vec2 airmass = clamp((exp2(rayLen * dy * mulH + a) - exp2(a)) / (log(2.0) * mulH * dy), 0.0, rayLen) * 0.5 * strength;
+            vec3 rayleighCoeff = 0.0005 * vec3(0.31, 0.67, 1.0);
+            float mieCoeff = mix(0.0001, 0.006, u_SunGlow.a) * (1.0 - u_Fog2.x);
+            vec3 od = rayleighCoeff * airmass.x + mieCoeff * airmass.y;
+            vec3 trans = exp(-od);
+            vec3 integ = (1.0 - trans) / max(od, vec3(1e-6));
+            vec3 rayS = integ * airmass.x * rayleighCoeff;
+            vec3 mieS = integ * airmass.y * mieCoeff * 0.9;
+            float LoV = dot(dir, u_SunDir);
+            const float ISO = 0.0795775;
+            vec3 scat = 2.0 * (rayS + mieS) * ISO * u_FogAmbient;
+            float amt = 1.0, aniso = 1.0;
+            float sunShadow = u_Extras.w > 0.0 ? vl.r : 1.0;
+            for (int i = 0; i < 4; i++) {
+                float ph = 0.7 * hgPhase(LoV, 0.5 * aniso) + 0.3 * hgPhase(LoV, -0.2 * aniso);
+                scat += amt * (rayS * ISO + mieS * ph) * u_FogLight * sunShadow;
+                amt *= 0.5; aniso *= 0.7;
             }
+            scat *= 1.0 - u_Fog2.x;
+            vec3 sl = pow(max(scene, vec3(0.0)), vec3(2.2));
+            vec3 add = pow(max(aurum_tonemap(scat), vec3(0.0)), vec3(2.2));
+            scene = pow(sl * trans + add, vec3(1.0 / 2.2));
         }
 
         if (u_Flags.y > 0.5) {
