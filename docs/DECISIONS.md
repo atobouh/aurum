@@ -339,3 +339,19 @@ Clear sky sampled from the top of the frame to the horizon in 6 bands:
 - The atmosphere model's brightness is kept.
 - Near the sun the model's own warm glow is kept.
 - The distance mist takes its colour from this sky, so it is lavender-grey rather than mint.
+
+## 0.8.3: no veil (2026-10-26)
+
+The user asked "are you unable to identify… a washed fog… the colours are not sharp".
+
+An A/B in the user-like views measured each effect:
+
+| Effect turned off | Result |
+| --- | --- |
+| 0.8.1 mist | saturation 0.19 → 0.28, darks (p5) 0.31 → 0.18 |
+| bloom, fog, TAA and edge fade (after the mist) | ≤ 0.02 change |
+
+- The mist now starts at 64 blocks (was 16).
+- The ground layer is ×0.80 (was ×2.4) and the thin layer ×0.25.
+- The cap is 0.55 by day and 0.40 at golden hour.
+- Result: near and middle distance stay crisp (saturation 0.26, p5 0.22); only far land hazes.

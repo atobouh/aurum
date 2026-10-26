@@ -295,7 +295,10 @@ void main() {
             float dh = h1 - h0;
             float mist = abs(dh) > 0.5 ? 16.0 * (exp(-h0 / 16.0) - exp(-h1 / 16.0)) / dh : exp(-h0 / 16.0);
             float thin = abs(dh) > 0.5 ? 60.0 * (exp(-h0 / 60.0) - exp(-h1 / 60.0)) / dh : exp(-h0 / 60.0);
-            float od = max(dist - 16.0, 0.0) * u_Fog3.w * (2.4 * mist + 0.30 * thin);
+            // 0.8.3: from 64 blocks and much thinner. Starting at 16 with a dense ground layer laid a milky veil
+            // over the whole scene (A/B in the user's view: saturation 0.19 with it, 0.28 without; darks 0.31 vs
+            // 0.18). Near and middle distance now stay crisp; only far land hazes.
+            float od = max(dist - 64.0, 0.0) * u_Fog3.w * (0.80 * mist + 0.25 * thin);
             float aerial = (1.0 - exp(-od)) * (1.0 - u_Fog2.x) * (1.0 - 0.8 * u_Volumetric2.y);
             if (aerial > 0.002) {
                 vec3 airRad = aurum_fogRadiance(dir, u_SunDir) / 0.75;
@@ -309,7 +312,7 @@ void main() {
                 if (u_Extras.w > 0.0) airLit *= mix(0.62, 1.0, vl.r);
                 vec3 airColor = aurum_tonemap(airLit);
                 scene = pow(mix(pow(max(scene, vec3(0.0)), vec3(2.2)),
-                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.75, 0.45, u_SunGlow.a))), vec3(1.0 / 2.2));
+                                pow(max(airColor, vec3(0.0)), vec3(2.2)), min(aerial, mix(0.55, 0.40, u_SunGlow.a))), vec3(1.0 / 2.2));
             }
         }
 
