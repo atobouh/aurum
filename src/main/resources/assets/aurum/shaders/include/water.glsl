@@ -113,8 +113,8 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     // The pattern fades with distance (sub-pixel lines only shimmer) and on side faces it stays gentle.
     float patternFade = (1.0 - smoothstep(12.0, 48.0, dist)) * (ng.y > 0.3 ? 1.0 : 0.4);
     // Gentle: the reference keeps a near-mirror that only wavers along the lines.
-    // 0.7.5: calmer (user: "the water effect is pretty strong"); every texel was catching the sky as a speck.
-    float k = 0.25 * patternFade * u_WaterParams.w;
+    // 0.7.6: between 0.7.4 (user: "pretty strong") and 0.7.5 (user: "the effect is just gone").
+    float k = 0.36 * patternFade * u_WaterParams.w;
     vec3 n = normalize(ng - (T * gx + B * gy) * k);
     if (ng.y > 0.3) {
         vec2 swell = texture(u_WaterNormalTex, wp.xz / 16.0 + u_WaterScroll.xy * 0.6).rg * 2.0 - 1.0;
@@ -171,7 +171,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     vec3 skinHdr = skin * (u_SkyAmbient * skyVis * 1.2 + u_LightColor * ndl * sunVisible
                            + localLight);
     vec3 skinLit = aurum_toLinear(aurum_tonemap(skinHdr));
-    under = mix(under, skinLit, 0.07);
+    under = mix(under, skinLit, 0.09);
 
     // ---- Reflection: terrain (screen space) where found, otherwise the real sky.
     vec3 R = reflect(V, n);
@@ -201,7 +201,7 @@ vec3 aurum_shadeWater(vec4 tex, vec4 vertexColor, vec2 lightCoord, vec3 pos, vec
     fresnel = min(fresnel + 0.35 * (1.0 - cosT) * (1.0 - cosT), 0.97);
     vec3 color = mix(under, refl, fresnel);
     // The texture's light streaks sit on top of the reflection, faint, like the reference's pixel lines.
-    color += skinLit * line * 0.18 * (0.4 + 0.6 * fresnel);
+    color += skinLit * line * 0.28 * (0.4 + 0.6 * fresnel);
 
     // ---- Sun: one clean, bright reflection that breaks up only where the pixel pattern tilts the surface.
     if (ng.y > 0.3 && sunUp > 0.0) {

@@ -218,3 +218,9 @@ the forest scattering and water-depth findings.
   - skin veil 0.10 → 0.07.
 - **Shore line:** its width is now about 1.5 px from `fwidth` of the vertical depth (was 0.07 + 0.003·distance).
   The old width became a wide pale band along far shores at low angles.
+
+## 0.7.6: water strength between 0.7.4 and 0.7.5 (2026-10-26)
+
+- The user found 0.7.4 "pretty strong" and 0.7.5 "the effect is just gone".
+- New values: texture-normal strength 0.36, line overlay 0.28, skin veil 0.09.
+- The thin shore line from 0.7.5 stays.
