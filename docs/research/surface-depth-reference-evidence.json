@@ -1,0 +1,2152 @@
+{
+  "date": "2026-10-26",
+  "scope": "Research only; no renderer changes or new mod release",
+  "targets": [
+    {
+      "frame": 1,
+      "source": "User-supplied still in conversation",
+      "subject": "Wood cabin and Ender chest"
+    },
+    {
+      "frame": 2,
+      "source": "User-supplied still in conversation",
+      "subject": "Cut log and bark"
+    },
+    {
+      "frame": 3,
+      "source": "User-supplied still in conversation",
+      "subject": "Crafting table and coloured floor"
+    }
+  ],
+  "referenceStudy": {
+    "reference": "Official public AVPBR Retextured R5 demo, Modrinth HC44ldY7",
+    "sha256": "97856bf1bb271dd3b6a84d5cb4764a6b35ff598269a4243cad6b6106aa52a1f1",
+    "scope": "Opaque colour texels only (alpha >=250), excluding unused transparent skin space. R5 is not established as the version in the trailer. Only dimensions/counts/statistics are exported, not copyrighted texture maps.",
+    "brightnessDefinition": "Rec.709 weights applied to stored RGB/255, matching the current Aurum heuristic; this is not a linear-light luminance measurement.",
+    "normalMaps": 2513,
+    "specularMaps": 2563,
+    "materials": [
+      {
+        "texture": "block/oak_log_top",
+        "resolution": [
+          128,
+          128
+        ],
+        "vanillaResolution": [
+          16,
+          16
+        ],
+        "scaleOverVanilla": 8,
+        "opaquePixelFraction": 1.0,
+        "heightByteRange": [
+          240,
+          255
+        ],
+        "heightLevels": 3,
+        "luminanceHeightCorrelation": -0.7091318576122996,
+        "fractionPixelsSharingColorWithDifferentHeight": 0.0,
+        "constantColorCellFraction": 1.0,
+        "varyingNormalCellFraction": 0.7734375
+      },
+      {
+        "texture": "block/oak_log",
+        "resolution": [
+          128,
+          128
+        ],
+        "vanillaResolution": [
+          16,
+          16
+        ],
+        "scaleOverVanilla": 8,
+        "opaquePixelFraction": 1.0,
+        "heightByteRange": [
+          241,
+          255
+        ],
+        "heightLevels": 6,
+        "luminanceHeightCorrelation": 0.9902549694105223,
+        "fractionPixelsSharingColorWithDifferentHeight": 0.0,
+        "constantColorCellFraction": 1.0,
+        "varyingNormalCellFraction": 0.68359375
+      },
+      {
+        "texture": "block/crafting_table_top",
+        "resolution": [
+          128,
+          128
+        ],
+        "vanillaResolution": [
+          16,
+          16
+        ],
+        "scaleOverVanilla": 8,
+        "opaquePixelFraction": 1.0,
+        "heightByteRange": [
+          250,
+          255
+        ],
+        "heightLevels": 2,
+        "luminanceHeightCorrelation": 0.14661700723253177,
+        "fractionPixelsSharingColorWithDifferentHeight": 0.0,
+        "constantColorCellFraction": 1.0,
+        "varyingNormalCellFraction": 0.71875
+      },
+      {
+        "texture": "block/blue_wool",
+        "resolution": [
+          128,
+          128
+        ],
+        "vanillaResolution": [
+          16,
+          16
+        ],
+        "scaleOverVanilla": 8,
+        "opaquePixelFraction": 1.0,
+        "heightByteRange": [
+          244,
+          255
+        ],
+        "heightLevels": 6,
+        "luminanceHeightCorrelation": 0.9376859091365004,
+        "fractionPixelsSharingColorWithDifferentHeight": 0.046875,
+        "constantColorCellFraction": 1.0,
+        "varyingNormalCellFraction": 0.6875
+      },
+      {
+        "texture": "entity/chest/ender",
+        "resolution": [
+          512,
+          512
+        ],
+        "vanillaResolution": [
+          64,
+          64
+        ],
+        "scaleOverVanilla": 8,
+        "opaquePixelFraction": 0.4033203125,
+        "heightByteRange": [
+          192,
+          255
+        ],
+        "heightLevels": 6,
+        "luminanceHeightCorrelation": -0.012571385185927144,
+        "fractionPixelsSharingColorWithDifferentHeight": 0.3516949152542373,
+        "constantColorCellFraction": 1.0,
+        "varyingNormalCellFraction": 0.5944309927360775
+      }
+    ]
+  },
+  "excalTargetCases": {
+    "oak_log": {
+      "modelPresentInPack": false,
+      "directElements": 0,
+      "parent": null,
+      "textureReferences": {},
+      "stateModelReferences": []
+    },
+    "crafting_table": {
+      "modelPresentInPack": true,
+      "directElements": 0,
+      "parent": "block/cube",
+      "textureReferences": {
+        "particle": "block/crafting_table_front",
+        "down": "block/crafting_table_top",
+        "up": "block/crafting_table_top",
+        "north": "block/crafting_table_front",
+        "east": "block/crafting_table_side",
+        "south": "block/crafting_table_side",
+        "west": "block/crafting_table_front"
+      },
+      "stateModelReferences": [
+        "block/crafting_table",
+        "block/wood/crafting_table/crafting_table1",
+        "block/wood/crafting_table/crafting_table2",
+        "block/wood/crafting_table/crafting_table3"
+      ],
+      "resolvedTextureSizes": {
+        "assets/minecraft/textures/block/crafting_table_front.png": [
+          16,
+          16
+        ],
+        "assets/minecraft/textures/block/crafting_table_top.png": [
+          16,
+          16
+        ],
+        "assets/minecraft/textures/block/crafting_table_side.png": [
+          16,
+          16
+        ],
+        "assets/minecraft/textures/block/crafting_table_front1.png": [
+          16,
+          16
+        ]
+      }
+    },
+    "blue_carpet": {
+      "modelPresentInPack": false,
+      "directElements": 0,
+      "parent": null,
+      "textureReferences": {},
+      "stateModelReferences": []
+    },
+    "yellow_carpet": {
+      "modelPresentInPack": true,
+      "directElements": 0,
+      "parent": "block/carpet",
+      "textureReferences": {
+        "particle": "block/carpet_yellow",
+        "wool": "block/carpet_yellow"
+      },
+      "stateModelReferences": []
+    },
+    "ender_chest": {
+      "modelPresentInPack": false,
+      "directElements": 0,
+      "parent": null,
+      "textureReferences": {},
+      "stateModelReferences": []
+    },
+    "chestTextureFiles": [
+      "assets/minecraft/textures/entity/chest/trapped_left.png",
+      "assets/minecraft/textures/entity/chest/trapped.png",
+      "assets/minecraft/textures/entity/chest/christmas_right.png",
+      "assets/minecraft/textures/entity/chest/normal.png",
+      "assets/minecraft/textures/entity/chest/ender.png",
+      "assets/minecraft/textures/entity/chest/normal_right.png",
+      "assets/minecraft/textures/entity/chest/christmas.png",
+      "assets/minecraft/textures/entity/chest/normal_left.png",
+      "assets/minecraft/textures/entity/chest/trapped_right.png",
+      "assets/minecraft/textures/entity/chest/christmas_left.png"
+    ],
+    "chestTextureSizes": {
+      "assets/minecraft/textures/entity/chest/trapped_left.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/trapped.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/christmas_right.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/normal.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/ender.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/normal_right.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/christmas.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/normal_left.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/trapped_right.png": [
+        64,
+        64
+      ],
+      "assets/minecraft/textures/entity/chest/christmas_left.png": [
+        64,
+        64
+      ]
+    }
+  },
+  "sourceReferences": [
+    {
+      "title": "AVPBR project and recommendations",
+      "url": "https://modrinth.com/resourcepack/avpbr-retextured"
+    },
+    {
+      "title": "NostalgiaVX public description",
+      "url": "https://rre36.com/nostalgiavx"
+    },
+    {
+      "title": "LabPBR material standard",
+      "url": "https://shaderlabs.org/wiki/LabPBR_Material_Standard"
+    },
+    {
+      "title": "Parallax explanation",
+      "url": "https://learnopengl.com/Advanced-Lighting/Parallax-Mapping"
+    }
+  ],
+  "sourceHashes": {
+    "src/main/java/dev/impeccable/aurum/bake/AtlasBaker.java": "0b702bf05d16d1e512efe18c9377e3dcf587e80353477e2e9c166638dbbb1530",
+    "src/main/resources/assets/aurum/shaders/include/pbr.glsl": "c4c16e7522b6fa54cf657f0e29ef7f9e182f38f8b43e777d4244ef10cd8e009a",
+    "src/main/resources/assets/aurum/shaders/include/model_light.glsl": "3da56a5ea9a83babdcf5447be68a0ae4957a0160b61efd0ab2f3b778dd698e5b",
+    "src/main/resources/assets/aurum/shaders/include/surface_light.glsl": "f4b174b90950ab74ed896c395be7a3cb3e4308f4780da4f1b845becac6598a47"
+  },
+  "figures": [
+    {
+      "file": "height-polarity.png",
+      "sha256": "a6bfb54b30b4e9292e33dc7e11aafd8f4a0111790869daf1492850f53d212be5",
+      "title": "Measured height polarity",
+      "scope": "Cut wood and bark need opposite treatment. The Ender-chest height is almost unrelated to brightness."
+    },
+    {
+      "file": "fine-normal-detail.png",
+      "sha256": "778d706b5b8773fd989ccdf5722de4ba802b56b9523a723d798c30f161dba436",
+      "title": "Measured fine normal detail",
+      "scope": "Fine shaping exists within flat colour groups. These are data plots, not rendered examples of a new Aurum feature."
+    },
+    {
+      "file": "avpbr-gallery-2.png",
+      "sha256": "2de4c1579751dd62f51f7a3685e5ea9e6c4160e33a35c44c79906dfd98f60cf6",
+      "title": "Supporting creator render \u00b7 Cherry Blocks",
+      "scope": "AVPBR creator gallery, listed as R7 B2 / @lovelyrune. A separate camera and version from the supplied screenshots and R5 audit; not an Aurum render."
+    },
+    {
+      "file": "avpbr-gallery-3.png",
+      "sha256": "ff1e457f09db7ff8bfa2b3c5f65c9adb7767a89c1a77ab8fc213af0fdfbeae85",
+      "title": "Supporting creator render \u00b7 Copper Blocks",
+      "scope": "AVPBR creator gallery, listed as R7 B2 / @lovelyrune. A separate camera and version from the supplied screenshots and R5 audit; not an Aurum render."
+    },
+    {
+      "file": "vanilla-close.png",
+      "sha256": "d549d4af677489cc155867d7ce14d84add91ec85b4bbc49e270d44d358a3442e",
+      "title": "Vanilla \u00b7 existing Aurum baseline",
+      "scope": "Previously captured unmodified 0.6.2-alpha.1 renderer, LabPBR off, software OpenGL. This is a baseline from the earlier study, not a new implementation or a matched trailer shot."
+    },
+    {
+      "file": "excal-close.png",
+      "sha256": "6b67a4d7cabcf0043d97b58c18944393e086483b71f942b5e094c483cd86a031",
+      "title": "Excalibur \u00b7 existing Aurum baseline",
+      "scope": "Previously captured unmodified 0.6.2-alpha.1 renderer, LabPBR off, software OpenGL. This is a baseline from the earlier study, not a new implementation or a matched trailer shot."
+    }
+  ],
+  "supportingCreatorImages": [
+    {
+      "file": "avpbr-gallery-2.png",
+      "url": "https://cdn.modrinth.com/data/7junW3B9/images/74169989b2477bd3b533594fa8724424e2224377.png",
+      "title": "Cherry Blocks",
+      "description": "AVPBR Retextured R7 B2\n- @lovelyrune",
+      "sha256": "2de4c1579751dd62f51f7a3685e5ea9e6c4160e33a35c44c79906dfd98f60cf6",
+      "bytes": 2708704,
+      "attribution": "AVPBR Retextured by JoaquiX; gallery credit @lovelyrune where listed",
+      "scope": "Supporting creator render, not one of the three user-supplied trailer screenshots"
+    },
+    {
+      "file": "avpbr-gallery-3.png",
+      "url": "https://cdn.modrinth.com/data/7junW3B9/images/b648a4e342f10aea3dadb8a424ddb0c694fefbcf.png",
+      "title": "Copper Blocks",
+      "description": "AVPBR Retextured R7 B2\n- @lovelyrune",
+      "sha256": "ff1e457f09db7ff8bfa2b3c5f65c9adb7767a89c1a77ab8fc213af0fdfbeae85",
+      "bytes": 2844971,
+      "attribution": "AVPBR Retextured by JoaquiX; gallery credit @lovelyrune where listed",
+      "scope": "Supporting creator render, not one of the three user-supplied trailer screenshots"
+    }
+  ],
+  "oldBaselineStates": [
+    {
+      "image": "vanilla-close.png",
+      "sha256": "d549d4af677489cc155867d7ce14d84add91ec85b4bbc49e270d44d358a3442e",
+      "capturedUtc": "2026-10-25T21:55:45Z",
+      "world": "Aurum Lighting Audit (disposable generated scenery copy; fixture or natural scene identified by capture name)",
+      "commands": [
+        "aurumdev lighting off",
+        "aurumdev lighting snapshot"
+      ],
+      "snapshot": {
+        "capturedUtc": "2026-10-25T21:55:44.846047548Z",
+        "aurum": "0.6.2-alpha.1",
+        "requestedView": "off",
+        "activeView": "off",
+        "terrainMode": 1,
+        "scope": "Terrain and supported model contribution diagnostic. Water is purple; unsupported shaders retain their own shading. Aurum post effects bypassed while active.",
+        "dimension": "minecraft:overworld",
+        "worldTime": 3000,
+        "camera": {
+          "yaw": 115.0,
+          "pitch": 4.0,
+          "z": 4117.5,
+          "y": 202.61999988555908,
+          "x": -1231.5
+        },
+        "eyeLight": {
+          "block": 0,
+          "sky": 15
+        },
+        "biome": "terralith:blooming_valley",
+        "target": {
+          "position": "-1234, 202, 4116",
+          "face": "east",
+          "blockClass": "net.minecraft.block.Block",
+          "state": "Block{minecraft:stone_bricks}",
+          "blockEntity": false,
+          "emission": 0
+        },
+        "lighting": {
+          "direct": [
+            6.4012547,
+            5.49605,
+            4.542672
+          ],
+          "minimum": 0.024439009,
+          "exposure": 0.26596823,
+          "block": [
+            7.14371,
+            5.714968,
+            4.400525
+          ],
+          "sky": [
+            0.24420813,
+            0.40838802,
+            0.765882
+          ]
+        },
+        "fog": {
+          "enclosed": 1.1931047e-06,
+          "cave": 0.0,
+          "heightDensity": 0.0,
+          "clearZone": 32.0,
+          "density": 0.00019999991
+        },
+        "surface": {
+          "depthPass": false,
+          "adapters": 10,
+          "world": false,
+          "modelBindsThisFrame": 0
+        },
+        "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+        "gamma": 0.5,
+        "voxel": {
+          "ready": false,
+          "usable": false,
+          "hasSources": false,
+          "revision": 0,
+          "publishedRevision": -1,
+          "generation": 1,
+          "collecting": false,
+          "baking": false,
+          "uploading": false,
+          "lastSnapshotUnloadedCells": 0,
+          "snapshotSide": 56,
+          "snapshotCellsCaptured": 0,
+          "uploadRow": 0,
+          "origin": [
+            0,
+            0,
+            0
+          ],
+          "desiredOrigin": [
+            0,
+            0,
+            0
+          ],
+          "fieldSide": 16,
+          "detail": 0,
+          "publishedCandidates": 0,
+          "publishedSources": 0,
+          "sourceCap": 32,
+          "publishedProbes": 0,
+          "publishedBakeMillis": 0.0,
+          "dynamicCompatibilityFallback": true,
+          "sourceOverflowFallback": false,
+          "backend": "per-source visibility probes, exact receiver falloff/direction, bounded neutral single-bounce estimate",
+          "sourcePositionLevelsRelativeToOrigin": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sourceColors": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sourceScope": "Static emitters; coherent propagated fallback when LambDynamicLights is installed or source budget overflows"
+        },
+        "config": {
+          "configVersion": 10,
+          "preset": "CUSTOM",
+          "enabled": true,
+          "skyEnabled": true,
+          "sunShape": "ROUND",
+          "sunsetIntensity": 100,
+          "horizonWarmth": 100,
+          "rainDesaturation": 70,
+          "skyClarity": 75,
+          "skyTemperature": -10,
+          "lightingEnabled": true,
+          "sunStrength": 100,
+          "ambientStrength": 100,
+          "blockLightWarmth": 40,
+          "aoBoost": 50,
+          "foliageDepth": 60,
+          "normalsEnabled": true,
+          "normalStrength": 50,
+          "labPbr": false,
+          "voxelLightingEnabled": true,
+          "voxelLightingStrength": 100,
+          "voxelDetail": 4,
+          "wavingEnabled": false,
+          "wavingStrength": 100,
+          "wavingSpeed": 100,
+          "bounceEnabled": true,
+          "bounceStrength": 100,
+          "bloomEnabled": true,
+          "bloomStrength": 100,
+          "sheenEnabled": true,
+          "sheenStrength": 100,
+          "shadowsEnabled": true,
+          "shadowResolution": 2048,
+          "shadowDistance": 6,
+          "shadowSoftness": 100,
+          "lightEdgeStyle": "NATURAL",
+          "lightPixelGrid": 16,
+          "entityShadows": true,
+          "blobShadows": true,
+          "fogEnabled": true,
+          "fogStrength": 100,
+          "biomeHaze": 40,
+          "heightFog": true,
+          "edgeFade": true,
+          "waterEnabled": true,
+          "waterStyle": "CALM_LAKE",
+          "waterStyleBlend": 100,
+          "waterReflections": true,
+          "waveStrength": 100,
+          "vertexWaves": true,
+          "foam": true,
+          "puddles": true,
+          "groundReflections": 50,
+          "flareEnabled": true,
+          "flareStrength": 100,
+          "godRaysEnabled": true,
+          "godRayStrength": 100,
+          "cloudsEnabled": false,
+          "cloudStyle": "BLOCKY",
+          "cloudsFullRes": true,
+          "cloudHeight": 24,
+          "cloudsPackShapes": false,
+          "cloudSpeed": 100,
+          "cloudMotionVariation": 65,
+          "cloudShadowsEnabled": true,
+          "cloudShadowStrength": 65,
+          "cloudCoverage": 50,
+          "cloudShading": 100,
+          "pomEnabled": true,
+          "pomGenerated": true,
+          "pomDepth": 100,
+          "pomDistance": 16,
+          "tonemap": "FILMIC",
+          "whiteBalance": 100,
+          "exposure": 100,
+          "saturation": 100,
+          "vibrance": 108,
+          "contrast": 105,
+          "look": "CUSTOM",
+          "temperature": 0,
+          "shadeWarmth": 0,
+          "skySaturation": 100,
+          "skyLavender": 0,
+          "sharpnessEnabled": true,
+          "sharpness": 65,
+          "showOverlay": false
+        },
+        "mods": [
+          {
+            "id": "aquamirae",
+            "version": "6"
+          },
+          {
+            "id": "architectury",
+            "version": "9.2.14"
+          },
+          {
+            "id": "aurum",
+            "version": "0.6.2-alpha.1"
+          },
+          {
+            "id": "chunksfadein",
+            "version": "3.0.25-1.20"
+          },
+          {
+            "id": "cloth-basic-math",
+            "version": "0.6.1"
+          },
+          {
+            "id": "cloth-config",
+            "version": "11.1.136"
+          },
+          {
+            "id": "com_electronwill_night-config_core",
+            "version": "3.6.7"
+          },
+          {
+            "id": "com_electronwill_night-config_toml",
+            "version": "3.6.7"
+          },
+          {
+            "id": "com_moandjiezana_toml_toml4j",
+            "version": "0.7.2"
+          },
+          {
+            "id": "ctov",
+            "version": "3.4.14"
+          },
+          {
+            "id": "entity_model_features",
+            "version": "3.3.12"
+          },
+          {
+            "id": "entity_texture_features",
+            "version": "7.2.6"
+          },
+          {
+            "id": "entityculling",
+            "version": "1.11.3"
+          },
+          {
+            "id": "explorify",
+            "version": "1.6.5"
+          },
+          {
+            "id": "fabric-api",
+            "version": "0.92.12+1.20.1"
+          },
+          {
+            "id": "fabric-api-base",
+            "version": "0.4.32+1802ada577"
+          },
+          {
+            "id": "fabric-api-lookup-api-v1",
+            "version": "1.6.37+1802ada577"
+          },
+          {
+            "id": "fabric-biome-api-v1",
+            "version": "13.0.15+93aa238b77"
+          },
+          {
+            "id": "fabric-block-api-v1",
+            "version": "1.0.12+1802ada577"
+          },
+          {
+            "id": "fabric-block-view-api-v2",
+            "version": "1.0.3+924f046a77"
+          },
+          {
+            "id": "fabric-blockrenderlayer-v1",
+            "version": "1.1.42+1802ada577"
+          },
+          {
+            "id": "fabric-client-tags-api-v1",
+            "version": "1.2.0+238242b777"
+          },
+          {
+            "id": "fabric-command-api-v1",
+            "version": "1.2.35+f71b366f77"
+          },
+          {
+            "id": "fabric-command-api-v2",
+            "version": "2.2.14+1802ada577"
+          },
+          {
+            "id": "fabric-commands-v0",
+            "version": "0.2.52+df3654b377"
+          },
+          {
+            "id": "fabric-containers-v0",
+            "version": "0.1.68+df3654b377"
+          },
+          {
+            "id": "fabric-content-registries-v0",
+            "version": "4.0.13+1802ada577"
+          },
+          {
+            "id": "fabric-convention-tags-v1",
+            "version": "1.5.6+1802ada577"
+          },
+          {
+            "id": "fabric-crash-report-info-v1",
+            "version": "0.2.20+1802ada577"
+          },
+          {
+            "id": "fabric-data-attachment-api-v1",
+            "version": "1.0.2+de0fd6d177"
+          },
+          {
+            "id": "fabric-data-generation-api-v1",
+            "version": "12.4.0+238242b777"
+          },
+          {
+            "id": "fabric-dimensions-v1",
+            "version": "2.1.55+1802ada577"
+          },
+          {
+            "id": "fabric-entity-events-v1",
+            "version": "1.6.1+1c78457f77"
+          },
+          {
+            "id": "fabric-events-interaction-v0",
+            "version": "0.6.6+13a40c6677"
+          },
+          {
+            "id": "fabric-events-lifecycle-v0",
+            "version": "0.2.64+df3654b377"
+          },
+          {
+            "id": "fabric-game-rule-api-v1",
+            "version": "1.0.41+1802ada577"
+          },
+          {
+            "id": "fabric-gametest-api-v1",
+            "version": "1.2.15+1802ada577"
+          },
+          {
+            "id": "fabric-item-api-v1",
+            "version": "2.1.29+1802ada577"
+          },
+          {
+            "id": "fabric-item-group-api-v1",
+            "version": "4.0.14+1802ada577"
+          },
+          {
+            "id": "fabric-key-binding-api-v1",
+            "version": "1.0.38+1802ada577"
+          },
+          {
+            "id": "fabric-keybindings-v0",
+            "version": "0.2.36+df3654b377"
+          },
+          {
+            "id": "fabric-lifecycle-events-v1",
+            "version": "2.2.23+1802ada577"
+          },
+          {
+            "id": "fabric-loot-api-v2",
+            "version": "1.2.3+1802ada577"
+          },
+          {
+            "id": "fabric-loot-tables-v1",
+            "version": "1.1.47+9e7660c677"
+          },
+          {
+            "id": "fabric-message-api-v1",
+            "version": "5.1.10+1802ada577"
+          },
+          {
+            "id": "fabric-mining-level-api-v1",
+            "version": "2.1.52+1802ada577"
+          },
+          {
+            "id": "fabric-model-loading-api-v1",
+            "version": "1.0.4+1802ada577"
+          },
+          {
+            "id": "fabric-models-v0",
+            "version": "0.4.3+9386d8a777"
+          },
+          {
+            "id": "fabric-networking-api-v1",
+            "version": "1.3.15+0caff8d077"
+          },
+          {
+            "id": "fabric-networking-v0",
+            "version": "0.3.55+df3654b377"
+          },
+          {
+            "id": "fabric-object-builder-api-v1",
+            "version": "11.1.5+e35120df77"
+          },
+          {
+            "id": "fabric-particles-v1",
+            "version": "1.1.3+1802ada577"
+          },
+          {
+            "id": "fabric-recipe-api-v1",
+            "version": "1.0.25+1802ada577"
+          },
+          {
+            "id": "fabric-registry-sync-v0",
+            "version": "2.4.1+4c0a70e677"
+          },
+          {
+            "id": "fabric-renderer-api-v1",
+            "version": "3.2.2+1802ada577"
+          },
+          {
+            "id": "fabric-renderer-indigo",
+            "version": "1.5.3+85287f9f77"
+          },
+          {
+            "id": "fabric-renderer-registries-v1",
+            "version": "3.2.48+df3654b377"
+          },
+          {
+            "id": "fabric-rendering-data-attachment-v1",
+            "version": "0.3.39+92a0d36777"
+          },
+          {
+            "id": "fabric-rendering-fluids-v1",
+            "version": "3.0.29+1802ada577"
+          },
+          {
+            "id": "fabric-rendering-v0",
+            "version": "1.1.51+df3654b377"
+          },
+          {
+            "id": "fabric-rendering-v1",
+            "version": "3.0.10+54550fb677"
+          },
+          {
+            "id": "fabric-resource-conditions-api-v1",
+            "version": "2.3.9+1802ada577"
+          },
+          {
+            "id": "fabric-resource-loader-v0",
+            "version": "0.11.12+fb82e9d777"
+          },
+          {
+            "id": "fabric-screen-api-v1",
+            "version": "2.0.9+1802ada577"
+          },
+          {
+            "id": "fabric-screen-handler-api-v1",
+            "version": "1.3.34+1802ada577"
+          },
+          {
+            "id": "fabric-sound-api-v1",
+            "version": "1.0.14+1802ada577"
+          },
+          {
+            "id": "fabric-tag-api-v1",
+            "version": "1.3.0+238242b777"
+          },
+          {
+            "id": "fabric-transfer-api-v1",
+            "version": "3.3.6+8dd72ea377"
+          },
+          {
+            "id": "fabric-transitive-access-wideners-v1",
+            "version": "4.3.2+1802ada577"
+          },
+          {
+            "id": "fabricloader",
+            "version": "0.20.1"
+          },
+          {
+            "id": "ferritecore",
+            "version": "6.0.1"
+          },
+          {
+            "id": "galosphere",
+            "version": "1.20.1-1.5.2"
+          },
+          {
+            "id": "immediatelyfast",
+            "version": "1.5.5+1.20.4"
+          },
+          {
+            "id": "java",
+            "version": "21"
+          },
+          {
+            "id": "lambdynlights",
+            "version": "4.4.0+1.20.1"
+          },
+          {
+            "id": "lambdynlights_api",
+            "version": "4.4.0+1.20.1"
+          },
+          {
+            "id": "lithostitched",
+            "version": "1.4.11"
+          },
+          {
+            "id": "midnightlib",
+            "version": "1.9.2"
+          },
+          {
+            "id": "minecraft",
+            "version": "1.20.1"
+          },
+          {
+            "id": "mixinextras",
+            "version": "0.5.5"
+          },
+          {
+            "id": "mm",
+            "version": "2.3"
+          },
+          {
+            "id": "mmv",
+            "version": "2.2.0"
+          },
+          {
+            "id": "modmenu",
+            "version": "7.2.2"
+          },
+          {
+            "id": "moogs_structures",
+            "version": "3.4.2+fabric"
+          },
+          {
+            "id": "mr_dungeons_andtaverns",
+            "version": "3.0.3.f"
+          },
+          {
+            "id": "mvs",
+            "version": "5.1.3"
+          },
+          {
+            "id": "natures_spirit",
+            "version": "2.2.5-1.20.1"
+          },
+          {
+            "id": "net_lenni0451_reflect",
+            "version": "1.6.2"
+          },
+          {
+            "id": "obscure_api",
+            "version": "16"
+          },
+          {
+            "id": "ohthetreesyoullgrow",
+            "version": "1.7.3"
+          },
+          {
+            "id": "org_javassist_javassist",
+            "version": "3.29.2-GA"
+          },
+          {
+            "id": "org_reflections_reflections",
+            "version": "0.10.2"
+          },
+          {
+            "id": "pride",
+            "version": "1.2.0+1.19.4"
+          },
+          {
+            "id": "seasons",
+            "version": "2.4.2-BETA+1.20"
+          },
+          {
+            "id": "seasonsextras",
+            "version": "1.3.2-BETA+1.20"
+          },
+          {
+            "id": "seasonsterralithcompat",
+            "version": "1.0-2.3.7"
+          },
+          {
+            "id": "sodium",
+            "version": "0.5.13+mc1.20.1"
+          },
+          {
+            "id": "sparsestructures",
+            "version": "3.0"
+          },
+          {
+            "id": "spruceui",
+            "version": "6.2.1+1.20"
+          },
+          {
+            "id": "structory",
+            "version": "1.3.5"
+          },
+          {
+            "id": "terrablender",
+            "version": "3.0.1.11"
+          },
+          {
+            "id": "terrain_slabs",
+            "version": "3.1.1"
+          },
+          {
+            "id": "transition",
+            "version": "1.0.26"
+          },
+          {
+            "id": "trender",
+            "version": "1.0.17"
+          },
+          {
+            "id": "u_desert",
+            "version": "1.6.3"
+          },
+          {
+            "id": "u_sea",
+            "version": "1.2.5"
+          },
+          {
+            "id": "weatherrefind",
+            "version": "2.0"
+          },
+          {
+            "id": "wet-sand",
+            "version": "beta-0.0.4-1.20.1"
+          },
+          {
+            "id": "wilderflowers",
+            "version": "1.0.3+1.20.1"
+          },
+          {
+            "id": "worldalive",
+            "version": "1.2.1"
+          },
+          {
+            "id": "yumi_commons_collections",
+            "version": "1.0.0-beta.4"
+          },
+          {
+            "id": "yumi_commons_core",
+            "version": "1.0.0-beta.4"
+          },
+          {
+            "id": "yumi_commons_event",
+            "version": "1.0.0-beta.4"
+          },
+          {
+            "id": "yungsapi",
+            "version": "1.20-Fabric-4.0.6"
+          },
+          {
+            "id": "yungsextras",
+            "version": "1.20-Fabric-4.0.3"
+          }
+        ]
+      },
+      "bridgeAck": {
+        "id": "75cabdca69d64f24b1b72a2888769025",
+        "result": "lighting-12780046397309011221.json",
+        "frame": 708
+      },
+      "scope": "Actual Minecraft research baseline; existing unmodified renderer, LabPBR disabled. Not a newly implemented relief technique or Intel UHD performance test.",
+      "resourcePack": "vanilla",
+      "scene": "Disposable research detail board",
+      "rendererCommit": "b8f5a5b17d64e37d45162109ae1d818dd45ce848"
+    },
+    {
+      "image": "excal-close.png",
+      "sha256": "6b67a4d7cabcf0043d97b58c18944393e086483b71f942b5e094c483cd86a031",
+      "capturedUtc": "2026-10-25T22:00:18Z",
+      "world": "Aurum Lighting Audit (disposable generated scenery copy; fixture or natural scene identified by capture name)",
+      "commands": [
+        "aurumdev lighting off",
+        "aurumdev lighting snapshot"
+      ],
+      "snapshot": {
+        "capturedUtc": "2026-10-25T22:00:18.011597431Z",
+        "aurum": "0.6.2-alpha.1",
+        "requestedView": "off",
+        "activeView": "off",
+        "terrainMode": 1,
+        "scope": "Terrain and supported model contribution diagnostic. Water is purple; unsupported shaders retain their own shading. Aurum post effects bypassed while active.",
+        "dimension": "minecraft:overworld",
+        "worldTime": 3000,
+        "camera": {
+          "x": -1231.5,
+          "y": 202.61999988555908,
+          "z": 4117.5,
+          "pitch": 4.0,
+          "yaw": 115.0
+        },
+        "eyeLight": {
+          "sky": 15,
+          "block": 0
+        },
+        "biome": "terralith:blooming_valley",
+        "target": {
+          "position": "-1234, 202, 4116",
+          "emission": 0,
+          "blockEntity": false,
+          "state": "Block{minecraft:stone_bricks}",
+          "blockClass": "net.minecraft.block.Block",
+          "face": "east"
+        },
+        "lighting": {
+          "direct": [
+            6.4012547,
+            5.49605,
+            4.542672
+          ],
+          "sky": [
+            0.24420813,
+            0.40838802,
+            0.765882
+          ],
+          "block": [
+            7.1437335,
+            5.714987,
+            4.4005394
+          ],
+          "exposure": 0.26596737,
+          "minimum": 0.024439089
+        },
+        "fog": {
+          "density": 0.00019999991,
+          "clearZone": 32.0,
+          "heightDensity": 0.0,
+          "cave": 0.0,
+          "enclosed": 0.0
+        },
+        "surface": {
+          "modelBindsThisFrame": 0,
+          "world": false,
+          "adapters": 10,
+          "depthPass": false
+        },
+        "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+        "gamma": 0.5,
+        "voxel": {
+          "ready": false,
+          "usable": false,
+          "hasSources": false,
+          "revision": 0,
+          "publishedRevision": -1,
+          "generation": 1,
+          "collecting": false,
+          "baking": false,
+          "uploading": false,
+          "lastSnapshotUnloadedCells": 0,
+          "snapshotSide": 56,
+          "snapshotCellsCaptured": 0,
+          "uploadRow": 0,
+          "origin": [
+            0,
+            0,
+            0
+          ],
+          "desiredOrigin": [
+            0,
+            0,
+            0
+          ],
+          "fieldSide": 16,
+          "detail": 0,
+          "publishedCandidates": 0,
+          "publishedSources": 0,
+          "sourceCap": 32,
+          "publishedProbes": 0,
+          "publishedBakeMillis": 0.0,
+          "dynamicCompatibilityFallback": true,
+          "sourceOverflowFallback": false,
+          "backend": "per-source visibility probes, exact receiver falloff/direction, bounded neutral single-bounce estimate",
+          "sourcePositionLevelsRelativeToOrigin": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sourceColors": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sourceScope": "Static emitters; coherent propagated fallback when LambDynamicLights is installed or source budget overflows"
+        },
+        "config": {
+          "configVersion": 10,
+          "preset": "CUSTOM",
+          "enabled": true,
+          "skyEnabled": true,
+          "sunShape": "ROUND",
+          "sunsetIntensity": 100,
+          "horizonWarmth": 100,
+          "rainDesaturation": 70,
+          "skyClarity": 75,
+          "skyTemperature": -10,
+          "lightingEnabled": true,
+          "sunStrength": 100,
+          "ambientStrength": 100,
+          "blockLightWarmth": 40,
+          "aoBoost": 50,
+          "foliageDepth": 60,
+          "normalsEnabled": true,
+          "normalStrength": 50,
+          "labPbr": false,
+          "voxelLightingEnabled": true,
+          "voxelLightingStrength": 100,
+          "voxelDetail": 4,
+          "wavingEnabled": false,
+          "wavingStrength": 100,
+          "wavingSpeed": 100,
+          "bounceEnabled": true,
+          "bounceStrength": 100,
+          "bloomEnabled": true,
+          "bloomStrength": 100,
+          "sheenEnabled": true,
+          "sheenStrength": 100,
+          "shadowsEnabled": true,
+          "shadowResolution": 2048,
+          "shadowDistance": 6,
+          "shadowSoftness": 100,
+          "lightEdgeStyle": "NATURAL",
+          "lightPixelGrid": 16,
+          "entityShadows": true,
+          "blobShadows": true,
+          "fogEnabled": true,
+          "fogStrength": 100,
+          "biomeHaze": 40,
+          "heightFog": true,
+          "edgeFade": true,
+          "waterEnabled": true,
+          "waterStyle": "CALM_LAKE",
+          "waterStyleBlend": 100,
+          "waterReflections": true,
+          "waveStrength": 100,
+          "vertexWaves": true,
+          "foam": true,
+          "puddles": true,
+          "groundReflections": 50,
+          "flareEnabled": true,
+          "flareStrength": 100,
+          "godRaysEnabled": true,
+          "godRayStrength": 100,
+          "cloudsEnabled": false,
+          "cloudStyle": "BLOCKY",
+          "cloudsFullRes": true,
+          "cloudHeight": 24,
+          "cloudsPackShapes": false,
+          "cloudSpeed": 100,
+          "cloudMotionVariation": 65,
+          "cloudShadowsEnabled": true,
+          "cloudShadowStrength": 65,
+          "cloudCoverage": 50,
+          "cloudShading": 100,
+          "pomEnabled": true,
+          "pomGenerated": true,
+          "pomDepth": 100,
+          "pomDistance": 16,
+          "tonemap": "FILMIC",
+          "whiteBalance": 100,
+          "exposure": 100,
+          "saturation": 100,
+          "vibrance": 108,
+          "contrast": 105,
+          "look": "CUSTOM",
+          "temperature": 0,
+          "shadeWarmth": 0,
+          "skySaturation": 100,
+          "skyLavender": 0,
+          "sharpnessEnabled": true,
+          "sharpness": 65,
+          "showOverlay": false
+        },
+        "mods": [
+          {
+            "version": "6",
+            "id": "aquamirae"
+          },
+          {
+            "version": "9.2.14",
+            "id": "architectury"
+          },
+          {
+            "version": "0.6.2-alpha.1",
+            "id": "aurum"
+          },
+          {
+            "version": "3.0.25-1.20",
+            "id": "chunksfadein"
+          },
+          {
+            "version": "0.6.1",
+            "id": "cloth-basic-math"
+          },
+          {
+            "version": "11.1.136",
+            "id": "cloth-config"
+          },
+          {
+            "version": "3.6.7",
+            "id": "com_electronwill_night-config_core"
+          },
+          {
+            "version": "3.6.7",
+            "id": "com_electronwill_night-config_toml"
+          },
+          {
+            "version": "0.7.2",
+            "id": "com_moandjiezana_toml_toml4j"
+          },
+          {
+            "version": "3.4.14",
+            "id": "ctov"
+          },
+          {
+            "version": "3.3.12",
+            "id": "entity_model_features"
+          },
+          {
+            "version": "7.2.6",
+            "id": "entity_texture_features"
+          },
+          {
+            "version": "1.11.3",
+            "id": "entityculling"
+          },
+          {
+            "version": "1.6.5",
+            "id": "explorify"
+          },
+          {
+            "version": "0.92.12+1.20.1",
+            "id": "fabric-api"
+          },
+          {
+            "version": "0.4.32+1802ada577",
+            "id": "fabric-api-base"
+          },
+          {
+            "version": "1.6.37+1802ada577",
+            "id": "fabric-api-lookup-api-v1"
+          },
+          {
+            "version": "13.0.15+93aa238b77",
+            "id": "fabric-biome-api-v1"
+          },
+          {
+            "version": "1.0.12+1802ada577",
+            "id": "fabric-block-api-v1"
+          },
+          {
+            "version": "1.0.3+924f046a77",
+            "id": "fabric-block-view-api-v2"
+          },
+          {
+            "version": "1.1.42+1802ada577",
+            "id": "fabric-blockrenderlayer-v1"
+          },
+          {
+            "version": "1.2.0+238242b777",
+            "id": "fabric-client-tags-api-v1"
+          },
+          {
+            "version": "1.2.35+f71b366f77",
+            "id": "fabric-command-api-v1"
+          },
+          {
+            "version": "2.2.14+1802ada577",
+            "id": "fabric-command-api-v2"
+          },
+          {
+            "version": "0.2.52+df3654b377",
+            "id": "fabric-commands-v0"
+          },
+          {
+            "version": "0.1.68+df3654b377",
+            "id": "fabric-containers-v0"
+          },
+          {
+            "version": "4.0.13+1802ada577",
+            "id": "fabric-content-registries-v0"
+          },
+          {
+            "version": "1.5.6+1802ada577",
+            "id": "fabric-convention-tags-v1"
+          },
+          {
+            "version": "0.2.20+1802ada577",
+            "id": "fabric-crash-report-info-v1"
+          },
+          {
+            "version": "1.0.2+de0fd6d177",
+            "id": "fabric-data-attachment-api-v1"
+          },
+          {
+            "version": "12.4.0+238242b777",
+            "id": "fabric-data-generation-api-v1"
+          },
+          {
+            "version": "2.1.55+1802ada577",
+            "id": "fabric-dimensions-v1"
+          },
+          {
+            "version": "1.6.1+1c78457f77",
+            "id": "fabric-entity-events-v1"
+          },
+          {
+            "version": "0.6.6+13a40c6677",
+            "id": "fabric-events-interaction-v0"
+          },
+          {
+            "version": "0.2.64+df3654b377",
+            "id": "fabric-events-lifecycle-v0"
+          },
+          {
+            "version": "1.0.41+1802ada577",
+            "id": "fabric-game-rule-api-v1"
+          },
+          {
+            "version": "1.2.15+1802ada577",
+            "id": "fabric-gametest-api-v1"
+          },
+          {
+            "version": "2.1.29+1802ada577",
+            "id": "fabric-item-api-v1"
+          },
+          {
+            "version": "4.0.14+1802ada577",
+            "id": "fabric-item-group-api-v1"
+          },
+          {
+            "version": "1.0.38+1802ada577",
+            "id": "fabric-key-binding-api-v1"
+          },
+          {
+            "version": "0.2.36+df3654b377",
+            "id": "fabric-keybindings-v0"
+          },
+          {
+            "version": "2.2.23+1802ada577",
+            "id": "fabric-lifecycle-events-v1"
+          },
+          {
+            "version": "1.2.3+1802ada577",
+            "id": "fabric-loot-api-v2"
+          },
+          {
+            "version": "1.1.47+9e7660c677",
+            "id": "fabric-loot-tables-v1"
+          },
+          {
+            "version": "5.1.10+1802ada577",
+            "id": "fabric-message-api-v1"
+          },
+          {
+            "version": "2.1.52+1802ada577",
+            "id": "fabric-mining-level-api-v1"
+          },
+          {
+            "version": "1.0.4+1802ada577",
+            "id": "fabric-model-loading-api-v1"
+          },
+          {
+            "version": "0.4.3+9386d8a777",
+            "id": "fabric-models-v0"
+          },
+          {
+            "version": "1.3.15+0caff8d077",
+            "id": "fabric-networking-api-v1"
+          },
+          {
+            "version": "0.3.55+df3654b377",
+            "id": "fabric-networking-v0"
+          },
+          {
+            "version": "11.1.5+e35120df77",
+            "id": "fabric-object-builder-api-v1"
+          },
+          {
+            "version": "1.1.3+1802ada577",
+            "id": "fabric-particles-v1"
+          },
+          {
+            "version": "1.0.25+1802ada577",
+            "id": "fabric-recipe-api-v1"
+          },
+          {
+            "version": "2.4.1+4c0a70e677",
+            "id": "fabric-registry-sync-v0"
+          },
+          {
+            "version": "3.2.2+1802ada577",
+            "id": "fabric-renderer-api-v1"
+          },
+          {
+            "version": "1.5.3+85287f9f77",
+            "id": "fabric-renderer-indigo"
+          },
+          {
+            "version": "3.2.48+df3654b377",
+            "id": "fabric-renderer-registries-v1"
+          },
+          {
+            "version": "0.3.39+92a0d36777",
+            "id": "fabric-rendering-data-attachment-v1"
+          },
+          {
+            "version": "3.0.29+1802ada577",
+            "id": "fabric-rendering-fluids-v1"
+          },
+          {
+            "version": "1.1.51+df3654b377",
+            "id": "fabric-rendering-v0"
+          },
+          {
+            "version": "3.0.10+54550fb677",
+            "id": "fabric-rendering-v1"
+          },
+          {
+            "version": "2.3.9+1802ada577",
+            "id": "fabric-resource-conditions-api-v1"
+          },
+          {
+            "version": "0.11.12+fb82e9d777",
+            "id": "fabric-resource-loader-v0"
+          },
+          {
+            "version": "2.0.9+1802ada577",
+            "id": "fabric-screen-api-v1"
+          },
+          {
+            "version": "1.3.34+1802ada577",
+            "id": "fabric-screen-handler-api-v1"
+          },
+          {
+            "version": "1.0.14+1802ada577",
+            "id": "fabric-sound-api-v1"
+          },
+          {
+            "version": "1.3.0+238242b777",
+            "id": "fabric-tag-api-v1"
+          },
+          {
+            "version": "3.3.6+8dd72ea377",
+            "id": "fabric-transfer-api-v1"
+          },
+          {
+            "version": "4.3.2+1802ada577",
+            "id": "fabric-transitive-access-wideners-v1"
+          },
+          {
+            "version": "0.20.1",
+            "id": "fabricloader"
+          },
+          {
+            "version": "6.0.1",
+            "id": "ferritecore"
+          },
+          {
+            "version": "1.20.1-1.5.2",
+            "id": "galosphere"
+          },
+          {
+            "version": "1.5.5+1.20.4",
+            "id": "immediatelyfast"
+          },
+          {
+            "version": "21",
+            "id": "java"
+          },
+          {
+            "version": "4.4.0+1.20.1",
+            "id": "lambdynlights"
+          },
+          {
+            "version": "4.4.0+1.20.1",
+            "id": "lambdynlights_api"
+          },
+          {
+            "version": "1.4.11",
+            "id": "lithostitched"
+          },
+          {
+            "version": "1.9.2",
+            "id": "midnightlib"
+          },
+          {
+            "version": "1.20.1",
+            "id": "minecraft"
+          },
+          {
+            "version": "0.5.5",
+            "id": "mixinextras"
+          },
+          {
+            "version": "2.3",
+            "id": "mm"
+          },
+          {
+            "version": "2.2.0",
+            "id": "mmv"
+          },
+          {
+            "version": "7.2.2",
+            "id": "modmenu"
+          },
+          {
+            "version": "3.4.2+fabric",
+            "id": "moogs_structures"
+          },
+          {
+            "version": "3.0.3.f",
+            "id": "mr_dungeons_andtaverns"
+          },
+          {
+            "version": "5.1.3",
+            "id": "mvs"
+          },
+          {
+            "version": "2.2.5-1.20.1",
+            "id": "natures_spirit"
+          },
+          {
+            "version": "1.6.2",
+            "id": "net_lenni0451_reflect"
+          },
+          {
+            "version": "16",
+            "id": "obscure_api"
+          },
+          {
+            "version": "1.7.3",
+            "id": "ohthetreesyoullgrow"
+          },
+          {
+            "version": "3.29.2-GA",
+            "id": "org_javassist_javassist"
+          },
+          {
+            "version": "0.10.2",
+            "id": "org_reflections_reflections"
+          },
+          {
+            "version": "1.2.0+1.19.4",
+            "id": "pride"
+          },
+          {
+            "version": "2.4.2-BETA+1.20",
+            "id": "seasons"
+          },
+          {
+            "version": "1.3.2-BETA+1.20",
+            "id": "seasonsextras"
+          },
+          {
+            "version": "1.0-2.3.7",
+            "id": "seasonsterralithcompat"
+          },
+          {
+            "version": "0.5.13+mc1.20.1",
+            "id": "sodium"
+          },
+          {
+            "version": "3.0",
+            "id": "sparsestructures"
+          },
+          {
+            "version": "6.2.1+1.20",
+            "id": "spruceui"
+          },
+          {
+            "version": "1.3.5",
+            "id": "structory"
+          },
+          {
+            "version": "3.0.1.11",
+            "id": "terrablender"
+          },
+          {
+            "version": "3.1.1",
+            "id": "terrain_slabs"
+          },
+          {
+            "version": "1.0.26",
+            "id": "transition"
+          },
+          {
+            "version": "1.0.17",
+            "id": "trender"
+          },
+          {
+            "version": "1.6.3",
+            "id": "u_desert"
+          },
+          {
+            "version": "1.2.5",
+            "id": "u_sea"
+          },
+          {
+            "version": "2.0",
+            "id": "weatherrefind"
+          },
+          {
+            "version": "beta-0.0.4-1.20.1",
+            "id": "wet-sand"
+          },
+          {
+            "version": "1.0.3+1.20.1",
+            "id": "wilderflowers"
+          },
+          {
+            "version": "1.2.1",
+            "id": "worldalive"
+          },
+          {
+            "version": "1.0.0-beta.4",
+            "id": "yumi_commons_collections"
+          },
+          {
+            "version": "1.0.0-beta.4",
+            "id": "yumi_commons_core"
+          },
+          {
+            "version": "1.0.0-beta.4",
+            "id": "yumi_commons_event"
+          },
+          {
+            "version": "1.20-Fabric-4.0.6",
+            "id": "yungsapi"
+          },
+          {
+            "version": "1.20-Fabric-4.0.3",
+            "id": "yungsextras"
+          }
+        ]
+      },
+      "bridgeAck": {
+        "id": "7dacb4eb52dc482899856a7c3947d21d",
+        "result": "lighting-1242006848393354908.json",
+        "frame": 1163
+      },
+      "scope": "Actual Minecraft research baseline; existing unmodified renderer, LabPBR disabled. Not a newly implemented relief technique or Intel UHD performance test.",
+      "resourcePack": "excal",
+      "scene": "Disposable research detail board",
+      "rendererCommit": "b8f5a5b17d64e37d45162109ae1d818dd45ce848"
+    }
+  ],
+  "limits": [
+    "The supplied stills are visually analysed; no full trailer playback is claimed.",
+    "No new surface-depth implementation or target-GPU benchmark.",
+    "The three in-chat stills are described; supporting gallery images are separately attributed and not presented as those frames.",
+    "No copyrighted normal/height/specular texture files are redistributed."
+  ]
+}

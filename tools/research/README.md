@@ -24,3 +24,17 @@ python3 tools/render_excal_research.py --evidence /path/to/evidence
 ```
 
 Its primary deliverable is `dist/aurum-excalibur-relief-research.zip`: extract all and open `Aurum-Excalibur-research/index.html`. It includes four attributed gallery references, eleven original Minecraft captures and evidence JSON. The current Excalibur overview POM control is unresolved; a settings flag or an almost-zero pixel difference is not proof that relief works.
+
+## Frame-specific surface-depth study
+
+The updated proposal is `docs/research/SURFACE_DEPTH_FROM_REFERENCE_FRAMES.md`. It analyses the user's chest, cut-log and crafting-table stills and the primary AVPBR reference, extending the earlier Excalibur baseline. `surface_depth_material_audit.py` measures five relevant maps from the official public R5 demo; it does not export texture images.
+
+```bash
+python3 tools/research/surface_depth_material_audit.py \
+  --reference-pack /path/to/AVPBR-R5-reference.zip \
+  --minecraft-client /path/to/minecraft-client.jar \
+  --out /path/to/evidence
+python3 tools/render_surface_depth_research.py --evidence /path/to/evidence
+```
+
+The renderer also uses the documented source metadata/gallery downloads and Excalibur case inventory in that evidence directory, plus the clearly labelled previous baseline captures. Its ZIP is `dist/aurum-surface-depth-research.zip`. Extract all and open `Aurum-surface-depth-research/index.html`. Supporting creator renders, measured charts and previous baseline screenshots are distinct from the user-supplied stills; none are represented as newly captured trailer frames or an implemented improvement.

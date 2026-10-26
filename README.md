@@ -10,6 +10,7 @@ Experimental lighting build: **0.6.2-alpha.1**. Terrain and ten supported model 
 - [Download the illustrated lighting report (ZIP)](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-0.6.2-alpha.1-lighting-report.zip) — extract all, then open `Aurum-lighting-report/index.html`; all images and videos work offline.
 - [Single-file HTML report source](docs/reports/aurum-0.6.2-alpha.1-lighting-review.html) — GitHub shows this as raw text; download it before opening in a browser.
 - [Implementation and remaining gates](docs/research/LIGHTING_IMPLEMENTATION_062_ALPHA1.md)
+- [Surface depth from the supplied frames (HTML report ZIP)](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-surface-depth-research.zip) — AVPBR material measurements, Excalibur support, chest coverage and the implementation proposal.
 - [Excalibur-inspired depth research (HTML report ZIP)](https://raw.githubusercontent.com/atobouh/aurum/codex/dist/aurum-excalibur-relief-research.zip) — LabPBR-off baseline tests and engineering proposal; no new renderer implementation.
 
 Stable build: **0.6.1**. It corrects excessive daytime canopy darkening and adds diffuse fill beneath cloud shadows,
